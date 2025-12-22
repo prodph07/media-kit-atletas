@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Trash2, PlusCircle, Save, LogOut, Eye } from 'lucide-react';
+import { Trash2, PlusCircle, Save, LogOut, Eye, Lock } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -19,10 +19,11 @@ export default function Painel() {
   // --- ESTADO INICIAL ---
   const [perfil, setPerfil] = useState({
     nome: '', apelido: '', categoria: '', foto_url: '', about: '', fightingStyle: '',
+    plano: 'free', // Padrão é free
     stats: { height: '', weight: '', reach: '', age: '' },
     record: { wins: 0, losses: 0, draws: 0, knockouts: 0, submissions: 0 },
     contact: { email: '', phone: '', city: '', trainingCenter: '' },
-    nextFight: { date: '', event: '', opponent: '', location: '' }, // No estado chamo de nextFight, mas no banco será prox_luta
+    nextFight: { date: '', event: '', opponent: '', location: '' },
     socials: { instagram: { user: '', followers: '', url: '', active: true }, youtube: { user: '', followers: '', url: '', active: false } },
     historico: [],
     video_lista: [],
@@ -72,10 +73,11 @@ export default function Painel() {
       if (data) {
         setPerfil({
             ...data,
+            // Garante que lê o plano do banco
+            plano: data.plano || 'free',
             stats: data.atributos || { height: '', weight: '', reach: '', age: '' },
             record: data.cartel || { wins: 0, losses: 0, draws: 0 },
             contact: data.contato || { email: '', phone: '', city: '' },
-            // AQUI MUDOU: Agora busca de 'prox_luta'
             nextFight: data.prox_luta || { date: '', event: '', opponent: '' }, 
             socials: data.redes_sociais || { instagram: { active: true } },
             historico: data.historico || [],
@@ -104,10 +106,7 @@ export default function Painel() {
         atributos: perfil.stats,
         cartel: perfil.record,
         contato: perfil.contact,
-        
-        // AQUI MUDOU: Salva na coluna 'prox_luta'
         prox_luta: perfil.nextFight, 
-        
         redes_sociais: perfil.socials,
         historico: perfil.historico,
         video_lista: perfil.video_lista,
@@ -150,16 +149,44 @@ export default function Painel() {
       <div className="max-w-4xl mx-auto">
         
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-8 bg-slate-900 p-4 rounded-xl border border-slate-800">
+        <div className="flex justify-between items-center mb-6 bg-slate-900 p-4 rounded-xl border border-slate-800">
             <div>
-                <h1 className="text-2xl font-bold">Painel do Atleta</h1>
-                <p className="text-slate-400 text-sm">Edite seu Mídia Kit</p>
+                <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-bold">Painel do Atleta</h1>
+                    {/* Badge de Status */}
+                    {perfil.plano === 'premium' ? (
+                        <span className="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded border border-yellow-500/50 font-bold uppercase">PREMIUM</span>
+                    ) : (
+                        <span className="bg-slate-700 text-slate-400 text-xs px-2 py-1 rounded font-bold uppercase">GRÁTIS</span>
+                    )}
+                </div>
+                <p className="text-slate-400 text-sm">Gerencie sua carreira</p>
             </div>
             <div className="flex gap-3">
                 <Link href={`/${perfil.slug || perfil.id}`} target="_blank" className="p-2 bg-slate-800 rounded hover:bg-slate-700"><Eye size={20}/></Link>
                 <button onClick={() => { supabase.auth.signOut(); router.push('/login'); }} className="p-2 bg-red-900/50 text-red-400 rounded"><LogOut size={20}/></button>
             </div>
         </div>
+
+        {/* --- BANNER DE VENDA (SÓ APARECE SE FOR FREE) --- */}
+        {perfil.plano !== 'premium' && (
+            <div className="mb-8 bg-gradient-to-r from-blue-900 to-slate-900 p-6 rounded-xl border border-blue-500/30 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+                <div>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">🚀 Libere o Modo Profissional</h3>
+                    <p className="text-blue-200 text-sm mt-1">
+                        Tenha vídeos ilimitados, fotos em alta resolução e destaque nas buscas.
+                    </p>
+                </div>
+                <a 
+                    // ⚠️ ATENÇÃO: SUBSTITUA O LINK ABAIXO PELO SEU DA KIRVANO
+                    href={`https://pay.kirvano.com/c134ee8a-6d5c-46cd-bf22-f9c72de5b368?email=${perfil.contact?.email || ''}`} 
+                    target="_blank"
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-lg shadow-lg shadow-yellow-500/20 transition transform hover:scale-105 whitespace-nowrap"
+                >
+                    Virar Premium
+                </a>
+            </div>
+        )}
 
         {/* ABAS */}
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2">
@@ -252,7 +279,6 @@ export default function Painel() {
                             <div key={i} className="grid grid-cols-12 gap-2 mb-2 items-center bg-black/40 p-2 rounded border border-slate-800">
                                 <div className="col-span-2"><select className="w-full bg-slate-800 text-white rounded p-1" value={luta.result} onChange={e => handleArrayChange('historico', i, 'result', e.target.value)}><option value="W">V</option><option value="L">D</option><option value="D">E</option></select></div>
                                 <div className="col-span-5"><input className="w-full bg-transparent p-1 text-white text-sm" placeholder="Evento" value={luta.event} onChange={e => handleArrayChange('historico', i, 'event', e.target.value)} /></div>
-                                {/* AQUI ESTÁ A CORREÇÃO: INPUT DE DATA DO HISTÓRICO COM MÁSCARA */}
                                 <div className="col-span-4">
                                     <input 
                                         className="w-full bg-transparent p-1 text-white text-sm" 
@@ -273,7 +299,16 @@ export default function Painel() {
             {activeTab === 'midia' && (
                 <div className="space-y-6">
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                         <div className="flex justify-between mb-4"><h3 className="text-cyan-400 font-bold uppercase text-sm">Vídeos</h3><button onClick={() => addItem('video_lista', {title: '', thumb: '', embedUrl: ''})} className="text-green-400 text-xs flex gap-1"><PlusCircle size={14}/> Add Vídeo</button></div>
+                         <div className="flex justify-between mb-4">
+                             <h3 className="text-cyan-400 font-bold uppercase text-sm">Vídeos</h3>
+                             
+                             {/* LÓGICA DE TRAVA PREMIUM: Se for free, só deixa ter 1 vídeo */}
+                             {perfil.plano === 'premium' || perfil.video_lista.length < 1 ? (
+                                <button onClick={() => addItem('video_lista', {title: '', thumb: '', embedUrl: ''})} className="text-green-400 text-xs flex gap-1"><PlusCircle size={14}/> Add Vídeo</button>
+                             ) : (
+                                <span className="text-xs text-yellow-500 flex items-center gap-1 border border-yellow-500/30 px-2 rounded"><Lock size={12}/> Limite Grátis</span>
+                             )}
+                        </div>
                          {perfil.video_lista.map((v, i) => (
                             <div key={i} className="bg-black/40 p-3 rounded mb-2 border border-slate-800">
                                 <div className="grid md:grid-cols-2 gap-2 mb-2">
