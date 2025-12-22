@@ -1,41 +1,43 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Configura o Supabase com permissão de ADMIN (Service Role)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Força essa rota a ser dinâmica (não tenta gerar estático no build)
+export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    // 1. Recebe os dados da Kirvano
-    const payload = await req.json();
+    // 1. Verifica se as chaves existem antes de tentar conectar
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("ERRO CRÍTICO: Chaves do Supabase não configuradas no ambiente.");
+      return NextResponse.json({ message: 'Erro de configuração no servidor' }, { status: 500 });
+    }
+
+    // 2. Conecta no Supabase SOMENTE quando o webhook for chamado
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
+    // 3. Recebe os dados da Kirvano
+    const payload = await req.json();
     console.log("Webhook Kirvano Recebido:", payload);
 
-    // 2. Extrai os dados importantes
-    // A Kirvano geralmente envia: { event: 'sale.approved', data: { customer: { email: ... } } }
-    // Ou estrutura direta dependendo da versão. Vamos tentar pegar de formas variadas para garantir.
-    
-    const event = payload.event; // Ex: 'sale.approved'
-    
-    // Tenta achar o status e o email em locais diferentes do JSON para ser à prova de falhas
+    const event = payload.event; 
     const status = payload.status || payload.transaction_status || (event === 'sale.approved' ? 'approved' : '');
     const emailCliente = payload.customer?.email || payload.data?.customer?.email || payload.email;
 
-    // 3. Verifica se foi APROVADO (Venda realizada)
+    // 4. Verifica aprovação
     if (status === 'approved' || status === 'paid' || event === 'sale.approved') {
       
       if (!emailCliente) {
         return NextResponse.json({ message: 'Email não encontrado no payload' }, { status: 400 });
       }
 
-      // 4. Atualiza o plano do atleta para PREMIUM
-      const { data, error } = await supabaseAdmin
+      // Atualiza para PREMIUM
+      const { error } = await supabaseAdmin
         .from('atletas')
         .update({ plano: 'premium' })
-        .eq('email', emailCliente) // Busca pelo email cadastrado
+        .eq('email', emailCliente)
         .select();
 
       if (error) {
@@ -43,11 +45,10 @@ export async function POST(req) {
         return NextResponse.json({ message: 'Erro ao atualizar banco' }, { status: 500 });
       }
 
-      console.log(`Sucesso! Atleta ${emailCliente} agora é Premium.`);
-      return NextResponse.json({ message: 'Recebido e processado' }, { status: 200 });
+      return NextResponse.json({ message: 'Sucesso! Atleta virou Premium.' }, { status: 200 });
     }
 
-    // 5. Verifica Reembolso/Cancelamento (Volta para Free)
+    // 5. Verifica Reembolso
     if (status === 'refunded' || status === 'chargedback' || event === 'sale.refunded') {
        await supabaseAdmin
         .from('atletas')
