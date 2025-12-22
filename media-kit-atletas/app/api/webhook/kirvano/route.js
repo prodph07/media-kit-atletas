@@ -1,24 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Força essa rota a ser dinâmica (não tenta gerar estático no build)
+// --- A CORREÇÃO ESTÁ AQUI EMBAIXO ---
+export const runtime = 'edge'; 
+// ------------------------------------
+
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    // 1. Verifica se as chaves existem antes de tentar conectar
+    // Pegando as chaves do ambiente (no Edge Runtime)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error("ERRO CRÍTICO: Chaves do Supabase não configuradas no ambiente.");
       return NextResponse.json({ message: 'Erro de configuração no servidor' }, { status: 500 });
     }
 
-    // 2. Conecta no Supabase SOMENTE quando o webhook for chamado
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    // 3. Recebe os dados da Kirvano
     const payload = await req.json();
     console.log("Webhook Kirvano Recebido:", payload);
 
@@ -26,14 +26,13 @@ export async function POST(req) {
     const status = payload.status || payload.transaction_status || (event === 'sale.approved' ? 'approved' : '');
     const emailCliente = payload.customer?.email || payload.data?.customer?.email || payload.email;
 
-    // 4. Verifica aprovação
+    // Verifica Aprovação
     if (status === 'approved' || status === 'paid' || event === 'sale.approved') {
       
       if (!emailCliente) {
-        return NextResponse.json({ message: 'Email não encontrado no payload' }, { status: 400 });
+        return NextResponse.json({ message: 'Email não encontrado' }, { status: 400 });
       }
 
-      // Atualiza para PREMIUM
       const { error } = await supabaseAdmin
         .from('atletas')
         .update({ plano: 'premium' })
@@ -41,14 +40,14 @@ export async function POST(req) {
         .select();
 
       if (error) {
-        console.error("Erro ao atualizar banco:", error);
-        return NextResponse.json({ message: 'Erro ao atualizar banco' }, { status: 500 });
+        console.error("Erro banco:", error);
+        return NextResponse.json({ message: 'Erro banco' }, { status: 500 });
       }
 
-      return NextResponse.json({ message: 'Sucesso! Atleta virou Premium.' }, { status: 200 });
+      return NextResponse.json({ message: 'Premium Ativado' }, { status: 200 });
     }
 
-    // 5. Verifica Reembolso
+    // Verifica Cancelamento
     if (status === 'refunded' || status === 'chargedback' || event === 'sale.refunded') {
        await supabaseAdmin
         .from('atletas')
@@ -58,10 +57,10 @@ export async function POST(req) {
        return NextResponse.json({ message: 'Plano cancelado' }, { status: 200 });
     }
 
-    return NextResponse.json({ message: 'Evento ignorado' }, { status: 200 });
+    return NextResponse.json({ message: 'Ignorado' }, { status: 200 });
 
   } catch (err) {
-    console.error("Erro interno no Webhook:", err);
-    return NextResponse.json({ message: 'Erro interno no servidor' }, { status: 500 });
+    console.error("Erro:", err);
+    return NextResponse.json({ message: 'Erro interno' }, { status: 500 });
   }
 }
