@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Script from 'next/script'; // Importante para carregar o widget
-import { Trash2, PlusCircle, Save, LogOut, Eye, Lock, Instagram, Youtube, Twitter, Camera, Upload } from 'lucide-react';
+import Script from 'next/script'; 
+import { Trash2, PlusCircle, Save, LogOut, Eye, Lock, Instagram, Youtube, Twitter, Camera, Upload, Link as LinkIcon, Check, X } from 'lucide-react';
 
 // --- CONFIGURAÇÃO CLOUDINARY ---
-// 👇 COLOQUE SEUS DADOS AQUI 👇
-const CLOUD_NAME = "dgn8bzilm"; // Ex: dpt...
-const UPLOAD_PRESET = "atletas_upload";   // Ex: atletas_upload
+const CLOUD_NAME = "SEU_CLOUD_NAME_AQUI"; 
+const UPLOAD_PRESET = "SEU_PRESET_AQUI";   
 // ------------------------------
 
 const TikTokIcon = ({size=24, className}) => (
@@ -29,9 +28,10 @@ export default function Painel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('geral');
+  const [userId, setUserId] = useState(null); // Guardar ID para verificação
 
   const [perfil, setPerfil] = useState({
-    nome: '', apelido: '', categoria: '', foto_url: '', about: '', 
+    nome: '', apelido: '', categoria: '', foto_url: '', about: '', slug: '',
     fightingStyle: '', plano: 'free', 
     stats: { height: '', weight: '', reach: '', age: '' },
     record: { wins: 0, losses: 0, draws: 0, knockouts: 0, submissions: 0 },
@@ -43,7 +43,19 @@ export default function Painel() {
 
   const mascaraData = (valor) => valor.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{4})\d+?$/, '$1'); 
 
-  // Helpers de Medidas
+  // --- FUNÇÃO DE LIMPEZA DE SLUG ---
+  const limparSlug = (texto) => {
+    return texto
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
   const handleFocusMedida = (e, unidade) => {
     const valorLimpo = e.target.value.replace(unidade, '').trim();
     setPerfil(prev => ({ ...prev, stats: { ...prev.stats, [e.target.name]: valorLimpo } }));
@@ -59,11 +71,15 @@ export default function Painel() {
     async function getData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
+      
+      setUserId(user.id); // Guarda o ID para verificar duplicidade depois
+
       const { data } = await supabase.from('atletas').select('*').eq('user_id', user.id).single();
       if (data) {
         setPerfil({
             ...data,
             plano: data.plano || 'free',
+            slug: data.slug || '', // Garante slug
             stats: data.atributos || { height: '', weight: '', reach: '', age: '' },
             record: data.cartel || { wins: 0, losses: 0, draws: 0 },
             contact: data.contato || { email: '', phone: '', state: '' },
@@ -84,76 +100,74 @@ export default function Painel() {
 
   async function handleSave() {
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    
+    // --- VERIFICAÇÃO DE SLUG (LINK) ---
+    // Se o usuário mudou o slug, precisamos ver se já existe
+    if (perfil.slug) {
+        const slugLimpo = limparSlug(perfil.slug);
+        
+        // Verifica no banco se existe ALGUÉM com esse slug que NÃO SEJA eu
+        const { data: existeSlug } = await supabase
+            .from('atletas')
+            .select('id')
+            .eq('slug', slugLimpo)
+            .neq('user_id', userId) // Ignora o próprio usuário
+            .maybeSingle();
+        
+        if (existeSlug) {
+            alert(`O link "${slugLimpo}" já está em uso por outro atleta. Por favor, escolha outro.`);
+            setSaving(false);
+            return; // Cancela o salvamento
+        }
+
+        // Atualiza o estado local com o slug limpo antes de salvar
+        perfil.slug = slugLimpo; 
+    }
+
     const payload = {
         nome: perfil.nome, apelido: perfil.apelido, categoria: perfil.categoria, foto_url: perfil.foto_url,
+        slug: perfil.slug, // Salva o slug novo
         sobre: perfil.about, estilodeluta: perfil.fightingStyle, atributos: perfil.stats, cartel: perfil.record,
         contato: perfil.contact, prox_luta: perfil.nextFight, redes_sociais: perfil.socials,
         historico: perfil.historico, video_lista: perfil.video_lista, galeria: perfil.galeria, premios: perfil.premios
     };
-    const { error } = await supabase.from('atletas').update(payload).eq('user_id', user.id);
+
+    const { error } = await supabase.from('atletas').update(payload).eq('user_id', userId);
     if (error) alert("Erro: " + error.message);
     else alert("Salvo com sucesso!");
     setSaving(false);
   }
 
-  // --- FUNÇÃO PARA ABRIR O WIDGET DA CLOUDINARY ---
+  // --- WIDGET CLOUDINARY ---
   const openWidget = () => {
-    if (!window.cloudinary) {
-        alert("Erro ao carregar sistema de upload. Tente recarregar a página.");
-        return;
-    }
-
+    if (!window.cloudinary) { alert("Erro ao carregar sistema de upload."); return; }
     const widget = window.cloudinary.createUploadWidget(
       {
-        cloudName: CLOUD_NAME,
-        uploadPreset: UPLOAD_PRESET,
-        sources: ['local', 'instagram', 'camera'], // De onde ele pode pegar foto
-        multiple: false, // Apenas uma foto
-        cropping: true, // Habilita o corte
-        croppingAspectRatio: 1, // Corte quadrado (1:1)
-        showSkipCropButton: false,
-        folder: 'atletas_perfil', // Pasta na Cloudinary
-        clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'],
-        maxImageFileSize: 5000000, // 5MB
-        language: "pt", // Tenta colocar em pt (se configurado na conta)
-        styles: {
-            palette: {
-                window: "#0f172a",
-                windowBorder: "#1e293b",
-                tabIcon: "#eab308",
-                menuIcons: "#eab308",
-                textDark: "#0f172a",
-                textLight: "#ffffff",
-                link: "#eab308",
-                action: "#eab308",
-                inactiveTabIcon: "#94a3b8",
-                error: "#ef4444",
-                inProgress: "#3b82f6",
-                complete: "#22c55e",
-                sourceBg: "#1e293b"
-            }
-        }
+        cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET, sources: ['local', 'instagram', 'camera'],
+        multiple: false, cropping: true, croppingAspectRatio: 1, showSkipCropButton: false,
+        folder: 'atletas_perfil', clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'], maxImageFileSize: 5000000,
+        language: "pt", styles: { palette: { window: "#0f172a", sourceBg: "#1e293b", windowBorder: "#1e293b", tabIcon: "#eab308", inactiveTabIcon: "#94a3b8", menuIcons: "#eab308", link: "#eab308", action: "#eab308", inProgress: "#3b82f6", complete: "#22c55e", error: "#ef4444", textDark: "#0f172a", textLight: "#ffffff" } }
       },
-      (error, result) => {
-        if (!error && result && result.event === "success") {
-          console.log("Upload concluído: ", result.info);
-          // Atualiza o estado com a URL segura da Cloudinary
-          setPerfil(prev => ({ ...prev, foto_url: result.info.secure_url }));
-        }
-      }
+      (error, result) => { if (!error && result && result.event === "success") { setPerfil(prev => ({ ...prev, foto_url: result.info.secure_url })); } }
     );
-
     widget.open();
   };
 
   const handleChange = (e) => setPerfil({...perfil, [e.target.name]: e.target.value});
+  
+  // Handle especial para o Slug (Limpa enquanto digita)
+  const handleSlugChange = (e) => {
+      const val = limparSlug(e.target.value);
+      setPerfil({...perfil, slug: val});
+  };
+
   const handleNested = (parent, field, value) => setPerfil(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } }));
   const handleDeepNested = (parent, key, field, value) => setPerfil(prev => ({ ...prev, [parent]: { ...prev[parent], [key]: { ...prev[parent][key], [field]: value } } }));
   const handleArrayChange = (arr, idx, field, val) => { const n = [...perfil[arr]]; n[idx][field] = val; setPerfil({...perfil, [arr]: n}); };
   const addItem = (arr, item) => setPerfil({...perfil, [arr]: [...perfil[arr], item]});
   const removeItem = (arr, idx) => { const n = [...perfil[arr]]; n.splice(idx, 1); setPerfil({...perfil, [arr]: n}); };
   const handleAwardChange = (idx, val) => { const n = [...perfil.premios]; n[idx] = val; setPerfil({...perfil, premios: n}); };
+  
   const PremiumLock = ({ text }) => (
       <div className="bg-slate-900/50 border border-yellow-500/20 p-6 rounded-xl flex flex-col items-center justify-center text-center gap-2 opacity-80">
           <Lock className="text-yellow-500 mb-2" size={32} />
@@ -168,9 +182,7 @@ export default function Painel() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-white p-4 pb-32 font-sans">
-      {/* SCRIPT DO WIDGET */}
       <Script src="https://upload-widget.cloudinary.com/global/all.js" strategy="lazyOnload" />
-
       <div className="max-w-4xl mx-auto">
         
         {/* HEADER */}
@@ -191,7 +203,7 @@ export default function Painel() {
             <div className="mb-8 bg-gradient-to-r from-blue-900 to-slate-900 p-6 rounded-xl border border-blue-500/30 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
                 <div>
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">🚀 Libere seu Potencial</h3>
-                    <p className="text-blue-200 text-sm mt-1">Desbloqueie vídeos, histórico completo e todas as redes sociais.</p>
+                    <p className="text-blue-200 text-sm mt-1">Desbloqueie vídeos, link personalizado, histórico completo e mais.</p>
                 </div>
                 <a href={`https://pay.kirvano.com/AQUI_VAI_SEU_LINK_KIRVANO?email=${perfil.contact?.email || ''}`} target="_blank" className="bg-yellow-500 text-black font-bold py-3 px-6 rounded-lg hover:scale-105 transition">Virar Premium</a>
             </div>
@@ -205,7 +217,7 @@ export default function Painel() {
 
         <div className="space-y-6">
             
-            {/* 1. GERAL (COM WIDGET CLOUDINARY) */}
+            {/* 1. GERAL */}
             {activeTab === 'geral' && (
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 grid gap-6">
                     <h3 className="text-cyan-400 font-bold uppercase text-sm">Informações Básicas</h3>
@@ -213,29 +225,37 @@ export default function Painel() {
                     {/* ÁREA DE UPLOAD CLOUDINARY */}
                     <div className="flex flex-col items-center justify-center p-4 bg-black/40 rounded-xl border border-slate-700 border-dashed">
                         <div onClick={openWidget} className="relative w-32 h-32 mb-4 group cursor-pointer">
-                            {/* Visual da Imagem */}
                             <div className="w-full h-full rounded-full overflow-hidden border-4 border-slate-700 group-hover:border-yellow-500 transition relative">
-                                {perfil.foto_url ? (
-                                    <img src={perfil.foto_url} alt="Perfil" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500">
-                                        <Camera size={32} />
-                                    </div>
-                                )}
-                                {/* Overlay de Upload */}
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-10">
-                                    <Upload size={24} className="text-white" />
-                                </div>
+                                {perfil.foto_url ? <img src={perfil.foto_url} alt="Perfil" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500"><Camera size={32} /></div>}
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition z-10"><Upload size={24} className="text-white" /></div>
                             </div>
                         </div>
-                        <button onClick={openWidget} className="text-xs text-yellow-500 hover:underline">
-                            Clique para alterar foto
-                        </button>
+                        <button onClick={openWidget} className="text-xs text-yellow-500 hover:underline">Clique para alterar foto</button>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
                         <div><label className="text-xs text-slate-500">Nome</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="nome" value={perfil.nome} onChange={handleChange} /></div>
                         <div><label className="text-xs text-slate-500">Apelido</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="apelido" value={perfil.apelido} onChange={handleChange} /></div>
+                        
+                        {/* NOVO: CAMPO SLUG (LINK PERSONALIZADO) */}
+                        <div className="md:col-span-2">
+                            <label className="text-xs text-slate-500 flex items-center gap-1">Link Personalizado {isPremium && <span className="text-green-500 text-[10px] ml-1 flex items-center gap-0.5"><Check size={10}/> Disponível</span>}</label>
+                            <div className={`flex items-center border p-2 rounded ${isPremium ? 'bg-black border-slate-700' : 'bg-slate-800/50 border-slate-800 opacity-60'}`}>
+                                <LinkIcon size={16} className="text-slate-500 mr-2"/>
+                                <span className="text-slate-500 text-sm mr-1 hidden sm:inline">nocautepages.com/</span>
+                                <input 
+                                    className="bg-transparent text-white w-full outline-none font-bold placeholder-slate-600"
+                                    name="slug"
+                                    value={perfil.slug}
+                                    onChange={handleSlugChange}
+                                    placeholder="seu-nome"
+                                    disabled={!isPremium} 
+                                />
+                                {!isPremium && <Lock size={16} className="text-yellow-500 ml-2" />}
+                            </div>
+                            {!isPremium && <p className="text-[10px] text-yellow-500/70 mt-1">Exclusivo para Premium. No plano Grátis usamos o link gerado automaticamente.</p>}
+                        </div>
+
                         <div><label className="text-xs text-slate-500">Categoria</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="categoria" value={perfil.categoria} onChange={handleChange} /></div>
                         <div>
                             <label className="text-xs text-slate-500">Estilo de Luta</label>
@@ -249,10 +269,8 @@ export default function Painel() {
                 </div>
             )}
 
-            {/* ABAS RESTANTES MANTIDAS (CARTEL, LUTAS, MIDIA, CONTATO) */}
             {activeTab === 'cartel' && (
                 <div className="space-y-6">
-                    {/* ... (Conteúdo da aba Cartel igual ao anterior) ... */}
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                         <h3 className="text-cyan-400 font-bold mb-4 uppercase text-sm">Cartel</h3>
                         <div className="grid grid-cols-5 gap-2 text-center">
@@ -277,7 +295,6 @@ export default function Painel() {
             
             {activeTab === 'lutas' && (
                 <div className="space-y-6">
-                    {/* ... (Conteúdo da aba Lutas igual ao anterior) ... */}
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                         <h3 className="text-red-500 font-bold mb-4 uppercase text-sm">Próxima Luta</h3>
                         <div className="grid md:grid-cols-2 gap-4">
@@ -309,7 +326,6 @@ export default function Painel() {
 
             {activeTab === 'midia' && (
                 <div className="space-y-6">
-                    {/* ... (Conteúdo da aba Midia igual ao anterior) ... */}
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                          <div className="flex justify-between mb-4"><h3 className="text-cyan-400 font-bold uppercase text-sm">Vídeos</h3>{isPremium || perfil.video_lista.length < 1 ? <button onClick={() => addItem('video_lista', {title: '', thumb: '', embedUrl: ''})} className="text-green-400 text-xs flex gap-1"><PlusCircle size={14}/> Add Vídeo</button> : <span className="text-xs text-yellow-500 flex items-center gap-1 border border-yellow-500/30 px-2 rounded"><Lock size={12}/> Limite Grátis Atingido</span>}</div>
                          {perfil.video_lista.map((v, i) => (
@@ -334,7 +350,6 @@ export default function Painel() {
 
             {activeTab === 'contato' && (
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 grid gap-4">
-                    {/* ... (Conteúdo da aba Contato igual ao anterior) ... */}
                     <h3 className="text-cyan-400 font-bold uppercase text-sm">Contato</h3>
                     <div className="grid md:grid-cols-2 gap-4">
                         <div><label className="text-xs text-slate-500">Email</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={perfil.contact.email} onChange={e => handleNested('contact', 'email', e.target.value)} /></div>

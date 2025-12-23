@@ -21,21 +21,33 @@ export default function Cadastro() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
+  // --- FUNÇÃO PARA GERAR SLUG (LINK AMIGÁVEL) ---
+  const gerarSlug = (texto) => {
+    return texto
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize('NFD') // Separa acentos das letras
+      .replace(/[\u0300-\u036f]/g, '') // Remove os acentos
+      .replace(/[^\w\s-]/g, '') // Remove caracteres especiais (ex: @, #, !)
+      .replace(/[\s_-]+/g, '-') // Troca espaços por hífens
+      .replace(/^-+|-+$/g, ''); // Remove hífens do começo e fim
+  };
+
   // --- MÁSCARA DE CPF ---
   const mascaraCPF = (value) => {
     return value
-      .replace(/\D/g, '') // Remove tudo o que não é dígito
-      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca um ponto entre o terceiro e o quarto dígitos
-      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca um ponto entre o terceiro e o quarto dígitos de novo
-      .replace(/(\d{3})(\d{1,2})/, '$1-$2') // Coloca um hífen entre o terceiro e o quarto dígitos
-      .replace(/(-\d{2})\d+?$/, '$1'); // Impede de digitar mais caracteres
+      .replace(/\D/g, '') 
+      .replace(/(\d{3})(\d)/, '$1.$2') 
+      .replace(/(\d{3})(\d)/, '$1.$2') 
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2') 
+      .replace(/(-\d{2})\d+?$/, '$1'); 
   };
 
   // --- VALIDAÇÃO MATEMÁTICA DE CPF ---
   function validarCPF(cpf) {
     cpf = cpf.replace(/[^\d]+/g, '');
     if (cpf == '') return false;
-    // Elimina CPFs invalidos conhecidos
     if (cpf.length != 11 || 
         cpf == "00000000000" || 
         cpf == "11111111111" || 
@@ -48,13 +60,11 @@ export default function Cadastro() {
         cpf == "88888888888" || 
         cpf == "99999999999")
             return false;
-    // Valida 1o digito
     let add = 0;
     for (let i = 0; i < 9; i ++) add += parseInt(cpf.charAt(i)) * (10 - i);
     let rev = 11 - (add % 11);
     if (rev == 10 || rev == 11) rev = 0;
     if (rev != parseInt(cpf.charAt(9))) return false;
-    // Valida 2o digito
     add = 0;
     for (let i = 0; i < 10; i ++) add += parseInt(cpf.charAt(i)) * (11 - i);
     rev = 11 - (add % 11);
@@ -92,9 +102,13 @@ export default function Cadastro() {
       if (error) throw error;
 
       if (data.user) {
-        // 2. Cria perfil na tabela (COM CPF LIMPO, SOMENTE NÚMEROS)
+        // 2. Prepara os dados (Limpa CPF e Gera Slug)
         const cpfLimpo = formData.cpf.replace(/\D/g, '');
         
+        // Gera slug: "pedro silva" vira "pedro-silva-4821" (número aleatório pra garantir que é único)
+        const slugFinal = `${gerarSlug(formData.nome)}-${Math.floor(Math.random() * 10000)}`;
+
+        // 3. Salva no banco de dados
         const { error: dbError } = await supabase
           .from('atletas')
           .insert([
@@ -102,13 +116,13 @@ export default function Cadastro() {
               user_id: data.user.id,
               nome: formData.nome,
               email: formData.email,
-              cpf: cpfLimpo, // Salva só numeros para facilitar busca depois
+              cpf: cpfLimpo,
+              slug: slugFinal, // <--- AQUI ESTÁ A MÁGICA
               plano: 'free'
             }
           ]);
 
         if (dbError) {
-            // Erro de CPF duplicado (código 23505 no Postgres)
             if (dbError.code === '23505') throw new Error("Este CPF já está cadastrado.");
             throw dbError;
         }
