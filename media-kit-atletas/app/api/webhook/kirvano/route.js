@@ -10,62 +10,79 @@ export async function POST(req) {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ message: 'Erro de configuração no servidor' }, { status: 500 });
+      return NextResponse.json({ message: 'Erro de configuração' }, { status: 500 });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
-
     const payload = await req.json();
-    console.log("Webhook Kirvano Recebido:", payload);
+    
+    // LOG para debug
+    console.log("Webhook Recebido:", JSON.stringify(payload));
 
-    // --- CORREÇÃO AQUI: Converter tudo para minúsculo para comparar ---
     const event = (payload.event || '').toLowerCase(); 
     const status = (payload.status || payload.transaction_status || '').toLowerCase();
     
-    // Pega o email (tenta em vários lugares do JSON)
+    // DADOS DO CLIENTE
     const emailCliente = payload.customer?.email || payload.data?.customer?.email || payload.email;
+    
+    // CPF (Vem da Kirvano como customer.document)
+    let cpfCliente = payload.customer?.document || payload.data?.customer?.document || '';
+    // Limpa o CPF (deixa só números)
+    cpfCliente = cpfCliente.replace(/\D/g, '');
 
-    console.log(`Processando: Evento=${event}, Status=${status}, Email=${emailCliente}`);
+    console.log(`Processando: Email=${emailCliente}, CPF=${cpfCliente}`);
 
-    // VERIFICA APROVAÇÃO (Aceita 'sale_approved', 'approved', 'paid')
+    // --- LÓGICA DE APROVAÇÃO ---
     if (status === 'approved' || status === 'paid' || event === 'sale_approved') {
       
-      if (!emailCliente) {
-        return NextResponse.json({ message: 'Email não encontrado' }, { status: 400 });
+      if (!emailCliente && !cpfCliente) {
+        return NextResponse.json({ message: 'Dados do cliente não encontrados' }, { status: 400 });
       }
 
-      // Atualiza para PREMIUM
-      const { data, error } = await supabaseAdmin
-        .from('atletas')
-        .update({ plano: 'premium' })
-        .eq('email', emailCliente) // O email tem que bater exato
-        .select();
+      // BUSCA INTELIGENTE: Procura por Email OU CPF
+      // A sintaxe do Supabase para OR é: .or(`coluna1.eq.valor,coluna2.eq.valor`)
+      let query = supabaseAdmin.from('atletas').update({ plano: 'premium' });
+
+      if (emailCliente && cpfCliente) {
+         // Se tem os dois, tenta bater um OU outro
+         query = query.or(`email.eq.${emailCliente},cpf.eq.${cpfCliente}`);
+      } else if (emailCliente) {
+         query = query.eq('email', emailCliente);
+      } else if (cpfCliente) {
+         query = query.eq('cpf', cpfCliente);
+      }
+
+      const { data, error } = await query.select();
 
       if (error) {
         console.error("Erro banco:", error);
         return NextResponse.json({ message: 'Erro ao atualizar banco' }, { status: 500 });
       }
 
-      // Se não encontrou o usuário (data vazio), avisa no log
-      if (data && data.length === 0) {
-        console.log("Email não encontrado no banco:", emailCliente);
-        return NextResponse.json({ message: 'Usuário não encontrado no banco' }, { status: 404 });
+      if (data && data.length > 0) {
+          return NextResponse.json({ message: 'Premium Ativado', user: data[0].nome }, { status: 200 });
+      } else {
+          console.log("Nenhum usuário encontrado com esse Email ou CPF");
+          return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
       }
-
-      return NextResponse.json({ message: 'Premium Ativado com Sucesso' }, { status: 200 });
     }
 
-    // VERIFICA REEMBOLSO (Aceita 'sale_refunded', 'refunded')
+    // --- LÓGICA DE REEMBOLSO ---
     if (status === 'refunded' || status === 'chargedback' || event === 'sale_refunded') {
-       await supabaseAdmin
-        .from('atletas')
-        .update({ plano: 'free' })
-        .eq('email', emailCliente);
+       // Mesma lógica de busca para remover
+       let query = supabaseAdmin.from('atletas').update({ plano: 'free' });
        
+       if (emailCliente && cpfCliente) {
+         query = query.or(`email.eq.${emailCliente},cpf.eq.${cpfCliente}`);
+       } else if (emailCliente) {
+         query = query.eq('email', emailCliente);
+       }
+
+       await query;
        return NextResponse.json({ message: 'Plano cancelado' }, { status: 200 });
     }
 
-    return NextResponse.json({ message: 'Ignorado', received_status: status, received_event: event }, { status: 200 });
+    return NextResponse.json({ message: 'Ignorado' }, { status: 200 });
 
   } catch (err) {
     console.error("Erro:", err);
