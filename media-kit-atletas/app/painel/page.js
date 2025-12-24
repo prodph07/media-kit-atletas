@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script'; 
-import { Trash2, PlusCircle, Save, LogOut, Eye, Lock, Instagram, Youtube, Twitter, Camera, Upload, Link as LinkIcon, Check, X, Image as ImageIcon } from 'lucide-react';
+import { Trash2, PlusCircle, Save, LogOut, Eye, Lock, Instagram, Youtube, Twitter, Camera, Upload, Link as LinkIcon, Check, X, Image as ImageIcon, BarChart3, Users, PieChart, AlertCircle } from 'lucide-react';
 
 // --- CONFIGURAÇÃO CLOUDINARY ---
 const CLOUD_NAME = "dgn8bzilm"; 
@@ -30,6 +30,12 @@ export default function Painel() {
   const [activeTab, setActiveTab] = useState('geral');
   const [userId, setUserId] = useState(null);
 
+  // Estados locais para inputs controlados (Métricas)
+  const [ageRange, setAgeRange] = useState({ min: '', max: '' });
+  const [genderSplit, setGenderSplit] = useState({ men: '', women: '' });
+  const [cityInput, setCityInput] = useState({ name: '', percent: '' });
+  const [cityList, setCityList] = useState([]); // [{name: 'SP', percent: 40}]
+
   const [perfil, setPerfil] = useState({
     nome: '', apelido: '', categoria: '', foto_url: '', about: '', slug: '',
     fightingStyle: '', plano: 'free', 
@@ -37,11 +43,22 @@ export default function Painel() {
     record: { wins: 0, losses: 0, draws: 0, knockouts: 0, submissions: 0 },
     contact: { email: '', phone: '', state: '', trainingCenter: '' },
     nextFight: { date: '', event: '', opponent: '', location: '' },
-    socials: { instagram: { user: '', followers: '', url: '' }, youtube: { user: '', followers: '', url: '' }, tiktok: { user: '', followers: '', url: '' }, x: { user: '', followers: '', url: '' } },
+    socials: { 
+        instagram: { user: '', followers: '', url: '', stats: { reach: '', impressions: '', engagement: '', shares: '' }, audience: { age: '', gender: '', cities: '' } }, 
+        youtube: { user: '', followers: '', url: '' }, 
+        tiktok: { user: '', followers: '', url: '' }, 
+        x: { user: '', followers: '', url: '' } 
+    },
     historico: [], video_lista: [], galeria: [], premios: []
   });
 
   const mascaraData = (valor) => valor.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{4})\d+?$/, '$1'); 
+  
+  // Mascara para números com ponto (Ex: 100.000)
+  const formatNumber = (value) => {
+      if (!value) return '';
+      return value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
 
   const limparSlug = (texto) => {
     return texto.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
@@ -66,6 +83,35 @@ export default function Painel() {
 
       const { data } = await supabase.from('atletas').select('*').eq('user_id', user.id).single();
       if (data) {
+        const instaData = data.redes_sociais?.instagram || {};
+        
+        // Parsing inicial dos dados salvos para os estados locais
+        // Idade
+        const ageStr = instaData.audience?.age || '';
+        const ageMatch = ageStr.match(/(\d+)-(\d+)/);
+        if (ageMatch) setAgeRange({ min: ageMatch[1], max: ageMatch[2] });
+
+        // Gênero
+        const genderStr = instaData.audience?.gender || '';
+        const menMatch = genderStr.match(/(\d+)% Homens/);
+        const womenMatch = genderStr.match(/(\d+)% Mulheres/);
+        setGenderSplit({ 
+            men: menMatch ? menMatch[1] : '', 
+            women: womenMatch ? womenMatch[1] : '' 
+        });
+
+        // Cidades (Parser manual simples)
+        // Ex: "São Paulo (40%), Rio (20%)"
+        const citiesStr = instaData.audience?.cities || '';
+        if (citiesStr) {
+            const list = citiesStr.split(',').map(item => {
+                const match = item.match(/(.+)\s\((\d+)%\)/);
+                if (match) return { name: match[1].trim(), percent: match[2] };
+                return null;
+            }).filter(Boolean);
+            setCityList(list);
+        }
+
         setPerfil({
             ...data,
             plano: data.plano || 'free',
@@ -75,7 +121,11 @@ export default function Painel() {
             contact: data.contato || { email: '', phone: '', state: '' },
             nextFight: data.prox_luta || { date: '', event: '', opponent: '' }, 
             socials: { 
-                instagram: { ...data.redes_sociais?.instagram },
+                instagram: { 
+                    ...instaData,
+                    stats: instaData.stats || { reach: '', impressions: '', engagement: '', shares: '' },
+                    audience: instaData.audience || { age: '', gender: '', cities: '' }
+                },
                 youtube: { ...data.redes_sociais?.youtube },
                 tiktok: { ...data.redes_sociais?.tiktok },
                 x: { ...data.redes_sociais?.x }
@@ -88,37 +138,65 @@ export default function Painel() {
     getData();
   }, []);
 
-  // --- NOVA FUNÇÃO: DELETAR DA CLOUDINARY E DO ESTADO ---
+  // --- LOGICA DE ATUALIZAÇÃO AUTOMÁTICA DOS CAMPOS STRINGS ---
+  
+  // Atualiza string de Idade quando inputs mudam
+  useEffect(() => {
+    if (ageRange.min && ageRange.max) {
+        handleInstaStats('audience', 'age', `${ageRange.min}-${ageRange.max} anos`);
+    }
+  }, [ageRange]);
+
+  // Atualiza string de Genero quando inputs mudam
+  useEffect(() => {
+    if (genderSplit.men || genderSplit.women) {
+        const m = genderSplit.men || 0;
+        const w = genderSplit.women || 0;
+        handleInstaStats('audience', 'gender', `${m}% Homens / ${w}% Mulheres`);
+    }
+  }, [genderSplit]);
+
+  // Atualiza string de Cidades quando a lista muda
+  useEffect(() => {
+    if (cityList.length > 0) {
+        const str = cityList.map(c => `${c.name} (${c.percent}%)`).join(', ');
+        handleInstaStats('audience', 'cities', str);
+    } else {
+        handleInstaStats('audience', 'cities', '');
+    }
+  }, [cityList]);
+
+  // Lógica Cidades
+  const addCity = () => {
+      if (!cityInput.name || !cityInput.percent) return;
+      if (cityList.length >= 5) { alert("Máximo de 5 cidades."); return; }
+      const totalPercent = cityList.reduce((acc, curr) => acc + parseInt(curr.percent), 0);
+      if (totalPercent + parseInt(cityInput.percent) > 100) { alert("A soma das porcentagens não pode passar de 100%."); return; }
+      
+      setCityList([...cityList, { name: cityInput.name, percent: cityInput.percent }]);
+      setCityInput({ name: '', percent: '' });
+  };
+  
+  const removeCity = (idx) => {
+      const newList = [...cityList];
+      newList.splice(idx, 1);
+      setCityList(newList);
+  };
+
   const handleDeleteImage = async (arrName, index, urlParaDeletar) => {
      if (!confirm("Tem certeza que deseja excluir esta imagem?")) return;
-
-     // 1. Chama a API para deletar da nuvem (se tiver URL)
      if (urlParaDeletar && urlParaDeletar.includes('cloudinary')) {
-         try {
-             await fetch('/api/delete-image', {
-                 method: 'POST',
-                 body: JSON.stringify({ url: urlParaDeletar })
-             });
-             console.log("Imagem deletada da nuvem.");
-         } catch (err) {
-             console.error("Erro ao deletar da nuvem", err);
-         }
+         try { await fetch('/api/delete-image', { method: 'POST', body: JSON.stringify({ url: urlParaDeletar }) }); } catch (err) { console.error(err); }
      }
-
-     // 2. Remove do estado local (Visual)
      const novaLista = [...perfil[arrName]];
      novaLista.splice(index, 1);
      setPerfil({ ...perfil, [arrName]: novaLista });
   };
 
-  // Deletar Foto de Perfil Específica
   const handleDeleteProfilePic = async () => {
       if (!perfil.foto_url) return;
       if (!confirm("Remover foto de perfil?")) return;
-      
-      if (perfil.foto_url.includes('cloudinary')) {
-        await fetch('/api/delete-image', { method: 'POST', body: JSON.stringify({ url: perfil.foto_url }) });
-      }
+      if (perfil.foto_url.includes('cloudinary')) { await fetch('/api/delete-image', { method: 'POST', body: JSON.stringify({ url: perfil.foto_url }) }); }
       setPerfil({ ...perfil, foto_url: '' });
   };
 
@@ -144,27 +222,12 @@ export default function Painel() {
 
   const openWidget = (onUpload, isSquare = true) => {
     if (!window.cloudinary) { alert("Erro ao carregar sistema de upload."); return; }
-    
     const widget = window.cloudinary.createUploadWidget(
       {
-        cloudName: CLOUD_NAME, 
-        uploadPreset: UPLOAD_PRESET, 
-        sources: ['local', 'instagram', 'camera'],
-        multiple: false, 
-        cropping: isSquare,
-        croppingAspectRatio: isSquare ? 1 : null, 
-        showSkipCropButton: false,
-        folder: 'atletas_assets', 
-        clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'], 
-        maxImageFileSize: 5000000,
-        language: "pt", 
+        cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET, sources: ['local', 'instagram', 'camera'], multiple: false, cropping: isSquare, croppingAspectRatio: isSquare ? 1 : null, showSkipCropButton: false, folder: 'atletas_assets', clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'], maxImageFileSize: 5000000, language: "pt", 
         styles: { palette: { window: "#0f172a", sourceBg: "#1e293b", windowBorder: "#1e293b", tabIcon: "#eab308", inactiveTabIcon: "#94a3b8", menuIcons: "#eab308", link: "#eab308", action: "#eab308", inProgress: "#3b82f6", complete: "#22c55e", error: "#ef4444", textDark: "#0f172a", textLight: "#ffffff" } }
       },
-      (error, result) => { 
-          if (!error && result && result.event === "success") { 
-              onUpload(result.info.secure_url); 
-          } 
-      }
+      (error, result) => { if (!error && result && result.event === "success") { onUpload(result.info.secure_url); } }
     );
     widget.open();
   };
@@ -175,12 +238,25 @@ export default function Painel() {
   const handleDeepNested = (parent, key, field, value) => setPerfil(prev => ({ ...prev, [parent]: { ...prev[parent], [key]: { ...prev[parent][key], [field]: value } } }));
   const handleArrayChange = (arr, idx, field, val) => { const n = [...perfil[arr]]; n[idx][field] = val; setPerfil({...perfil, [arr]: n}); };
   const addItem = (arr, item) => setPerfil({...perfil, [arr]: [...perfil[arr], item]});
-  
-  // removeItem antigo (apenas para itens sem foto, tipo premios ou historico)
   const removeItem = (arr, idx) => { const n = [...perfil[arr]]; n.splice(idx, 1); setPerfil({...perfil, [arr]: n}); };
-  
   const handleAwardChange = (idx, val) => { const n = [...perfil.premios]; n[idx] = val; setPerfil({...perfil, premios: n}); };
   
+  const handleInstaStats = (category, field, value) => {
+      setPerfil(prev => ({
+          ...prev,
+          socials: {
+              ...prev.socials,
+              instagram: {
+                  ...prev.socials.instagram,
+                  [category]: {
+                      ...prev.socials.instagram[category],
+                      [field]: value
+                  }
+              }
+          }
+      }));
+  };
+
   const PremiumLock = ({ text }) => (
       <div className="bg-slate-900/50 border border-yellow-500/20 p-6 rounded-xl flex flex-col items-center justify-center text-center gap-2 opacity-80">
           <Lock className="text-yellow-500 mb-2" size={32} />
@@ -192,6 +268,10 @@ export default function Painel() {
 
   if (loading) return <div className="text-white p-10 text-center">Carregando painel...</div>;
   const isPremium = perfil.plano === 'premium';
+
+  // Cálculos de validação para renderização
+  const totalGender = (parseInt(genderSplit.men) || 0) + (parseInt(genderSplit.women) || 0);
+  const totalCityPercent = cityList.reduce((acc, curr) => acc + parseInt(curr.percent), 0);
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-white p-4 pb-32 font-sans">
@@ -215,29 +295,27 @@ export default function Painel() {
         {!isPremium && (
             <div className="mb-8 bg-gradient-to-r from-blue-900 to-slate-900 p-6 rounded-xl border border-blue-500/30 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
                 <div>
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">🚀 Libere seu Potencial</h3>
-                    <p className="text-blue-200 text-sm mt-1">Desbloqueie vídeos, link personalizado, histórico completo e mais.</p>
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">🚀 Libere seu Media Kit</h3>
+                    <p className="text-blue-200 text-sm mt-1">Desbloqueie estatísticas do Instagram, alcance e demografia.</p>
                 </div>
                 <a href={`https://pay.kirvano.com/AQUI_VAI_SEU_LINK_KIRVANO?email=${perfil.contact?.email || ''}`} target="_blank" className="bg-yellow-500 text-black font-bold py-3 px-6 rounded-lg hover:scale-105 transition">Virar Premium</a>
             </div>
         )}
 
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
-            {['geral', 'cartel', 'lutas', 'midia', 'contato'].map((tab) => (
+            {['geral', 'cartel', 'lutas', 'midia', 'metricas', 'contato'].map((tab) => (
                 <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-full text-sm font-bold uppercase transition whitespace-nowrap ${activeTab === tab ? 'bg-cyan-600' : 'bg-slate-800 text-slate-400'}`}>{tab}</button>
             ))}
         </div>
 
         <div className="space-y-6">
             
-            {/* 1. GERAL */}
+            {/* 1. GERAL (MANTIDO) */}
             {activeTab === 'geral' && (
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 grid gap-6">
                     <h3 className="text-cyan-400 font-bold uppercase text-sm">Informações Básicas</h3>
-                    
                     {/* FOTO DE PERFIL */}
                     <div className="flex flex-col items-center justify-center p-4 bg-black/40 rounded-xl border border-slate-700 border-dashed">
-                        {/* Se já tiver foto, mostra opção de Trocar ou Remover */}
                         <div onClick={() => openWidget((url) => setPerfil({...perfil, foto_url: url}))} className="relative w-32 h-32 mb-4 group cursor-pointer">
                             <div className="w-full h-full rounded-full overflow-hidden border-4 border-slate-700 group-hover:border-yellow-500 transition relative">
                                 {perfil.foto_url ? <img src={perfil.foto_url} alt="Perfil" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500"><Camera size={32} /></div>}
@@ -249,11 +327,9 @@ export default function Painel() {
                              {perfil.foto_url && <button onClick={handleDeleteProfilePic} className="text-red-500 hover:underline">Remover</button>}
                         </div>
                     </div>
-
                     <div className="grid md:grid-cols-2 gap-4">
                         <div><label className="text-xs text-slate-500">Nome</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="nome" value={perfil.nome} onChange={handleChange} /></div>
                         <div><label className="text-xs text-slate-500">Apelido</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="apelido" value={perfil.apelido} onChange={handleChange} /></div>
-                        
                         <div className="md:col-span-2">
                             <label className="text-xs text-slate-500 flex items-center gap-1">Link Personalizado {isPremium && <span className="text-green-500 text-[10px] ml-1 flex items-center gap-0.5"><Check size={10}/> Disponível</span>}</label>
                             <div className={`flex items-center border p-2 rounded ${isPremium ? 'bg-black border-slate-700' : 'bg-slate-800/50 border-slate-800 opacity-60'}`}>
@@ -263,7 +339,6 @@ export default function Painel() {
                                 {!isPremium && <Lock size={16} className="text-yellow-500 ml-2" />}
                             </div>
                         </div>
-
                         <div><label className="text-xs text-slate-500">Categoria</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="categoria" value={perfil.categoria} onChange={handleChange} /></div>
                         <div>
                             <label className="text-xs text-slate-500">Estilo de Luta</label>
@@ -277,8 +352,10 @@ export default function Painel() {
                 </div>
             )}
 
+            {/* 2. CARTEL e 3. LUTAS e 4. MIDIA (MANTIDOS - OCULTADOS PARA BREVIDADE NA RESPOSTA, MAS DEVEM ESTAR NO CÓDIGO FINAL COMO ANTES) */}
             {activeTab === 'cartel' && (
                 <div className="space-y-6">
+                    {/* ... (Mesmo código de antes) ... */}
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                         <h3 className="text-cyan-400 font-bold mb-4 uppercase text-sm">Cartel</h3>
                         <div className="grid grid-cols-5 gap-2 text-center">
@@ -303,6 +380,7 @@ export default function Painel() {
             
             {activeTab === 'lutas' && (
                 <div className="space-y-6">
+                    {/* ... (Mesmo código de antes) ... */}
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                         <h3 className="text-red-500 font-bold mb-4 uppercase text-sm">Próxima Luta</h3>
                         <div className="grid md:grid-cols-2 gap-4">
@@ -323,7 +401,7 @@ export default function Painel() {
                             </div>
                         ))}
                     </div>
-                    <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                          <div className="flex justify-between mb-4"><h3 className="text-cyan-400 font-bold uppercase text-sm">Títulos e Prêmios</h3>{isPremium && <button onClick={() => setPerfil({...perfil, premios: [...perfil.premios, ""]})} className="text-green-400 text-xs flex items-center gap-1"><PlusCircle size={14}/> Add</button>}</div>
                          {!isPremium && perfil.premios.length === 0 ? <PremiumLock text="Exiba suas conquistas e cinturões." /> : perfil.premios.map((p, i) => (
                             <div key={i} className="flex gap-2 mb-2"><input disabled={!isPremium} className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={p} onChange={e => handleAwardChange(i, e.target.value)} />{isPremium && <button onClick={() => {const n=[...perfil.premios];n.splice(i,1);setPerfil({...perfil,premios:n})}} className="text-red-500"><Trash2 size={18}/></button>}</div>
@@ -331,11 +409,10 @@ export default function Painel() {
                     </div>
                 </div>
             )}
-
+            
             {activeTab === 'midia' && (
                 <div className="space-y-6">
-                    
-                    {/* VÍDEOS */}
+                    {/* ... (Mesmo código de antes) ... */}
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                          <div className="flex justify-between mb-4"><h3 className="text-cyan-400 font-bold uppercase text-sm">Vídeos</h3>{isPremium || perfil.video_lista.length < 1 ? <button onClick={() => addItem('video_lista', {title: '', thumb: '', embedUrl: ''})} className="text-green-400 text-xs flex gap-1"><PlusCircle size={14}/> Add Vídeo</button> : <span className="text-xs text-yellow-500 flex items-center gap-1 border border-yellow-500/30 px-2 rounded"><Lock size={12}/> Limite Grátis Atingido</span>}</div>
                          {perfil.video_lista.map((v, i) => (
@@ -343,27 +420,17 @@ export default function Painel() {
                                 <div className="grid md:grid-cols-2 gap-2 mb-2"><input className="bg-transparent border-b border-slate-700 w-full" placeholder="Título" value={v.title} onChange={e => handleArrayChange('video_lista', i, 'title', e.target.value)} /><input className="bg-transparent border-b border-slate-700 w-full" placeholder="Link do YouTube (Embed)" value={v.embedUrl} onChange={e => handleArrayChange('video_lista', i, 'embedUrl', e.target.value)} /></div>
                                 <div className="flex justify-between items-center gap-2">
                                     <input className="bg-transparent text-xs w-full" placeholder="Capa (Thumb URL) - Use o botão ao lado ->" value={v.thumb} onChange={e => handleArrayChange('video_lista', i, 'thumb', e.target.value)} />
-                                    {/* BOTÃO UPLOAD THUMB VIDEO */}
                                     <button onClick={() => openWidget((url) => handleArrayChange('video_lista', i, 'thumb', url))} className="bg-slate-700 p-1 rounded text-white hover:bg-slate-600" title="Upload Capa"><Upload size={14}/></button>
-                                    
-                                    {/* BOTÃO REMOVER VIDEO (Com delete na nuvem) */}
                                     <button onClick={() => handleDeleteImage('video_lista', i, v.thumb)} className="text-red-500 text-xs"><Trash2 size={14}/></button>
                                 </div>
                             </div>
                          ))}
                     </div>
-
-                    {/* GALERIA */}
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                          <div className="flex justify-between mb-4">
                              <h3 className="text-cyan-400 font-bold uppercase text-sm">Galeria</h3>
                              {isPremium || perfil.galeria.length < 1 ? (
-                                <button 
-                                    onClick={() => openWidget((url) => addItem('galeria', {thumb: url, full: url}), false)} 
-                                    className="text-green-400 text-xs flex gap-1 border border-green-500/30 px-2 py-1 rounded hover:bg-green-500/10"
-                                >
-                                    <ImageIcon size={14}/> Add Foto (Upload)
-                                </button>
+                                <button onClick={() => openWidget((url) => addItem('galeria', {thumb: url, full: url}), false)} className="text-green-400 text-xs flex gap-1 border border-green-500/30 px-2 py-1 rounded hover:bg-green-500/10"><ImageIcon size={14}/> Add Foto (Upload)</button>
                              ) : (
                                 <span className="text-xs text-yellow-500 flex items-center gap-1 border border-yellow-500/30 px-2 rounded"><Lock size={12}/> Limite Grátis Atingido</span>
                              )}
@@ -372,7 +439,6 @@ export default function Painel() {
                             <div key={i} className="flex gap-2 mb-2 items-center">
                                 <div className="w-10 h-10 bg-black"><img src={g.thumb} className="w-full h-full object-cover"/></div>
                                 <div className="flex-1 grid gap-1"><input className="bg-black border border-slate-700 p-1 text-xs" placeholder="Full URL" value={g.full} onChange={e => handleArrayChange('galeria', i, 'full', e.target.value)} /><input className="bg-black border border-slate-700 p-1 text-xs" placeholder="Thumb URL" value={g.thumb} onChange={e => handleArrayChange('galeria', i, 'thumb', e.target.value)} /></div>
-                                {/* BOTÃO REMOVER GALERIA (Com delete na nuvem) */}
                                 <button onClick={() => handleDeleteImage('galeria', i, g.full)} className="text-red-500"><Trash2 size={16}/></button>
                             </div>
                          ))}
@@ -380,15 +446,166 @@ export default function Painel() {
                 </div>
             )}
 
+            {/* 5. MÉTRICAS (PADRONIZADO) */}
+            {activeTab === 'metricas' && (
+                <div className="space-y-6">
+                    {/* PERFORMANCE */}
+                    <div className={`bg-slate-900 p-6 rounded-xl border border-slate-800 relative overflow-hidden ${!isPremium ? 'opacity-80' : ''}`}>
+                        <div className="flex items-center gap-2 mb-6">
+                            <h3 className="text-pink-500 font-bold uppercase text-sm flex items-center gap-2"><BarChart3 size={18}/> Performance Instagram</h3>
+                            {!isPremium && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 px-2 py-0.5 rounded flex items-center gap-1"><Lock size={10}/> PREMIUM</span>}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block">Alcance (Contas)</label>
+                                <div className="relative">
+                                    <input 
+                                        disabled={!isPremium} 
+                                        className="w-full bg-black border border-slate-700 p-3 rounded text-white font-mono" 
+                                        placeholder="Ex: 15.400" 
+                                        value={perfil.socials?.instagram?.stats?.reach || ''} 
+                                        onChange={(e) => handleInstaStats('stats', 'reach', formatNumber(e.target.value))} 
+                                    />
+                                    {!isPremium && <Lock size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600"/>}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block">Impressões</label>
+                                <div className="relative">
+                                    <input 
+                                        disabled={!isPremium} 
+                                        className="w-full bg-black border border-slate-700 p-3 rounded text-white font-mono" 
+                                        placeholder="Ex: 50.000" 
+                                        value={perfil.socials?.instagram?.stats?.impressions || ''} 
+                                        onChange={(e) => handleInstaStats('stats', 'impressions', formatNumber(e.target.value))} 
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block">Engajamento (%)</label>
+                                <div className="relative">
+                                    <input 
+                                        disabled={!isPremium} 
+                                        className="w-full bg-black border border-slate-700 p-3 rounded text-white font-mono" 
+                                        placeholder="Ex: 8.5%" 
+                                        value={perfil.socials?.instagram?.stats?.engagement || ''} 
+                                        onChange={(e) => handleInstaStats('stats', 'engagement', e.target.value.replace(/[^0-9.,%]/g, ''))} 
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block">Compartilhamentos</label>
+                                <div className="relative">
+                                    <input 
+                                        disabled={!isPremium} 
+                                        className="w-full bg-black border border-slate-700 p-3 rounded text-white font-mono" 
+                                        placeholder="Ex: 1.200" 
+                                        value={perfil.socials?.instagram?.stats?.shares || ''} 
+                                        onChange={(e) => handleInstaStats('stats', 'shares', formatNumber(e.target.value))} 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* PÚBLICO E DEMOGRAFIA (PADRONIZADO) */}
+                    <div className={`bg-slate-900 p-6 rounded-xl border border-slate-800 relative overflow-hidden ${!isPremium ? 'opacity-80' : ''}`}>
+                        <div className="flex items-center gap-2 mb-6">
+                            <h3 className="text-cyan-400 font-bold uppercase text-sm flex items-center gap-2"><Users size={18}/> Público e Demografia</h3>
+                        </div>
+
+                        <div className="grid gap-6">
+                            {/* FAIXA ETÁRIA */}
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block">Faixa Etária (Min - Máx)</label>
+                                <div className="flex gap-2 items-center">
+                                    <input type="number" disabled={!isPremium} placeholder="25" className="w-full bg-black border border-slate-700 p-2 rounded text-center text-white" value={ageRange.min} onChange={e => setAgeRange({...ageRange, min: e.target.value})} />
+                                    <span className="text-slate-500">-</span>
+                                    <input type="number" disabled={!isPremium} placeholder="35" className="w-full bg-black border border-slate-700 p-2 rounded text-center text-white" value={ageRange.max} onChange={e => setAgeRange({...ageRange, max: e.target.value})} />
+                                    <span className="text-slate-500 text-sm">anos</span>
+                                </div>
+                            </div>
+
+                            {/* GÊNERO */}
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block flex justify-between">
+                                    <span>Distribuição de Gênero (%)</span>
+                                    {totalGender > 100 && <span className="text-red-500 text-[10px] flex items-center gap-1"><AlertCircle size={10}/> Soma ultrapassou 100%</span>}
+                                </label>
+                                <div className="flex gap-4 mb-2">
+                                    <div className="flex-1">
+                                        <div className="text-[10px] text-cyan-400 mb-1 uppercase text-center">Homens</div>
+                                        <input type="number" disabled={!isPremium} placeholder="70" className="w-full bg-black border border-cyan-500/30 focus:border-cyan-500 p-2 rounded text-center text-white" value={genderSplit.men} onChange={e => setGenderSplit({...genderSplit, men: e.target.value})} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="text-[10px] text-pink-500 mb-1 uppercase text-center">Mulheres</div>
+                                        <input type="number" disabled={!isPremium} placeholder="30" className="w-full bg-black border border-pink-500/30 focus:border-pink-500 p-2 rounded text-center text-white" value={genderSplit.women} onChange={e => setGenderSplit({...genderSplit, women: e.target.value})} />
+                                    </div>
+                                </div>
+                                {/* Barra Visual */}
+                                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
+                                    <div style={{width: `${Math.min(genderSplit.men || 0, 100)}%`}} className="h-full bg-cyan-500 transition-all"></div>
+                                    <div style={{width: `${Math.min(genderSplit.women || 0, 100)}%`}} className="h-full bg-pink-500 transition-all"></div>
+                                </div>
+                            </div>
+
+                            {/* CIDADES PRINCIPAIS */}
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block flex justify-between">
+                                    <span>Principais Cidades (Máx 5)</span>
+                                    <span className={totalCityPercent > 100 ? 'text-red-500' : 'text-slate-500'}>Total: {totalCityPercent}%</span>
+                                </label>
+                                
+                                <div className="flex gap-2 mb-3">
+                                    <input disabled={!isPremium} placeholder="Nome da Cidade" className="flex-grow bg-black border border-slate-700 p-2 rounded text-white text-sm" value={cityInput.name} onChange={e => setCityInput({...cityInput, name: e.target.value})} />
+                                    <input disabled={!isPremium} type="number" placeholder="%" className="w-16 bg-black border border-slate-700 p-2 rounded text-white text-center text-sm" value={cityInput.percent} onChange={e => setCityInput({...cityInput, percent: e.target.value})} />
+                                    <button disabled={!isPremium} onClick={addCity} className="bg-slate-800 hover:bg-slate-700 p-2 rounded text-green-400"><PlusCircle size={20}/></button>
+                                </div>
+
+                                <div className="space-y-1">
+                                    {cityList.map((city, idx) => (
+                                        <div key={idx} className="flex justify-between items-center bg-slate-800/50 p-2 rounded text-sm border border-slate-800">
+                                            <span>{city.name}</span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-mono text-cyan-400">{city.percent}%</span>
+                                                <button onClick={() => removeCity(idx)} className="text-red-500 hover:text-red-400"><Trash2 size={14}/></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {cityList.length === 0 && <p className="text-xs text-slate-600 italic text-center py-2">Nenhuma cidade adicionada</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {!isPremium && (
+                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+                                <PremiumLock text="Libere métricas detalhadas para atrair patrocinadores." />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* 6. CONTATO (MANTIDO) */}
             {activeTab === 'contato' && (
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 grid gap-4">
-                    {/* ... (mantido igual) ... */}
+                    {/* ... Código de contato igual ao anterior ... */}
                     <h3 className="text-cyan-400 font-bold uppercase text-sm">Contato</h3>
                     <div className="grid md:grid-cols-2 gap-4">
                         <div><label className="text-xs text-slate-500">Email</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={perfil.contact.email} onChange={e => handleNested('contact', 'email', e.target.value)} /></div>
                         <div><label className="text-xs text-slate-500">Whatsapp</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={perfil.contact.phone} onChange={e => handleNested('contact', 'phone', e.target.value)} /></div>
                         <div><label className="text-xs text-slate-500">Estado (UF)</label><select className="w-full bg-black border border-slate-700 p-2 rounded text-white outline-none" value={perfil.contact.state} onChange={e => handleNested('contact', 'state', e.target.value)}><option value="">Selecione...</option>{ESTADOS_BR.map(uf => <option key={uf} value={uf}>{uf}</option>)}</select></div>
                         <div><label className="text-xs text-slate-500">Academia</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={perfil.contact.trainingCenter} onChange={e => handleNested('contact', 'trainingCenter', e.target.value)} /></div>
+                    </div>
+                    <div className="border-t border-slate-800 pt-6 mt-2">
+                        <h3 className="text-cyan-400 font-bold uppercase text-sm mb-4">Redes Sociais</h3>
+                        <div className="mb-4"><label className="text-xs font-bold text-white mb-2 flex items-center gap-2"><Instagram size={14}/> Instagram</label><div className="grid grid-cols-3 gap-2"><input placeholder="@usuario" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.instagram?.user} onChange={e => handleDeepNested('socials', 'instagram', 'user', e.target.value)} /><input placeholder="Seguidores" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.instagram?.followers} onChange={e => handleDeepNested('socials', 'instagram', 'followers', e.target.value)} /><input placeholder="Link" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.instagram?.url} onChange={e => handleDeepNested('socials', 'instagram', 'url', e.target.value)} /></div></div>
+                        <div className="space-y-4">
+                            <div className={!isPremium ? 'opacity-40 grayscale pointer-events-none select-none relative' : ''}><label className="text-xs font-bold text-white mb-2 flex items-center gap-2"><Youtube size={14}/> Youtube {!isPremium && <Lock size={12} className="text-yellow-500"/>}</label><div className="grid grid-cols-3 gap-2"><input placeholder="Canal" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.youtube?.user || ''} onChange={e => handleDeepNested('socials', 'youtube', 'user', e.target.value)} /><input placeholder="Inscritos" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.youtube?.followers || ''} onChange={e => handleDeepNested('socials', 'youtube', 'followers', e.target.value)} /><input placeholder="URL" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.youtube?.url || ''} onChange={e => handleDeepNested('socials', 'youtube', 'url', e.target.value)} /></div></div>
+                            <div className={!isPremium ? 'opacity-40 grayscale pointer-events-none select-none relative' : ''}><label className="text-xs font-bold text-white mb-2 flex items-center gap-2"><TikTokIcon size={14}/> TikTok {!isPremium && <Lock size={12} className="text-yellow-500"/>}</label><div className="grid grid-cols-3 gap-2"><input placeholder="@usuario" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.tiktok?.user || ''} onChange={e => handleDeepNested('socials', 'tiktok', 'user', e.target.value)} /><input placeholder="Seguidores" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.tiktok?.followers || ''} onChange={e => handleDeepNested('socials', 'tiktok', 'followers', e.target.value)} /><input placeholder="URL" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.tiktok?.url || ''} onChange={e => handleDeepNested('socials', 'tiktok', 'url', e.target.value)} /></div></div>
+                            <div className={!isPremium ? 'opacity-40 grayscale pointer-events-none select-none relative' : ''}><label className="text-xs font-bold text-white mb-2 flex items-center gap-2"><Twitter size={14}/> X (Twitter) {!isPremium && <Lock size={12} className="text-yellow-500"/>}</label><div className="grid grid-cols-3 gap-2"><input placeholder="@usuario" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.x?.user || ''} onChange={e => handleDeepNested('socials', 'x', 'user', e.target.value)} /><input placeholder="Seguidores" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.x?.followers || ''} onChange={e => handleDeepNested('socials', 'x', 'followers', e.target.value)} /><input placeholder="URL" className="bg-black border border-slate-700 p-2 rounded text-white" value={perfil.socials?.x?.url || ''} onChange={e => handleDeepNested('socials', 'x', 'url', e.target.value)} /></div></div>
+                        </div>
                     </div>
                 </div>
             )}

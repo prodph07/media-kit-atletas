@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 
-// --- ÍCONES (Mantidos originais) ---
+// --- ÍCONES (Mantidos originais + Novos para Métricas) ---
 const Icon = ({ path, className, size = 24, fill = "none", ...props }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={fill === "none" ? "currentColor" : "none"} strokeWidth={fill === "none" ? "2" : "0"} strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
         {path}
@@ -27,6 +27,11 @@ const Youtube = (props) => <Icon {...props} path={<><path d="M2.5 17a24.12 24.12
 const TwitterX = (props) => <Icon {...props} fill="currentColor" path={<><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></>} />;
 const TikTok = (props) => <Icon {...props} fill="currentColor" path={<><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></>} />;
 const Kwai = (props) => <Icon {...props} fill="currentColor" path={<><path d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M8.5,16.5l-1-1l3-3l-3-3l1-1l4,4L8.5,16.5z"/></>} />;
+
+// NOVOS ÍCONES PARA MÉTRICAS
+const BarChart3 = (props) => <Icon {...props} path={<><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></>} />;
+const Users = (props) => <Icon {...props} path={<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>} />;
+const TrendingUp = (props) => <Icon {...props} path={<><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></>} />;
 
 // --- SUB-COMPONENTES ---
 const formatName = (name, nickname) => {
@@ -60,13 +65,13 @@ const StatCircle = ({ value, label, color = "text-cyan-400", subLabel }) => {
     );
 };
 
-const StatCard = ({ icon: Icon, value, label, highlight = false }) => (
-    <div className={`relative overflow-hidden rounded-xl p-4 sm:p-6 border ${highlight ? 'border-cyan-500/50 bg-cyan-950/10' : 'border-slate-800 bg-slate-900/50'} backdrop-blur-sm group hover:border-cyan-400/50 transition-all duration-300`}>
+const StatCard = ({ icon: Icon, value, label, highlight = false, colorClass = 'text-cyan-400' }) => (
+    <div className={`relative overflow-hidden rounded-xl p-4 sm:p-6 border ${highlight ? 'border-cyan-500/50 bg-cyan-950/10' : 'border-slate-800 bg-slate-900/50'} backdrop-blur-sm group hover:border-cyan-400/50 transition-all duration-300 h-full flex flex-col justify-between`}>
         <div className="flex items-center justify-between mb-2">
-        <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${highlight ? 'text-cyan-400' : 'text-slate-500 group-hover:text-cyan-400'} transition-colors`} />
-        {highlight && <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>}
+            <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${highlight ? colorClass : 'text-slate-500 group-hover:text-cyan-400'} transition-colors`} />
+            {highlight && <div className={`w-2 h-2 rounded-full ${colorClass.replace('text-', 'bg-')} animate-pulse`}></div>}
         </div>
-        <div className="text-2xl sm:text-3xl font-black text-white tracking-tighter mb-1">{value || 0}</div>
+        <div className="text-2xl sm:text-3xl font-black text-white tracking-tighter mb-1 break-all">{value || '-'}</div>
         <div className="text-[10px] sm:text-xs uppercase tracking-widest text-slate-400 font-medium">{label}</div>
         <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-white/5 to-transparent"></div>
     </div>
@@ -128,6 +133,9 @@ export function TemplatePadrao({ data }) {
 
         return { total, winRate, koRate };
     }, [athleteData]);
+
+    // Checa se tem métricas do Instagram para exibir
+    const hasInstaMetrics = athleteData.socials?.instagram?.stats?.reach || athleteData.socials?.instagram?.audience?.age;
 
     const copyLink = () => {
         if (typeof window !== "undefined") {
@@ -234,7 +242,6 @@ export function TemplatePadrao({ data }) {
                 <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
                     <div className="lg:col-span-5 flex flex-col items-center lg:items-start">
                         <div className="relative group w-full max-w-sm lg:max-w-md mx-auto lg:mx-0 aspect-[4/5] rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
-                            {/* CORREÇÃO DO ERRO SRC EMPTY: Usa fallback se foto_url estiver vazio */}
                             <img 
                                 src={athleteData.foto_url || "https://placehold.co/600x800/1e293b/FFF?text=FOTO"} 
                                 alt="Foto do Atleta" 
@@ -291,7 +298,7 @@ export function TemplatePadrao({ data }) {
                             <StatCard icon={Dumbbell} value={computedStats.total} label="Lutas" />
                         </div>
 
-                        {/* CARTÕES REDES SOCIAIS (Grid Layout) */}
+                        {/* CARTÕES REDES SOCIAIS */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
                             {athleteData.socials?.instagram?.active && (
                                 <a href={athleteData.socials.instagram.url} target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-pink-500 hover:bg-slate-900 transition-all group">
@@ -337,6 +344,12 @@ export function TemplatePadrao({ data }) {
                     <a href="#stats-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-cyan-400 hover:text-white transition-colors whitespace-nowrap">
                         Estatísticas & Prêmios
                     </a>
+                    {/* Exibe o link se houver métricas */}
+                    {hasInstaMetrics && (
+                        <a href="#metrics-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-pink-500 hover:text-white transition-colors whitespace-nowrap">
+                            Métricas & Alcance
+                        </a>
+                    )}
                     <a href="#media-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-slate-500 hover:text-white transition-colors whitespace-nowrap">
                         Galeria & Vídeos
                     </a>
@@ -407,7 +420,65 @@ export function TemplatePadrao({ data }) {
                     </div>
                 </section>
 
-                {/* SEÇÃO 2: GALERIA E MÍDIA */}
+                {/* --- SEÇÃO NOVA: MÉTRICAS E PÚBLICO (SÓ APARECE SE TIVER DADOS) --- */}
+                {hasInstaMetrics && (
+                    <section id="metrics-section" className="animate-fadeIn scroll-mt-24">
+                        <div className="flex items-center gap-4 mb-8">
+                            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">Métricas e <span className="text-pink-500">Alcance</span></h2>
+                            <div className="h-px bg-slate-800 flex-grow"></div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                            {/* INSTAGRAM PERFORMANCE */}
+                            <div className="bg-[#121214] border border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col justify-center">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <BarChart3 className="text-pink-500" size={24} /> Performance Instagram
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4 h-full">
+                                    <StatCard icon={TrendingUp} value={athleteData.socials.instagram.stats.reach} label="Alcance" highlight={true} colorClass="text-pink-500" />
+                                    <StatCard icon={Instagram} value={athleteData.socials.instagram.stats.impressions} label="Impressões" />
+                                    <StatCard icon={MessageCircle} value={athleteData.socials.instagram.stats.engagement} label="Engajamento" />
+                                    <StatCard icon={Share2} value={athleteData.socials.instagram.stats.shares} label="Compartilhamentos" />
+                                </div>
+                            </div>
+
+                            {/* AUDIÊNCIA DEMOGRÁFICA */}
+                            <div className="bg-[#121214] border border-slate-800 rounded-2xl p-6 sm:p-8">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <Users className="text-pink-500" size={24} /> Público e Demografia
+                                </h3>
+                                <div className="space-y-6">
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                        <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Faixa Etária Principal</div>
+                                        <div className="text-xl sm:text-2xl font-bold text-white">{athleteData.socials.instagram.audience.age || '-'}</div>
+                                    </div>
+                                    
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                        <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Distribuição de Gênero</div>
+                                        <div className="text-lg sm:text-xl font-bold text-white">{athleteData.socials.instagram.audience.gender || '-'}</div>
+                                        {/* Barra visual simples se houver texto */}
+                                        <div className="w-full h-2 bg-slate-800 rounded-full mt-3 overflow-hidden flex">
+                                            <div className="h-full bg-cyan-500 w-1/2 opacity-80"></div>
+                                            <div className="h-full bg-pink-500 w-1/2 opacity-80"></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                                        <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Principais Cidades</div>
+                                        <div className="flex items-start gap-2">
+                                            <MapPin size={20} className="text-pink-500 mt-1 shrink-0" />
+                                            <div className="text-base sm:text-lg text-slate-200 leading-snug">
+                                                {athleteData.socials.instagram.audience.cities || '-'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* SEÇÃO 2: GALERIA E MÍDIA (MANTIDO) */}
                 <section id="media-section" className="animate-fadeIn scroll-mt-24">
                     <div className="flex items-center gap-4 mb-8">
                         <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">Galeria e <span className="text-cyan-400">Vídeos</span></h2>
@@ -422,7 +493,6 @@ export function TemplatePadrao({ data }) {
                             onClick={() => openMedia('video', item.embedUrl)}
                             className="group relative aspect-video bg-slate-900 rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-cyan-400/50 transition-all"
                         >
-                            {/* CORREÇÃO ERRO SRC: Usa fallback se item.thumb estiver vazio */}
                             <img 
                                 src={item.thumb || "https://placehold.co/600x400/1e293b/FFF?text=VIDEO"} 
                                 alt={item.title} 
@@ -449,7 +519,6 @@ export function TemplatePadrao({ data }) {
                             onClick={() => openMedia('image', item.full)}
                             className="aspect-square bg-slate-800 rounded-lg overflow-hidden hover:opacity-80 transition-opacity cursor-pointer border border-slate-800 hover:border-cyan-400/30"
                         >
-                            {/* CORREÇÃO ERRO SRC: Usa fallback se item.thumb estiver vazio */}
                             <img 
                                 src={item.thumb || "https://placehold.co/400x400/1e293b/FFF?text=FOTO"} 
                                 alt={`Galeria ${index}`} 
