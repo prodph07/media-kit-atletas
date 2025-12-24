@@ -234,8 +234,9 @@ export function TemplatePadrao({ data }) {
                 <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
                     <div className="lg:col-span-5 flex flex-col items-center lg:items-start">
                         <div className="relative group w-full max-w-sm lg:max-w-md mx-auto lg:mx-0 aspect-[4/5] rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
+                            {/* CORREÇÃO DO ERRO SRC EMPTY: Usa fallback se foto_url estiver vazio */}
                             <img 
-                                src={athleteData.foto_url || "https://placehold.co/600x800/1e293b/FFF?text=FOTO+DO+ATLETA"} 
+                                src={athleteData.foto_url || "https://placehold.co/600x800/1e293b/FFF?text=FOTO"} 
                                 alt="Foto do Atleta" 
                                 className="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                             />
@@ -415,13 +416,18 @@ export function TemplatePadrao({ data }) {
                     
                     {/* VÍDEOS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                        {athleteData.videos?.map((item) => (
+                        {athleteData.videos?.map((item, index) => (
                         <div 
-                            key={item.id} 
+                            key={index} 
                             onClick={() => openMedia('video', item.embedUrl)}
                             className="group relative aspect-video bg-slate-900 rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-cyan-400/50 transition-all"
                         >
-                            <img src={item.thumb} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                            {/* CORREÇÃO ERRO SRC: Usa fallback se item.thumb estiver vazio */}
+                            <img 
+                                src={item.thumb || "https://placehold.co/600x400/1e293b/FFF?text=VIDEO"} 
+                                alt={item.title} 
+                                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" 
+                            />
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-12 h-12 rounded-full bg-cyan-500/80 text-black flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
                                     <Play fill="currentColor" size={20} />
@@ -437,13 +443,18 @@ export function TemplatePadrao({ data }) {
                     
                     {/* FOTOS */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {athleteData.gallery?.map((item) => (
+                        {athleteData.gallery?.map((item, index) => (
                         <div 
-                            key={item.id} 
+                            key={index} 
                             onClick={() => openMedia('image', item.full)}
                             className="aspect-square bg-slate-800 rounded-lg overflow-hidden hover:opacity-80 transition-opacity cursor-pointer border border-slate-800 hover:border-cyan-400/30"
                         >
-                            <img src={item.thumb} alt={`Galeria ${item.id}`} className="w-full h-full object-cover" />
+                            {/* CORREÇÃO ERRO SRC: Usa fallback se item.thumb estiver vazio */}
+                            <img 
+                                src={item.thumb || "https://placehold.co/400x400/1e293b/FFF?text=FOTO"} 
+                                alt={`Galeria ${index}`} 
+                                className="w-full h-full object-cover" 
+                            />
                         </div>
                         ))}
                     </div>
