@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 // --- ÍCONES (Mantidos originais + Novos para Métricas) ---
 const Icon = ({ path, className, size = 24, fill = "none", ...props }) => (
@@ -114,6 +115,66 @@ const FightRow = ({ result, event, date }) => {
 export function TemplatePadrao({ data }) {
     const athleteData = data;
     
+    // --- LÓGICA DE REGISTRO DE VIEW ---
+    useEffect(() => {
+        const registrarView = async () => {
+            // Se não tiver ID do atleta, aborta
+            if (!athleteData?.user_id) return;
+
+            // Prevenção básica: usa SessionStorage para contar apenas 1 view por sessão do navegador
+            const sessionKey = `viewed_${athleteData.user_id}`;
+            if (typeof window !== 'undefined' && sessionStorage.getItem(sessionKey)) return;
+
+            // Inicializa cliente Supabase
+            const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+            );
+
+            try {
+                // 1. Tenta pegar usuário logado (Visitante)
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                let visitanteId = null;
+                let visitanteTipo = 'anonimo';
+
+                if (user) {
+                    // Se o dono do perfil estiver visitando o próprio perfil, NÃO conta
+                    if (user.id === athleteData.user_id) return;
+
+                    visitanteId = user.id;
+
+                    // Busca o tipo de conta do visitante na tabela 'atletas'
+                    const { data: visitanteData } = await supabase
+                        .from('atletas')
+                        .select('tipo_conta')
+                        .eq('user_id', user.id)
+                        .single();
+                    
+                    if (visitanteData) {
+                        visitanteTipo = visitanteData.tipo_conta || 'atleta';
+                    }
+                }
+
+                // 2. Insere o registro de view
+                await supabase.from('profile_views').insert({
+                    perfil_visitado_id: athleteData.user_id,
+                    visitante_id: visitanteId,
+                    visitante_tipo: visitanteTipo
+                });
+
+                // Marca sessão como visualizada
+                sessionStorage.setItem(sessionKey, 'true');
+
+            } catch (error) {
+                console.error("Erro ao registrar view:", error);
+            }
+        };
+
+        registrarView();
+    }, [athleteData]); // Roda sempre que os dados do atleta mudarem (load inicial)
+
+
     // Fallback de segurança
     if (!athleteData) return <div className="text-white p-10 text-center">Carregando perfil...</div>;
 
