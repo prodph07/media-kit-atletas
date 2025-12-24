@@ -1,3 +1,5 @@
+export const runtime = 'edge'; // <--- ADICIONE ISSO NA LINHA 1
+
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import VotacaoWrapper from '@/components/VotacaoWrapper'; 
