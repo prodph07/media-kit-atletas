@@ -1,3 +1,6 @@
+export const runtime = 'edge';
+
+// ... resto do seu código ...
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
