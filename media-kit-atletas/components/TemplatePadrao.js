@@ -5,11 +5,21 @@ import { createClient } from '@supabase/supabase-js';
 import { 
     Trophy, Target, Activity, Mail, Phone, Share2, Download, 
     MapPin, Dumbbell, Play, Star, MessageCircle, X as XIcon, 
-    Instagram, Youtube, Twitter as TwitterX, Eye, BarChart3, Users, TrendingUp 
-} from 'lucide-react'; // Importando ícones direto do lucide-react para facilitar, ou use seus componentes Icon se preferir
+    Instagram, Youtube, Twitter as TwitterX, Eye, BarChart3, Users, TrendingUp, Smartphone 
+} from 'lucide-react'; 
 
-// Se você usa componentes Icon personalizados, mantenha-os. 
-// Vou usar os do Lucide para garantir que o ícone Eye (Olho) funcione neste exemplo.
+// --- ÍCONES PERSONALIZADOS (Para manter o padrão visual) ---
+const TikTokIcon = ({ size=24, className }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+    </svg>
+);
+
+const KwaiIcon = ({ size=24, className }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M12.005 2c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm4.7 15.3l-2.6-3.6-2.1 2.1v1.5h-2.4V7.4h2.4v5.3l3.8-5.3h3l-4.1 5.3 4.5 6.6h-2.5z"/>
+    </svg>
+);
 
 // --- SUB-COMPONENTES VISUAIS ---
 const StatCircle = ({ value, label, color = "text-cyan-400", subLabel }) => {
@@ -85,11 +95,7 @@ export function TemplatePadrao({ data }) {
     const [publicViewCount, setPublicViewCount] = useState(0);
 
 useEffect(() => {
-        // --- CONFIGURAÇÃO ---
-        // Agora usamos 'id' (1007) em vez de 'user_id'
         const ATLETA_ID = athleteData?.id; 
-
-        console.log("🔥 ID PARA VIEWS:", ATLETA_ID);
 
         if (!ATLETA_ID) return;
 
@@ -99,21 +105,17 @@ useEffect(() => {
                 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
             );
 
-            // 1. CARREGAR CONTAGEM (Usando ID numérico)
+            // 1. CARREGAR CONTAGEM
             const { data: count, error: countErr } = await supabase
                 .rpc('get_profile_view_count', { profile_id: ATLETA_ID });
 
-            if (countErr) {
-                console.error("❌ Erro ao contar:", countErr);
-            } else {
-                console.log("✅ Contagem recebida:", count);
+            if (!countErr) {
                 setPublicViewCount(count || 0);
             }
 
             // 2. VERIFICAR TRAVA DE SESSÃO
             const sessionKey = `view_registrado_${ATLETA_ID}`;
             if (typeof window !== 'undefined' && sessionStorage.getItem(sessionKey)) {
-                console.log("⏸️ View já contada nesta sessão.");
                 return;
             }
 
@@ -124,13 +126,7 @@ useEffect(() => {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (user) {
-                // Se precisar checar se é o dono, precisaria comparar user.id com o user_id da tabela
-                // Como user_id está vindo null, vamos pular essa trava de dono por enquanto para garantir que funcione
-                // ou apenas registrar.
-                
                 visitanteId = user.id;
-                
-                // Busca se o visitante é empresa/atleta
                 const { data: vData } = await supabase
                     .from('atletas')
                     .select('tipo_conta')
@@ -144,15 +140,12 @@ useEffect(() => {
             const { error: insertErr } = await supabase
                 .from('profile_views')
                 .insert({
-                    perfil_visitado_id: ATLETA_ID, // Enviando 1007 (Bigint)
+                    perfil_visitado_id: ATLETA_ID,
                     visitante_id: visitanteId,
                     visitante_tipo: visitanteTipo
                 });
 
-            if (insertErr) {
-                console.error("❌ ERRO AO INSERIR VIEW:", insertErr);
-            } else {
-                console.log("✅ SUCESSO! View +1");
+            if (!insertErr) {
                 sessionStorage.setItem(sessionKey, 'true');
                 setPublicViewCount(prev => prev + 1);
             }
@@ -162,7 +155,6 @@ useEffect(() => {
     }, [athleteData]);
 
 
-    // Fallback de segurança
     if (!athleteData) return <div className="text-white p-10 text-center">Carregando perfil...</div>;
 
     const [selectedMedia, setSelectedMedia] = useState(null); 
@@ -282,7 +274,7 @@ useEffect(() => {
                             <StatCard icon={Activity} value={athleteData.record?.knockouts} label="K.O.s" />
                             <StatCard icon={Target} value={athleteData.record?.submissions} label="Finalizações" />
                             
-                            {/* --- NOVO CARD DE VISUALIZAÇÕES --- */}
+                            {/* CARD DE VISUALIZAÇÕES */}
                             <StatCard 
                                 icon={Eye} 
                                 value={publicViewCount > 0 ? publicViewCount : 'New'} 
@@ -292,8 +284,10 @@ useEffect(() => {
                             />
                         </div>
 
-                        {/* SOCIALS */}
+                        {/* SOCIALS (AGORA COM TODOS OS CARDS) */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
+                            
+                            {/* Instagram */}
                             {athleteData.socials?.instagram?.active && (
                                 <a href={athleteData.socials.instagram.url} target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-pink-500 hover:bg-slate-900 transition-all group">
                                     <div className="mb-2 text-slate-400 group-hover:text-pink-500 transition-colors"><Instagram size={24} /></div>
@@ -301,8 +295,43 @@ useEffect(() => {
                                     <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{athleteData.socials.instagram.followers} Segs</span>
                                 </a>
                             )}
-                            {/* ... outros cards de social mantidos ... */}
-                            {athleteData.socials?.youtube?.active && <a href={athleteData.socials.youtube.url} target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-red-600 hover:bg-slate-900 transition-all group"><div className="mb-2 text-slate-400 group-hover:text-red-600 transition-colors"><Youtube size={24} /></div><span className="text-xs font-bold text-white mb-1 truncate w-full text-center">{athleteData.socials.youtube.user}</span><span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{athleteData.socials.youtube.followers} Insc</span></a>}
+
+                            {/* TikTok (NOVO) */}
+                            {athleteData.socials?.tiktok?.active && (
+                                <a href={athleteData.socials.tiktok.url} target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-cyan-400 hover:bg-slate-900 transition-all group">
+                                    <div className="mb-2 text-slate-400 group-hover:text-cyan-400 transition-colors"><TikTokIcon size={24} /></div>
+                                    <span className="text-xs font-bold text-white mb-1 truncate w-full text-center">{athleteData.socials.tiktok.user}</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{athleteData.socials.tiktok.followers} Segs</span>
+                                </a>
+                            )}
+
+                            {/* YouTube */}
+                            {athleteData.socials?.youtube?.active && (
+                                <a href={athleteData.socials.youtube.url} target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-red-600 hover:bg-slate-900 transition-all group">
+                                    <div className="mb-2 text-slate-400 group-hover:text-red-600 transition-colors"><Youtube size={24} /></div>
+                                    <span className="text-xs font-bold text-white mb-1 truncate w-full text-center">{athleteData.socials.youtube.user}</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{athleteData.socials.youtube.followers} Insc</span>
+                                </a>
+                            )}
+
+                            {/* X / Twitter (NOVO) */}
+                            {athleteData.socials?.x?.active && (
+                                <a href={athleteData.socials.x.url} target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-white hover:bg-slate-900 transition-all group">
+                                    <div className="mb-2 text-slate-400 group-hover:text-white transition-colors"><TwitterX size={24} /></div>
+                                    <span className="text-xs font-bold text-white mb-1 truncate w-full text-center">{athleteData.socials.x.user}</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{athleteData.socials.x.followers} Segs</span>
+                                </a>
+                            )}
+
+                            {/* Kwai (NOVO) */}
+                            {athleteData.socials?.kwai?.active && (
+                                <a href={athleteData.socials.kwai.url} target="_blank" className="flex flex-col items-center justify-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-orange-500 hover:bg-slate-900 transition-all group">
+                                    <div className="mb-2 text-slate-400 group-hover:text-orange-500 transition-colors"><KwaiIcon size={24} /></div>
+                                    <span className="text-xs font-bold text-white mb-1 truncate w-full text-center">{athleteData.socials.kwai.user}</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{athleteData.socials.kwai.followers} Segs</span>
+                                </a>
+                            )}
+
                         </div>
                     </div>
                 </section>
@@ -315,7 +344,7 @@ useEffect(() => {
                     <a href="#contact-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-slate-500 hover:text-white transition-colors whitespace-nowrap">Contato</a>
                 </div>
                 
-                {/* SEÇÃO 1 */}
+                {/* SEÇÃO 1 - ESTATÍSTICAS */}
                 <section id="stats-section" className="animate-fadeIn scroll-mt-24">
                     <div className="flex items-center gap-4 mb-8">
                         <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">Estatísticas e <span className="text-cyan-400">Prêmios</span></h2>

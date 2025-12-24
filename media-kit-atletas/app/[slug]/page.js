@@ -1,14 +1,14 @@
 export const runtime = 'edge';
 import { supabase } from '../../lib/supabase'
 import { TemplatePadrao } from '../../components/TemplatePadrao'
-import Link from 'next/link' // Importante para o botão de voltar no 404
+import TemplateCyber from '../../components/TemplateCyber' // Importando o novo template
+import Link from 'next/link' 
 
-// Função para buscar dados (COM A CORREÇÃO DE ID)
+// Função para buscar dados
 async function getAtleta(slug) {
   console.log("🔍 Buscando no Supabase pelo slug ou ID:", slug)
 
   // 1. Tenta buscar pelo SLUG
-  // Usamos .maybeSingle() em vez de .single() para não dar erro se vier vazio
   let { data: atleta, error } = await supabase
     .from('atletas')
     .select('*')
@@ -58,13 +58,14 @@ export default async function Page({ params }) {
     )
   }
 
-  // Prepara os dados para o template (Mantendo seu mapeamento original)
+  // Prepara os dados para o template
   const dadosCompletos = {
-    ...atleta.dados, // Caso você tenha campos soltos em jsonb
-    id: atleta.id, // Importante passar o ID
+    ...atleta.dados, 
+    id: atleta.id, 
+    user_id: atleta.user_id, // Necessário para a lógica de não contar view do próprio dono
     name: atleta.nome,
     foto_url: atleta.foto_url,
-    template_tipo: atleta.template,
+    template_style: atleta.template_style, // O campo que define qual template usar
     nickname: atleta.apelido,    
     about: atleta.sobre, 
     record: atleta.cartel,
@@ -78,9 +79,15 @@ export default async function Page({ params }) {
     contact: atleta.contato,
     socials: atleta.redes_sociais,
     nextFight: atleta.prox_luta,
-    plano: atleta.plano // Passando o plano caso o template precise saber se é premium
+    plano: atleta.plano
   }
 
-  // Carrega o layout padrão que você já criou
+  // LÓGICA DE SELEÇÃO DE TEMPLATE
+  // Se o usuário escolheu "cyber", carrega o novo visual
+  if (dadosCompletos.template_style === 'cyber') {
+      return <TemplateCyber data={dadosCompletos} />
+  }
+
+  // Caso contrário (ou se for null), carrega o Padrão
   return <TemplatePadrao data={dadosCompletos} />
 }

@@ -4,12 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script'; 
-import { Trash2, PlusCircle, Save, LogOut, Eye, Lock, Instagram, Youtube, Twitter, Camera, Upload, Link as LinkIcon, Check, X, Image as ImageIcon, BarChart3, Users, PieChart, AlertCircle, Building2, Calendar, Medal, Trophy } from 'lucide-react';
+import { Trash2, PlusCircle, Save, LogOut, Eye, Lock, Instagram, Youtube, Twitter, Camera, Upload, Link as LinkIcon, Check, X, Image as ImageIcon, BarChart3, Users, PieChart, AlertCircle, Building2, Calendar, Medal, Trophy, Share2, Smartphone } from 'lucide-react';
 
 // --- CONFIGURAÇÃO CLOUDINARY ---
 const CLOUD_NAME = "dgn8bzilm"; 
 const UPLOAD_PRESET = "atletas_upload"; 
 
+// Ícones personalizados
 const TikTokIcon = ({size=24, className}) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>);
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -39,13 +40,17 @@ export default function Painel() {
   const [perfil, setPerfil] = useState({
     nome: '', apelido: '', categoria: '', foto_url: '', about: '', slug: '',
     fightingStyle: '', plano: 'free', tipo_conta: 'atleta',
+    template_style: 'padrao', 
     stats: { height: '', weight: '', reach: '', age: '' },
     record: { wins: 0, losses: 0, draws: 0, knockouts: 0, submissions: 0 },
     contact: { email: '', managerEmail: '', phone: '', phoneDisplay: '', city: '', trainingCenter: '' },
     nextFight: { date: '', event: '', opponent: '', location: '' },
     socials: { 
-        instagram: { user: '', followers: '', url: '', stats: { reach: '', impressions: '', engagement: '', shares: '' }, audience: { age: '', gender: '', cities: '' } }, 
-        youtube: { user: '', followers: '', url: '' }, tiktok: { user: '', followers: '', url: '' }, x: { user: '', followers: '', url: '' }, kwai: { user: '', followers: '', url: '' }
+        instagram: { active: true, user: '', followers: '', url: '', stats: { reach: '', impressions: '', engagement: '', shares: '' }, audience: { age: '', gender: '', cities: '' } }, 
+        youtube: { active: false, user: '', followers: '', url: '' }, 
+        tiktok: { active: false, user: '', followers: '', url: '' }, 
+        x: { active: false, user: '', followers: '', url: '' }, 
+        kwai: { active: false, user: '', followers: '', url: '' }
     },
     historico: [], video_lista: [], galeria: [], premios: []
   });
@@ -88,14 +93,18 @@ export default function Painel() {
             ...data,
             plano: data.plano || 'free',
             tipo_conta: data.tipo_conta || 'atleta',
+            template_style: data.template_style || 'padrao',
             slug: data.slug || '',
             stats: data.atributos || { height: '', weight: '', reach: '', age: '' },
             record: data.cartel || { wins: 0, losses: 0, draws: 0 },
             contact: data.contato || { email: '', managerEmail: '', phone: '', phoneDisplay: '', city: '', trainingCenter: '' },
             nextFight: data.prox_luta || { date: '', event: '', opponent: '', location: '' }, 
             socials: { 
-                instagram: { ...instaData, stats: instaData.stats || { reach: '', impressions: '', engagement: '', shares: '' }, audience: instaData.audience || { age: '', gender: '', cities: '' } },
-                youtube: { ...data.redes_sociais?.youtube }, tiktok: { ...data.redes_sociais?.tiktok }, x: { ...data.redes_sociais?.x }, kwai: { ...data.redes_sociais?.kwai }
+                instagram: { ...instaData, active: true, stats: instaData.stats || { reach: '', impressions: '', engagement: '', shares: '' }, audience: instaData.audience || { age: '', gender: '', cities: '' } },
+                youtube: { active: false, ...data.redes_sociais?.youtube }, 
+                tiktok: { active: false, ...data.redes_sociais?.tiktok }, 
+                x: { active: false, ...data.redes_sociais?.x }, 
+                kwai: { active: false, ...data.redes_sociais?.kwai }
             },
             historico: data.historico || [], 
             video_lista: data.video_lista || [], 
@@ -187,10 +196,11 @@ export default function Painel() {
         slug: perfil.slug, sobre: perfil.about, estilodeluta: perfil.fightingStyle, atributos: perfil.stats, cartel: perfil.record,
         contato: perfil.contact, prox_luta: perfil.nextFight, redes_sociais: perfil.socials,
         historico: perfil.historico, video_lista: perfil.video_lista, galeria: perfil.galeria, premios: perfil.premios,
-        tipo_conta: perfil.tipo_conta
+        tipo_conta: perfil.tipo_conta,
+        template_style: perfil.template_style
     };
     const { error } = await supabase.from('atletas').update(payload).eq('user_id', userId);
-    if (error) alert("Erro: " + error.message); else alert("Salvo!");
+    if (error) alert("Erro: " + error.message); else alert("Salvo com Sucesso!");
     setSaving(false);
   }
 
@@ -204,7 +214,19 @@ export default function Painel() {
   const handleContactChange = (e) => setPerfil({...perfil, contact: {...perfil.contact, [e.target.name]: e.target.value}});
   const handleNextFightChange = (e) => setPerfil({...perfil, nextFight: {...perfil.nextFight, [e.target.name]: e.target.value}});
   const handleFightChange = (index, field, value) => { const n = [...perfil.historico]; n[index][field] = value; setPerfil({...perfil, historico: n}); };
+  
   const handleInstaStats = (c, f, v) => setPerfil(prev => ({ ...prev, socials: { ...prev.socials, instagram: { ...prev.socials.instagram, [c]: { ...prev.socials.instagram[c], [f]: v } } } }));
+
+  // Helper específico para redes sociais (link, user, followers, active)
+  const handleSocialChange = (network, field, value) => {
+    setPerfil(prev => ({
+        ...prev,
+        socials: {
+            ...prev.socials,
+            [network]: { ...prev.socials[network], [field]: value, active: !!value || prev.socials[network].active }
+        }
+    }));
+  };
 
   const PremiumLock = ({ text }) => ( <div className="bg-slate-900/50 border border-yellow-500/20 p-6 rounded-xl flex flex-col items-center justify-center text-center gap-2 opacity-80"> <Lock className="text-yellow-500 mb-2" size={32} /> <h3 className="text-white font-bold">Funcionalidade Premium</h3> <p className="text-slate-400 text-sm mb-4">{text}</p> <a href={`https://pay.kirvano.com/AQUI_VAI_SEU_LINK_KIRVANO?email=${perfil.contact?.email || ''}`} target="_blank" className="bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold py-2 px-4 rounded transition">LIBERAR AGORA</a> </div> );
 
@@ -237,7 +259,9 @@ export default function Painel() {
 
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
             {['geral', 'cartel', 'lutas', 'midia', 'metricas', 'contato'].map((tab) => (
-                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-full text-sm font-bold uppercase transition whitespace-nowrap ${activeTab === tab ? 'bg-cyan-600' : 'bg-slate-800 text-slate-400'}`}>{tab}</button>
+                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-full text-sm font-bold uppercase transition whitespace-nowrap ${activeTab === tab ? 'bg-cyan-600' : 'bg-slate-800 text-slate-400'}`}>
+                   {tab === 'midia' ? 'MÍDIA & SOCIAL' : tab}
+                </button>
             ))}
         </div>
 
@@ -264,6 +288,37 @@ export default function Painel() {
                                 <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo_conta" value="atleta" checked={perfil.tipo_conta === 'atleta'} onChange={handleChange} className="accent-cyan-400"/> Atleta</label>
                                 <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo_conta" value="empresa" checked={perfil.tipo_conta === 'empresa'} onChange={handleChange} className="accent-cyan-400"/> Empresa/Marca</label>
                                 <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo_conta" value="evento" checked={perfil.tipo_conta === 'evento'} onChange={handleChange} className="accent-cyan-400"/> Evento</label>
+                            </div>
+                        </div>
+
+                        {/* SELEÇÃO DE TEMPLATE */}
+                        <div className="md:col-span-2 bg-slate-800 p-4 rounded-lg border border-slate-700 mt-2">
+                            <label className="text-xs text-slate-400 font-bold mb-3 block uppercase">Escolha o Layout do seu Media Kit</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div 
+                                    onClick={() => setPerfil({...perfil, template_style: 'padrao'})}
+                                    className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${perfil.template_style === 'padrao' ? 'border-cyan-500 bg-cyan-900/20' : 'border-slate-700 hover:border-slate-500'}`}
+                                >
+                                    <div className="h-20 bg-slate-700 mb-2 rounded flex items-center justify-center text-xs text-slate-400">Preview Padrão</div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-bold text-white text-sm">Clássico</span>
+                                        {perfil.template_style === 'padrao' && <Check size={16} className="text-cyan-500"/>}
+                                    </div>
+                                </div>
+                                <div 
+                                    onClick={() => {
+                                        if(isPremium) setPerfil({...perfil, template_style: 'cyber'});
+                                        else alert("Este template é exclusivo para assinantes Premium!");
+                                    }}
+                                    className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all ${perfil.template_style === 'cyber' ? 'border-lime-400 bg-lime-900/20' : 'border-slate-700 hover:border-lime-500/50'}`}
+                                >
+                                    <div className="h-20 bg-zinc-900 mb-2 rounded flex items-center justify-center text-xs text-lime-400 font-mono border border-zinc-700">CYBER.SYS</div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-bold text-white text-sm">Cyber Punk</span>
+                                        {perfil.template_style === 'cyber' && <Check size={16} className="text-lime-400"/>}
+                                        {!isPremium && <Lock size={16} className="text-yellow-500"/>}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -358,9 +413,58 @@ export default function Painel() {
                 </div>
             )}
 
-            {/* 4. MÍDIA */}
+            {/* 4. MÍDIA & SOCIAL (ATUALIZADA) */}
             {activeTab === 'midia' && (
                 <div className="space-y-6">
+                    
+                    {/* --- REDES SOCIAIS (NOVO) --- */}
+                    <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                        <h3 className="text-cyan-400 font-bold uppercase text-sm mb-4">Suas Redes Sociais</h3>
+                        <p className="text-xs text-slate-500 mb-4">Preencha para aparecer no Media Kit. Deixe em branco para ocultar.</p>
+                        
+                        <div className="space-y-4">
+                            {/* Instagram */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-3 bg-black/20 rounded border border-slate-700">
+                                <div className="flex items-center gap-2 text-pink-500 font-bold text-sm col-span-1 md:col-span-3"><Instagram size={16}/> Instagram</div>
+                                <input placeholder="@usuario" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.instagram.user} onChange={(e) => handleSocialChange('instagram', 'user', e.target.value)} />
+                                <input placeholder="Seguidores (Ex: 10k)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.instagram.followers} onChange={(e) => handleSocialChange('instagram', 'followers', e.target.value)} />
+                                <input placeholder="Link (https://...)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.instagram.url} onChange={(e) => handleSocialChange('instagram', 'url', e.target.value)} />
+                            </div>
+
+                            {/* TikTok */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-3 bg-black/20 rounded border border-slate-700">
+                                <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm col-span-1 md:col-span-3"><TikTokIcon size={16}/> TikTok</div>
+                                <input placeholder="@usuario" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.tiktok.user} onChange={(e) => handleSocialChange('tiktok', 'user', e.target.value)} />
+                                <input placeholder="Seguidores (Ex: 50k)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.tiktok.followers} onChange={(e) => handleSocialChange('tiktok', 'followers', e.target.value)} />
+                                <input placeholder="Link (https://...)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.tiktok.url} onChange={(e) => handleSocialChange('tiktok', 'url', e.target.value)} />
+                            </div>
+
+                            {/* YouTube */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-3 bg-black/20 rounded border border-slate-700">
+                                <div className="flex items-center gap-2 text-red-500 font-bold text-sm col-span-1 md:col-span-3"><Youtube size={16}/> YouTube</div>
+                                <input placeholder="Nome do Canal" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.youtube.user} onChange={(e) => handleSocialChange('youtube', 'user', e.target.value)} />
+                                <input placeholder="Inscritos (Ex: 1k)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.youtube.followers} onChange={(e) => handleSocialChange('youtube', 'followers', e.target.value)} />
+                                <input placeholder="Link (https://...)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.youtube.url} onChange={(e) => handleSocialChange('youtube', 'url', e.target.value)} />
+                            </div>
+
+                            {/* X / Twitter */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-3 bg-black/20 rounded border border-slate-700">
+                                <div className="flex items-center gap-2 text-white font-bold text-sm col-span-1 md:col-span-3"><Twitter size={16}/> X (Twitter)</div>
+                                <input placeholder="@usuario" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.x.user} onChange={(e) => handleSocialChange('x', 'user', e.target.value)} />
+                                <input placeholder="Seguidores" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.x.followers} onChange={(e) => handleSocialChange('x', 'followers', e.target.value)} />
+                                <input placeholder="Link (https://...)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.x.url} onChange={(e) => handleSocialChange('x', 'url', e.target.value)} />
+                            </div>
+                            
+                            {/* Kwai */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center p-3 bg-black/20 rounded border border-slate-700">
+                                <div className="flex items-center gap-2 text-orange-400 font-bold text-sm col-span-1 md:col-span-3"><Smartphone size={16}/> Kwai</div>
+                                <input placeholder="@usuario" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.kwai.user} onChange={(e) => handleSocialChange('kwai', 'user', e.target.value)} />
+                                <input placeholder="Seguidores" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.kwai.followers} onChange={(e) => handleSocialChange('kwai', 'followers', e.target.value)} />
+                                <input placeholder="Link (https://...)" className="bg-black border border-slate-700 p-2 rounded text-white text-xs" value={perfil.socials.kwai.url} onChange={(e) => handleSocialChange('kwai', 'url', e.target.value)} />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                         <h3 className="text-cyan-400 font-bold uppercase text-sm mb-4">Vídeos (YouTube)</h3>
                         <div className="flex gap-2 mb-4">
@@ -450,15 +554,22 @@ export default function Painel() {
                             </div>
                         )}
                     </div>
-                    {/* INSTAGRAM & PÚBLICO */}
+
+                    {/* INSTAGRAM & PÚBLICO (ATUALIZADO COM SHARE) */}
                     <div className={`bg-slate-900 p-6 rounded-xl border border-slate-800 relative overflow-hidden ${!isPremium ? 'opacity-80' : ''}`}>
                          <h3 className="text-pink-500 font-bold uppercase text-sm mb-4">Performance Instagram</h3>
                          <div className="grid grid-cols-2 gap-4">
                             <div><label className="text-xs text-slate-500">Alcance</label><input disabled={!isPremium} className="w-full bg-black border border-slate-700 p-2 rounded text-white" placeholder="Ex: 15.000" value={perfil.socials?.instagram?.stats?.reach} onChange={e => handleInstaStats('stats', 'reach', formatNumber(e.target.value))} /></div>
                             <div><label className="text-xs text-slate-500">Impressões</label><input disabled={!isPremium} className="w-full bg-black border border-slate-700 p-2 rounded text-white" placeholder="Ex: 50.000" value={perfil.socials?.instagram?.stats?.impressions} onChange={e => handleInstaStats('stats', 'impressions', formatNumber(e.target.value))} /></div>
+                            
+                            {/* NOVO CAMPO DE COMPARTILHAMENTOS */}
+                            <div><label className="text-xs text-slate-500">Compartilhamentos</label><input disabled={!isPremium} className="w-full bg-black border border-slate-700 p-2 rounded text-white" placeholder="Ex: 25.000" value={perfil.socials?.instagram?.stats?.shares} onChange={e => handleInstaStats('stats', 'shares', formatNumber(e.target.value))} /></div>
+                            
+                            <div><label className="text-xs text-slate-500">Engajamento (%)</label><input disabled={!isPremium} className="w-full bg-black border border-slate-700 p-2 rounded text-white" placeholder="Ex: 8.5%" value={perfil.socials?.instagram?.stats?.engagement} onChange={e => handleInstaStats('stats', 'engagement', e.target.value)} /></div>
                          </div>
                          {!isPremium && <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center z-10"><PremiumLock text="Libere métricas" /></div>}
                     </div>
+
                     <div className={`bg-slate-900 p-6 rounded-xl border border-slate-800 relative overflow-hidden ${!isPremium ? 'opacity-80' : ''}`}>
                          <h3 className="text-cyan-400 font-bold uppercase text-sm mb-4">Público</h3>
                          <div className="grid gap-4">
