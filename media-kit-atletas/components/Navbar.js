@@ -1,87 +1,134 @@
 'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Search, User, Menu, X, Trophy } from 'lucide-react';
+import { Menu, X, Swords, LogIn, Search, LayoutDashboard } from 'lucide-react';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export default function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [session, setSession] = useState(null);
   const pathname = usePathname();
-  const [user, setUser] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  // Verifica se tem usuário logado
   useEffect(() => {
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    }
-    getUser();
-  }, [pathname]); // Roda toda vez que muda de página
+    // Função segura para buscar sessão
+    const fetchSession = async () => {
+        try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) {
+                // Se der erro de token inválido, forçamos logout local para limpar
+                console.log("Sessão inválida, limpando...", error.message);
+                await supabase.auth.signOut();
+                setSession(null);
+                return;
+            }
+            setSession(session);
+        } catch (err) {
+            console.error("Erro inesperado na auth:", err);
+            setSession(null);
+        }
+    };
 
-  // Estilo para link ativo
-  const linkClass = (path) => 
-    `text-sm font-bold transition hover:text-yellow-500 ${pathname === path ? 'text-yellow-500' : 'text-slate-300'}`;
+    fetchSession();
+
+    // Escuta mudanças em tempo real (Login/Logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fecha o menu mobile ao trocar de rota
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   return (
-    <nav className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-            
-            {/* LOGO */}
-            <Link href="/" className="flex items-center gap-2 group">
-                <div className="bg-yellow-500 text-black p-1 rounded font-black text-xl group-hover:scale-110 transition">NP</div>
-                <span className="font-bold text-white tracking-wide">NOCAUTE<span className="text-yellow-500">PAGES</span></span>
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-800 bg-[#0a0a0c]/90 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          
+          {/* LOGO */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded flex items-center justify-center font-black text-black italic text-lg">
+                    N
+                </div>
+                <span className="font-bold text-lg text-white tracking-tighter">
+                    NOCAUTE<span className="text-yellow-500">.PAGES</span>
+                </span>
             </Link>
+          </div>
 
-            {/* LINKS (DESKTOP) */}
-            <div className="hidden md:flex items-center gap-8">
-                <Link href="/busca" className={linkClass('/busca')}>BUSCAR ATLETAS</Link>
-                
-                {user ? (
-                    <Link href="/painel" className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded font-bold transition flex items-center gap-2">
-                        <User size={18}/> MEU PAINEL
-                    </Link>
-                ) : (
-                    <div className="flex items-center gap-4">
-                        <Link href="/login" className={linkClass('/login')}>ENTRAR</Link>
-                        <Link href="/cadastro" className="border border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black px-4 py-2 rounded font-bold transition">
-                            CRIAR CONTA
-                        </Link>
-                    </div>
-                )}
+          {/* DESKTOP MENU */}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-8">
+              
+              <Link href="/busca" className="text-slate-300 hover:text-white transition-colors text-sm font-bold flex items-center gap-1">
+                <Search size={16}/> BUSCAR ATLETAS
+              </Link>
+
+              {/* BOTÃO DE DUELOS */}
+              <Link href="/duelos" className="text-slate-300 hover:text-yellow-500 transition-colors text-sm font-bold flex items-center gap-1">
+                <Swords size={18}/> DUELOS
+              </Link>
+
+              {session ? (
+                 <Link href="/painel" className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2 border border-slate-700">
+                    <LayoutDashboard size={16}/> MEU PAINEL
+                 </Link>
+              ) : (
+                 <Link href="/login" className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2 rounded-full text-sm font-black transition flex items-center gap-2">
+                    <LogIn size={16}/> ENTRAR
+                 </Link>
+              )}
             </div>
+          </div>
 
-            {/* MENU MOBILE (HAMBURGUER) */}
-            <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-white">
-                {menuOpen ? <X size={28}/> : <Menu size={28}/>}
+          {/* MOBILE MENU BUTTON */}
+          <div className="-mr-2 flex md:hidden">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
+          </div>
         </div>
       </div>
 
-      {/* MENU MOBILE EXPANDIDO */}
-      {menuOpen && (
-          <div className="md:hidden bg-slate-900 border-t border-slate-800 p-4 flex flex-col gap-4 shadow-2xl">
-              <Link href="/busca" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-slate-300 py-2 border-b border-slate-800">
-                  <Search size={18}/> Buscar Atletas
-              </Link>
-              
-              {user ? (
-                  <Link href="/painel" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-yellow-500 font-bold py-2">
-                      <User size={18}/> Acessar Painel
-                  </Link>
-              ) : (
-                  <>
-                      <Link href="/login" onClick={() => setMenuOpen(false)} className="text-slate-300 py-2">Login</Link>
-                      <Link href="/cadastro" onClick={() => setMenuOpen(false)} className="bg-yellow-500 text-black text-center py-3 rounded font-bold">CRIAR CONTA GRÁTIS</Link>
-                  </>
-              )}
+      {/* MOBILE MENU (Expandable) */}
+      {isOpen && (
+        <div className="md:hidden bg-[#0a0a0c] border-b border-slate-800">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <Link href="/busca" className="text-slate-300 hover:text-white block px-3 py-4 rounded-md text-base font-bold border-b border-slate-800">
+               <div className="flex items-center gap-2"><Search size={18}/> Buscar Atletas</div>
+            </Link>
+            
+            <Link href="/duelos" className="text-yellow-500 hover:text-yellow-400 block px-3 py-4 rounded-md text-base font-bold border-b border-slate-800">
+               <div className="flex items-center gap-2"><Swords size={18}/> Arena de Duelos</div>
+            </Link>
+
+            {session ? (
+                <Link href="/painel" className="text-white block px-3 py-4 rounded-md text-base font-bold bg-slate-800/50 mt-2">
+                    <div className="flex items-center gap-2"><LayoutDashboard size={18}/> Acessar Painel</div>
+                </Link>
+            ) : (
+                <div className="grid grid-cols-2 gap-2 mt-4 px-2">
+                    <Link href="/login" className="text-center text-slate-300 block px-3 py-3 rounded-md text-base font-bold border border-slate-700">
+                        Login
+                    </Link>
+                    <Link href="/cadastro" className="text-center bg-yellow-500 text-black block px-3 py-3 rounded-md text-base font-black">
+                        Criar Conta
+                    </Link>
+                </div>
+            )}
           </div>
+        </div>
       )}
     </nav>
   );

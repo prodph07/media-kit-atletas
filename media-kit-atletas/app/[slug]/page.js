@@ -1,13 +1,13 @@
 export const runtime = 'edge';
+
 import { supabase } from '../../lib/supabase'
 import { TemplatePadrao } from '../../components/TemplatePadrao'
-import TemplateCyber from '../../components/TemplateCyber' // Importando o novo template
+import TemplateCyber from '../../components/TemplateCyber' 
 import Link from 'next/link' 
+import ViewTracker from '../../components/ViewTracker' // Importação do Rastreador
 
 // Função para buscar dados
 async function getAtleta(slug) {
-  console.log("🔍 Buscando no Supabase pelo slug ou ID:", slug)
-
   // 1. Tenta buscar pelo SLUG
   let { data: atleta, error } = await supabase
     .from('atletas')
@@ -17,7 +17,6 @@ async function getAtleta(slug) {
 
   // 2. Fallback: Se não achou pelo slug e o parametro é um número, tenta pelo ID
   if (!atleta && !isNaN(slug)) {
-    console.log("⚠️ Não achou por slug. Tentando buscar pelo ID:", slug)
     const { data: atletaPorId } = await supabase
        .from('atletas')
        .select('*')
@@ -29,16 +28,11 @@ async function getAtleta(slug) {
     }
   }
 
-  if (!atleta) {
-    console.log("❌ Atleta não encontrado.")
-  } else {
-    console.log("✅ Atleta encontrado:", atleta?.nome)
-  }
-
   return atleta
 }
 
 export default async function Page({ params }) {
+  // Extrai o slug dos parâmetros (await é necessário no Next.js mais novo)
   const { slug } = await params
   
   const atleta = await getAtleta(slug)
@@ -62,10 +56,10 @@ export default async function Page({ params }) {
   const dadosCompletos = {
     ...atleta.dados, 
     id: atleta.id, 
-    user_id: atleta.user_id, // Necessário para a lógica de não contar view do próprio dono
+    user_id: atleta.user_id, 
     name: atleta.nome,
     foto_url: atleta.foto_url,
-    template_style: atleta.template_style, // O campo que define qual template usar
+    template_style: atleta.template_style, 
     nickname: atleta.apelido,    
     about: atleta.sobre, 
     record: atleta.cartel,
@@ -82,12 +76,21 @@ export default async function Page({ params }) {
     plano: atleta.plano
   }
 
-  // LÓGICA DE SELEÇÃO DE TEMPLATE
-  // Se o usuário escolheu "cyber", carrega o novo visual
-  if (dadosCompletos.template_style === 'cyber') {
-      return <TemplateCyber data={dadosCompletos} />
-  }
+  // --- AQUI ESTÁ A CORREÇÃO ---
+  // Envolvemos tudo numa div e colocamos o ViewTracker no topo
+  return (
+    <div className="relative w-full min-h-screen">
+        
+        {/* Componente Rastreador (agora com o quadrado vermelho de debug) */}
+        <ViewTracker profileId={dadosCompletos.id} profileUserId={dadosCompletos.user_id} />
 
-  // Caso contrário (ou se for null), carrega o Padrão
-  return <TemplatePadrao data={dadosCompletos} />
+        {/* LÓGICA DE SELEÇÃO DE TEMPLATE */}
+        {dadosCompletos.template_style === 'cyber' ? (
+            <TemplateCyber data={dadosCompletos} />
+        ) : (
+            <TemplatePadrao data={dadosCompletos} />
+        )}
+
+    </div>
+  )
 }
