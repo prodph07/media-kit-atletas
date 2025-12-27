@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { TemplatePadrao } from '../../components/TemplatePadrao'
 import TemplateCyber from '../../components/TemplateCyber' 
 import Link from 'next/link' 
-import ViewTracker from '../../components/ViewTracker' // Importação do Rastreador
+import ViewTracker from '../../components/ViewTracker'
 
 // Função para buscar dados
 async function getAtleta(slug) {
@@ -32,12 +32,10 @@ async function getAtleta(slug) {
 }
 
 export default async function Page({ params }) {
-  // Extrai o slug dos parâmetros (await é necessário no Next.js mais novo)
   const { slug } = await params
   
   const atleta = await getAtleta(slug)
 
-  // Se não achar o atleta, mostra erro na tela
   if (!atleta) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0c] text-white gap-4 p-4 text-center">
@@ -52,11 +50,16 @@ export default async function Page({ params }) {
     )
   }
 
-  // Prepara os dados para o template
+  // --- AQUI ESTAVA FALTANDO O XP E O LEVEL ---
   const dadosCompletos = {
     ...atleta.dados, 
     id: atleta.id, 
-    user_id: atleta.user_id, 
+    user_id: atleta.user_id,
+    
+    // ADICIONE ESTAS DUAS LINHAS:
+    level: atleta.level, // Pega o nível do banco
+    xp: atleta.xp,       // Pega o XP do banco
+    
     name: atleta.nome,
     foto_url: atleta.foto_url,
     template_style: atleta.template_style, 
@@ -76,12 +79,10 @@ export default async function Page({ params }) {
     plano: atleta.plano
   }
 
-  // --- AQUI ESTÁ A CORREÇÃO ---
-  // Envolvemos tudo numa div e colocamos o ViewTracker no topo
   return (
     <div className="relative w-full min-h-screen">
         
-        {/* Componente Rastreador (agora com o quadrado vermelho de debug) */}
+        {/* Componente Rastreador */}
         <ViewTracker profileId={dadosCompletos.id} profileUserId={dadosCompletos.user_id} />
 
         {/* LÓGICA DE SELEÇÃO DE TEMPLATE */}
