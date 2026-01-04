@@ -3,12 +3,21 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-// Removido Script do Cloudinary
 import { Save, LogOut, Eye, Bell, Swords, GraduationCap } from 'lucide-react';
 
-import { processGamification, getXpToNextLevel, processDuelParticipation, processVisitMilestone } from '../../lib/gamification';
+// --- IMPORTAÇÃO COMPLETA DAS FUNÇÕES DE GAMIFICAÇÃO ---
+import { 
+    processGamification, 
+    getXpToNextLevel, 
+    processDuelParticipation, 
+    processVisitMilestone, 
+    calculateNewLevelState,
+    processDailyLogin,      // Tarefa Diária (Login)
+    processWeeklyShare,     // Tarefa Semanal (Compartilhar)
+    processWeightCheckIn    // Tarefa Semanal (Peso)
+} from '../../lib/gamification';
 
-// --- IMPORTAÇÕES MODULARES ---
+// --- IMPORTAÇÕES DOS COMPONENTES (ABAS) ---
 import TabGeral from '../../components/panel/athlete/TabGeral';
 import TabCartel from '../../components/panel/athlete/TabCartel';
 import TabLutas from '../../components/panel/athlete/TabLutas';
@@ -18,7 +27,7 @@ import TabContato from '../../components/panel/athlete/TabContato';
 import TabNotificacoes from '../../components/panel/athlete/TabNotificacoes';
 import TabHistoricoDuelos from '../../components/panel/athlete/TabHistoricoDuelos';
 
-// Novas importações
+// Novas importações (Empresa/Treinador)
 import TabGeralEmpresa from '../../components/panel/company/TabGeralEmpresa';
 import TabTreinador from '../../components/panel/coach/TabTreinador';
 
@@ -33,7 +42,7 @@ export default function Painel() {
   const [activeTab, setActiveTab] = useState('geral');
   const [userId, setUserId] = useState(null);
 
-  // Estados de UI
+  // Estados de UI (Importantes para as Métricas)
   const [ageRange, setAgeRange] = useState({ min: '', max: '' });
   const [genderSplit, setGenderSplit] = useState({ men: '', women: '' });
   const [cityList, setCityList] = useState([]); 
@@ -48,11 +57,12 @@ export default function Painel() {
   
   const [meusDuelos, setMeusDuelos] = useState([]);
 
+  // Estado Principal do Perfil
   const [perfil, setPerfil] = useState({
     id: null, nome: '', apelido: '', categoria: '', foto_url: '', about: '', slug: '', fightingStyle: '', 
     plano: 'free', tipo_conta: 'atleta', template_style: 'padrao', 
     
-    // CAMPOS HÍBRIDOS
+    // Campos Híbridos (Atleta/Treinador)
     is_athlete: true, 
     is_coach: false,
     coach_details: {}, 
@@ -75,6 +85,7 @@ export default function Painel() {
   const limparSlug = (texto) => texto.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
   const formatNumber = (value) => !value ? '' : value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
+  // --- CARREGAMENTO INICIAL DOS DADOS ---
   useEffect(() => {
     async function getData() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -86,27 +97,51 @@ export default function Painel() {
       if (data) {
         const ATLETA_ID_NUMERICO = data.id; 
         
-        // --- LÓGICA DE VISITAS ---
+        // --- GAMIFICAÇÃO AUTOMÁTICA (LOGIN DIÁRIO + VISITAS) ---
+        const currentStats = data.weekly_stats || {};
+        let finalWeeklyStats = currentStats;
+        let finalXp = data.xp || 0;
+        let finalLevel = data.level || 1;
+        let autoAlerts = [];
+
+        // 1. Processa Login Diário
+        const loginResult = processDailyLogin(currentStats);
+        if (loginResult.success) {
+            const state = calculateNewLevelState(finalXp, finalLevel, loginResult.xpGained);
+            finalXp = state.newXp;
+            finalLevel = state.newLevel;
+            finalWeeklyStats = loginResult.updatedStats; 
+            autoAlerts.push(loginResult.message);
+            if (state.levelUp) autoAlerts.push(`🆙 LEVEL UP! Nível ${state.newLevel}!`);
+        }
+
+        // 2. Processa Visitas (Milestone)
         const { count: viewCount } = await supabase.from('profile_views').select('*', { count: 'exact', head: true }).eq('perfil_visitado_id', ATLETA_ID_NUMERICO);
         const totalV = viewCount || 0;
         
-        const currentStats = data.weekly_stats || {};
-        const visitResult = processVisitMilestone(totalV, currentStats);
-        
-        let newXp = data.xp || 0;
-        let newLevel = data.level || 1;
-        let finalWeeklyStats = currentStats;
-
+        const visitResult = processVisitMilestone(totalV, finalWeeklyStats);
         if (visitResult.success) {
-            newXp += visitResult.xpGained;
-            const target = getXpToNextLevel(newLevel);
-            if (newXp >= target) { newLevel++; newXp -= target; }
-            finalWeeklyStats = visitResult.updatedStats;
-            await supabase.from('atletas').update({ xp: newXp, level: newLevel, weekly_stats: finalWeeklyStats }).eq('user_id', user.id);
-            alert(`🎉 ${visitResult.message}`);
+            const state = calculateNewLevelState(finalXp, finalLevel, visitResult.xpGained);
+            finalXp = state.newXp;
+            finalLevel = state.newLevel;
+            finalWeeklyStats = visitResult.updatedStats; 
+            autoAlerts.push(visitResult.message);
+            if (state.levelUp) autoAlerts.push(`🆙 LEVEL UP! Nível ${state.newLevel}!`);
         }
 
-        // Auxiliares de UI
+        // Salvar se houve mudança automática
+        if (loginResult.success || visitResult.success) {
+            await supabase.from('atletas').update({ 
+                xp: finalXp, 
+                level: finalLevel, 
+                weekly_stats: finalWeeklyStats 
+            }).eq('user_id', user.id);
+            
+            if (autoAlerts.length > 0) alert(autoAlerts.join('\n'));
+        }
+        // --- FIM GAMIFICAÇÃO AUTOMÁTICA ---
+
+        // Processamento de Dados do Instagram (Mantido para não quebrar a TabMetricas)
         const instaData = data.redes_sociais?.instagram || {};
         const ageMatch = (instaData.audience?.age || '').match(/(\d+)-(\d+)/);
         if (ageMatch) setAgeRange({ min: ageMatch[1], max: ageMatch[2] });
@@ -131,38 +166,37 @@ export default function Painel() {
             is_coach: data.is_coach ?? false,
             coach_details: data.coach_details || {},
 
-            xp: newXp, level: newLevel, completed_tasks: data.completed_tasks || [], weekly_stats: finalWeeklyStats,
+            // Usa os valores atualizados (XP/Level/Stats)
+            xp: finalXp, level: finalLevel, weekly_stats: finalWeeklyStats,
+            completed_tasks: data.completed_tasks || [],
+
             stats: { height: safeVal(data.atributos?.height), weight: safeVal(data.atributos?.weight), reach: safeVal(data.atributos?.reach), age: safeVal(data.atributos?.age) },
             record: data.cartel || { wins: 0, losses: 0, draws: 0, knockouts: 0, submissions: 0 },
             contact: { email: safeVal(data.contato?.email), managerEmail: safeVal(data.contato?.managerEmail), phone: safeVal(data.contato?.phone), phoneDisplay: safeVal(data.contato?.phoneDisplay), city: safeVal(data.contato?.city), trainingCenter: safeVal(data.contato?.trainingCenter) },
             nextFight: { date: safeVal(data.prox_luta?.date), event: safeVal(data.prox_luta?.event), opponent: safeVal(data.prox_luta?.opponent), location: safeVal(data.prox_luta?.location) }, 
             socials: { 
-                instagram: { ...instaData, active: true, user: safeVal(instaData.user), followers: safeVal(instaData.followers), url: safeVal(instaData.url), stats: { reach: safeVal(instaData.stats?.reach), impressions: safeVal(instaData.stats?.impressions), engagement: safeVal(instaData.stats?.engagement), shares: safeVal(instaData.stats?.shares) }, audience: instaData.audience || { age: '', gender: '', cities: '' } },
-                youtube: { active: false, ...data.redes_sociais?.youtube, user: safeVal(data.redes_sociais?.youtube?.user), followers: safeVal(data.redes_sociais?.youtube?.followers), url: safeVal(data.redes_sociais?.youtube?.url) }, 
-                tiktok: { active: false, ...data.redes_sociais?.tiktok, user: safeVal(data.redes_sociais?.tiktok?.user), followers: safeVal(data.redes_sociais?.tiktok?.followers), url: safeVal(data.redes_sociais?.tiktok?.url) }, 
-                x: { active: false, ...data.redes_sociais?.x, user: safeVal(data.redes_sociais?.x?.user), followers: safeVal(data.redes_sociais?.x?.followers), url: safeVal(data.redes_sociais?.x?.url) }, 
-                kwai: { active: false, ...data.redes_sociais?.kwai, user: safeVal(data.redes_sociais?.kwai?.user), followers: safeVal(data.redes_sociais?.kwai?.followers), url: safeVal(data.redes_sociais?.kwai?.url) }
+                instagram: { ...instaData, active: true, user: safeVal(instaData.user), followers: safeVal(instaData.followers), url: safeVal(instaData.url), stats: { ...instaData.stats }, audience: instaData.audience || {} },
+                youtube: { active: false, ...data.redes_sociais?.youtube }, 
+                tiktok: { active: false, ...data.redes_sociais?.tiktok }, 
+                x: { active: false, ...data.redes_sociais?.x }, 
+                kwai: { active: false, ...data.redes_sociais?.kwai }
             },
             historico: data.historico || [], video_lista: data.video_lista || [], galeria: data.galeria || [], premios: data.premios || []
         });
 
-        // CARREGA DADOS RELACIONADOS
+        // Carrega Relacionados (Duelos, Convites, Histórico)
         const { data: duelosPendentes } = await supabase.from('duelos').select(`id, created_at, atleta_1_id, desafiante:atletas!atleta_1_id(nome, apelido, foto_url)`).eq('atleta_2_id', ATLETA_ID_NUMERICO).eq('status', 'pending');
         setNotificacoes(duelosPendentes || []);
 
-        const { data: convitesCoach } = await supabase
-            .from('relacoes')
-            .select(`id, created_at, coach_id, coach:atletas!coach_id(nome, apelido, foto_url, coach_details)`)
-            .eq('student_id', ATLETA_ID_NUMERICO)
-            .eq('status', 'pending');
+        const { data: convitesCoach } = await supabase.from('relacoes').select(`id, created_at, coach_id, coach:atletas!coach_id(nome, apelido, foto_url, coach_details)`).eq('student_id', ATLETA_ID_NUMERICO).eq('status', 'pending');
         setConvitesEquipe(convitesCoach || []);
 
         const { data: historico } = await supabase.from('duelos').select(`id, created_at, status, expires_at, votos_1, votos_2, p1:atletas!atleta_1_id(id, nome, apelido, foto_url), p2:atletas!atleta_2_id(id, nome, apelido, foto_url)`).or(`atleta_1_id.eq.${ATLETA_ID_NUMERICO},atleta_2_id.eq.${ATLETA_ID_NUMERICO}`).order('created_at', { ascending: false });
         setMeusDuelos(historico || []);
 
+        // Histórico de Visitas (Mantido)
         setTotalViews(totalV);
         const { data: viewsData } = await supabase.from('profile_views').select('created_at, visitante_tipo, visitante_id').eq('perfil_visitado_id', ATLETA_ID_NUMERICO).neq('visitante_tipo', 'anonimo').order('created_at', { ascending: false }).limit(data.plano === 'premium' ? 100 : 20);
-        
         let viewsCompletas = viewsData || [];
         if (viewsData && viewsData.length > 0) {
             const idsVisitantes = viewsData.map(v => v.visitante_id).filter(Boolean);
@@ -181,20 +215,32 @@ export default function Painel() {
     getData();
   }, []);
 
-  // --- NOVA FUNÇÃO DE DELEÇÃO SUPABASE ---
-  const deleteImageFromBucket = async (url) => {
-    // Só tenta deletar se for do nosso bucket media-kit
-    if (!url || typeof url !== 'string' || !url.includes('/media-kit/')) return;
+  // --- NOVA FUNÇÃO DE SHARE (HYPE DA SEMANA) ---
+  const handleOpenProfile = async () => {
+    window.open(`/${perfil.slug || perfil.id}`, '_blank');
 
+    const shareResult = processWeeklyShare(perfil.weekly_stats);
+    if (shareResult.success) {
+        const newState = calculateNewLevelState(perfil.xp, perfil.level, shareResult.xpGained);
+        await supabase.from('atletas').update({
+            xp: newState.newXp,
+            level: newState.newLevel,
+            weekly_stats: shareResult.updatedStats
+        }).eq('user_id', userId);
+
+        setPerfil(prev => ({ ...prev, xp: newState.newXp, level: newState.newLevel, weekly_stats: shareResult.updatedStats }));
+        alert(shareResult.message);
+    }
+  };
+
+  // --- FUNÇÕES DE DELEÇÃO E UPLOAD ---
+  const deleteImageFromBucket = async (url) => {
+    if (!url || typeof url !== 'string' || !url.includes('/media-kit/')) return;
     try {
-        // Extrai o caminho: user_id/timestamp.webp
         const path = url.split('/media-kit/')[1];
         if (path) {
             console.log("Deletando do Supabase:", path);
-            const { error } = await supabase.storage
-                .from('media-kit')
-                .remove([path]);
-            
+            const { error } = await supabase.storage.from('media-kit').remove([path]);
             if (error) console.error("Erro Supabase Storage:", error);
         }
     } catch (err) {
@@ -204,27 +250,17 @@ export default function Painel() {
 
   const handleDeleteImage = async (arrName, index, url) => { 
       if(!confirm("Excluir imagem permanentemente?")) return; 
-      
-      // 1. Deleta do Bucket Supabase
       await deleteImageFromBucket(url);
-
-      // 2. Atualiza Estado Visual
-      const n = [...perfil[arrName]]; 
-      n.splice(index, 1); 
-      setPerfil({...perfil, [arrName]: n}); 
+      const n = [...perfil[arrName]]; n.splice(index, 1); setPerfil({...perfil, [arrName]: n}); 
   };
 
   const handleDeleteProfilePic = async () => { 
       if(!perfil.foto_url || !confirm("Remover foto de perfil?")) return; 
-      
-      // 1. Deleta do Bucket Supabase
       await deleteImageFromBucket(perfil.foto_url);
-
-      // 2. Atualiza Estado Visual
       setPerfil({...perfil, foto_url: ''}); 
   };
   
-  // HANDLERS GENÉRICOS
+  // HANDLERS GENÉRICOS DE UI
   const handleChange = (e) => setPerfil({...perfil, [e.target.name]: e.target.value});
   const handleSlugChange = (e) => setPerfil({...perfil, slug: limparSlug(e.target.value)});
   const handleStatsChange = (e) => setPerfil({...perfil, stats: {...perfil.stats, [e.target.name]: e.target.value}});
@@ -234,15 +270,53 @@ export default function Painel() {
   const handleInstaStats = (c, f, v) => setPerfil(prev => ({ ...prev, socials: { ...prev.socials, instagram: { ...prev.socials.instagram, [c]: { ...prev.socials.instagram[c], [f]: v } } } }));
   const handleSocialChange = (network, field, value) => { setPerfil(prev => ({ ...prev, socials: { ...prev.socials, [network]: { ...prev.socials[network], [field]: value, active: !!value || prev.socials[network].active } } })); };
   
-  // DUELO E EQUIPE LOGIC
+  // --- DUELO E EQUIPE LOGIC (COM TRAVA ANTI-FARM) ---
   const handleEquipeAction = async (inviteId, action) => {
     if (action === 'accept') {
-        const { error } = await supabase.from('relacoes').update({ status: 'accepted' }).eq('id', inviteId);
-        if (!error) { alert("Convite aceito!"); setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId)); }
-        else { alert("Erro: " + error.message); }
+        try {
+            const { error } = await supabase.from('relacoes').update({ status: 'accepted' }).eq('id', inviteId);
+            if (error) throw error;
+
+            const inviteData = convitesEquipe.find(c => c.id === inviteId);
+            const coachName = inviteData?.coach?.nome || "Treinador";
+            const coachId = inviteData?.coach_id;
+            const studentTag = `xp_connect_coach_${coachId}`; 
+            const coachTag = `xp_connect_student_${perfil.id}`; 
+
+            let alertMsg = `Convite aceito! Agora você faz parte da equipe de ${coachName}.`;
+
+            // XP Aluno
+            const myTasks = perfil.completed_tasks || [];
+            if (!myTasks.includes(studentTag)) {
+                const connState = calculateNewLevelState(perfil.xp, perfil.level, 150);
+                const newTasks = [...myTasks, studentTag];
+                await supabase.from('atletas').update({ xp: connState.newXp, level: connState.newLevel, completed_tasks: newTasks }).eq('user_id', userId);
+                setPerfil(prev => ({ ...prev, xp: connState.newXp, level: connState.newLevel, completed_tasks: newTasks }));
+                alertMsg += `\n🎉 +150 XP Conexão!`;
+                if (connState.levelUp) alertMsg += `\n🆙 LEVEL UP! Nível ${connState.newLevel}!`;
+            } else { 
+                alertMsg += `\n(Você já recebeu XP por esta conexão anteriormente).`; 
+            }
+
+            // XP Treinador
+            if (coachId) {
+                const { data: coachData } = await supabase.from('atletas').select('user_id, xp, level, completed_tasks').eq('id', coachId).single();
+                if (coachData) {
+                    const coachTasks = coachData.completed_tasks || [];
+                    if (!coachTasks.includes(coachTag)) {
+                        const cState = calculateNewLevelState(coachData.xp, coachData.level, 150);
+                        const cTasks = [...coachTasks, coachTag];
+                        await supabase.from('atletas').update({ xp: cState.newXp, level: cState.newLevel, completed_tasks: cTasks }).eq('user_id', coachData.user_id);
+                    }
+                }
+            }
+            alert(alertMsg);
+            setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId));
+        } catch (err) { alert("Erro: " + err.message); }
     } else {
-        const { error } = await supabase.from('relacoes').delete().eq('id', inviteId);
-        if (!error) { alert("Convite recusado."); setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId)); }
+        await supabase.from('relacoes').delete().eq('id', inviteId);
+        alert("Convite recusado."); 
+        setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId));
     }
   };
 
@@ -255,25 +329,19 @@ export default function Painel() {
                 if (challenger) {
                     const chalResult = processDuelParticipation(challenger.weekly_stats);
                     if (chalResult.success) {
-                        let cXp = (challenger.xp || 0) + chalResult.xpGained;
-                        let cLevel = (challenger.level || 1);
-                        const cTarget = getXpToNextLevel(cLevel);
-                        if (cXp >= cTarget) { cLevel++; cXp -= cTarget; }
-                        await supabase.from('atletas').update({ xp: cXp, level: cLevel, weekly_stats: chalResult.updatedStats }).eq('user_id', challenger.user_id);
+                        const s = calculateNewLevelState(challenger.xp, challenger.level, chalResult.xpGained);
+                        await supabase.from('atletas').update({ xp: s.newXp, level: s.newLevel, weekly_stats: chalResult.updatedStats }).eq('user_id', challenger.user_id);
                     }
                 }
             }
         } catch (error) { console.error(error); }
         const myResult = processDuelParticipation(perfil.weekly_stats);
         if (myResult.success) {
-            let myNewXp = (perfil.xp || 0) + myResult.xpGained;
-            let myNewLevel = (perfil.level || 1);
-            const myTarget = getXpToNextLevel(myNewLevel);
-            if (myNewXp >= myTarget) { myNewLevel++; myNewXp = myNewXp - myTarget; alert(`🎉 LEVEL UP! Nível ${myNewLevel}!`); }
-            await supabase.from('atletas').update({ xp: myNewXp, level: myNewLevel, weekly_stats: myResult.updatedStats }).eq('user_id', userId);
-            setPerfil(prev => ({ ...prev, xp: myNewXp, level: myNewLevel, weekly_stats: myResult.updatedStats }));
+            const s = calculateNewLevelState(perfil.xp, perfil.level, myResult.xpGained);
+            await supabase.from('atletas').update({ xp: s.newXp, level: s.newLevel, weekly_stats: myResult.updatedStats }).eq('user_id', userId);
+            setPerfil(prev => ({ ...prev, xp: s.newXp, level: s.newLevel, weekly_stats: myResult.updatedStats }));
             alert(myResult.message);
-        } else { alert(myResult.message); }
+        }
         const { error } = await supabase.from('duelos').update({ status: 'active' }).eq('id', dueloId);
         if(!error) { window.location.reload(); }
     } else if (action === 'delete') {
@@ -285,6 +353,7 @@ export default function Painel() {
     }
   };
 
+  // --- BOTÃO SALVAR (GERAL + PESO) ---
   const handleSave = async () => {
     setSaving(true);
     if (perfil.slug) { 
@@ -295,15 +364,29 @@ export default function Painel() {
     }
 
     const currentCompletedTasks = perfil.completed_tasks || [];
-    const { xpGained, newTasks, notifications } = processGamification(perfil, currentCompletedTasks);
+    
+    // 1. Processa Tarefas Únicas (Bio, Social, etc)
+    let { xpGained, newTasks, notifications } = processGamification(perfil, currentCompletedTasks);
+
+    // 2. Processa Recorrência: Peso (Semanal)
+    let currentWeeklyStats = perfil.weekly_stats || {};
+    if (perfil.stats && perfil.stats.weight) {
+        const weightResult = processWeightCheckIn(currentWeeklyStats);
+        if (weightResult.success) {
+            xpGained += weightResult.xpGained;
+            currentWeeklyStats = weightResult.updatedStats;
+            notifications.push(weightResult.message);
+        }
+    }
 
     let finalXp = (perfil.xp || 0);
     let finalLevel = (perfil.level || 1);
 
     if (xpGained > 0) {
-        finalXp += xpGained;
-        const xpTarget = getXpToNextLevel(finalLevel);
-        if (finalXp >= xpTarget) { finalLevel++; finalXp = finalXp - xpTarget; alert(`🎉 LEVEL UP! Você alcançou o Nível ${finalLevel}!`); }
+        const state = calculateNewLevelState(finalXp, finalLevel, xpGained);
+        finalXp = state.newXp;
+        finalLevel = state.newLevel;
+        if (state.levelUp) alert(`🎉 LEVEL UP! Você alcançou o Nível ${finalLevel}!`);
         alert(`🏆 Você ganhou +${xpGained} XP!\n\nConquistas:\n- ${notifications.join('\n- ')}`);
     }
 
@@ -313,18 +396,17 @@ export default function Painel() {
         contato: perfil.contact, prox_luta: perfil.nextFight, redes_sociais: perfil.socials, 
         historico: perfil.historico, video_lista: perfil.video_lista, galeria: perfil.galeria, premios: perfil.premios, 
         tipo_conta: perfil.tipo_conta, template_style: perfil.template_style,
-        
-        is_athlete: perfil.is_athlete,
-        is_coach: perfil.is_coach,
-        coach_details: perfil.coach_details,
-
-        xp: finalXp, level: finalLevel, completed_tasks: newTasks
+        is_athlete: perfil.is_athlete, is_coach: perfil.is_coach, coach_details: perfil.coach_details,
+        xp: finalXp, level: finalLevel, completed_tasks: newTasks, weekly_stats: currentWeeklyStats
     };
 
     const { error } = await supabase.from('atletas').update(payload).eq('user_id', userId);
     
     if (error) { alert("Erro: " + error.message); } 
-    else { alert("Salvo com Sucesso!"); setPerfil({ ...perfil, xp: finalXp, level: finalLevel, completed_tasks: newTasks }); }
+    else { 
+        alert("Salvo com Sucesso!"); 
+        setPerfil({ ...perfil, xp: finalXp, level: finalLevel, completed_tasks: newTasks, weekly_stats: currentWeeklyStats }); 
+    }
     setSaving(false);
   }
 
@@ -336,12 +418,18 @@ export default function Painel() {
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-white p-4 pb-32 font-sans">
       <div className="max-w-4xl mx-auto">
+        {/* HEADER */}
         <div className="flex justify-between items-center mb-6 bg-slate-900 p-4 rounded-xl border border-slate-800">
             <div className="flex items-center gap-2"><h1 className="text-2xl font-bold">Painel</h1>{isPremium ? <span className="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded border border-yellow-500/50 font-bold uppercase">PREMIUM</span> : <span className="bg-slate-700 text-slate-400 text-xs px-2 py-1 rounded font-bold uppercase">GRÁTIS</span>}</div>
-            <div className="flex gap-3"><Link href={`/${perfil.slug || perfil.id}`} target="_blank" className="p-2 bg-slate-800 rounded hover:bg-slate-700"><Eye size={20}/></Link><button onClick={() => { supabase.auth.signOut(); router.push('/login'); }} className="p-2 bg-red-900/50 text-red-400 rounded"><LogOut size={20}/></button></div>
+            <div className="flex gap-3">
+                <button onClick={handleOpenProfile} className="p-2 bg-slate-800 rounded hover:bg-slate-700 text-white border border-slate-700" title="Ver Perfil & Ganhar XP">
+                    <Eye size={20}/>
+                </button>
+                <button onClick={() => { supabase.auth.signOut(); router.push('/login'); }} className="p-2 bg-red-900/50 text-red-400 rounded"><LogOut size={20}/></button>
+            </div>
         </div>
 
-        {/* --- NAVEGAÇÃO --- */}
+        {/* NAVEGAÇÃO */}
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
             <button onClick={() => setActiveTab('geral')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase ${activeTab === 'geral' ? (isCompany ? 'bg-purple-600' : 'bg-cyan-600') : 'bg-slate-800 text-slate-400'}`}>Geral</button>
             <button onClick={() => setActiveTab('notificacoes')} className={`relative px-4 py-2 rounded-full text-sm font-bold uppercase flex items-center gap-2 ${activeTab === 'notificacoes' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400'}`}><Bell size={16}/> {totalNotificacoes > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white animate-pulse">{totalNotificacoes}</span>} Solicitações</button>
@@ -363,105 +451,20 @@ export default function Painel() {
             <button onClick={() => setActiveTab('contato')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase ${activeTab === 'contato' ? (isCompany ? 'bg-purple-600' : 'bg-cyan-600') : 'bg-slate-800 text-slate-400'}`}>Contato</button>
         </div>
 
+        {/* CONTEÚDO DAS ABAS */}
         <div className="space-y-6">
-            
-            {activeTab === 'geral' && (
-                isCompany ? (
-                    <TabGeralEmpresa 
-                        perfil={perfil} 
-                        setPerfil={setPerfil} 
-                        handleChange={handleChange} 
-                        handleSlugChange={handleSlugChange}
-                        handleDeleteProfilePic={handleDeleteProfilePic}
-                        isPremium={isPremium}
-                        userId={userId} // Necessário para Upload Supabase
-                    />
-                ) : (
-                    <TabGeral 
-                        perfil={perfil} 
-                        setPerfil={setPerfil} 
-                        handleChange={handleChange} 
-                        handleSlugChange={handleSlugChange}
-                        handleDeleteProfilePic={handleDeleteProfilePic}
-                        isPremium={isPremium}
-                        userId={userId} // Necessário para Upload Supabase
-                    />
-                )
-            )}
-
-            {activeTab === 'cartel' && !isCompany && perfil.is_athlete && (
-                <TabCartel 
-                    perfil={perfil}
-                    setPerfil={setPerfil}
-                    handleStatsChange={handleStatsChange}
-                    handleRecordChange={handleRecordChange}
-                />
-            )}
-
-            {activeTab === 'lutas' && !isCompany && perfil.is_athlete && (
-                <TabLutas 
-                    perfil={perfil}
-                    setPerfil={setPerfil}
-                    handleNextFightChange={handleNextFightChange}
-                />
-            )}
-
-            {activeTab === 'historico_duelos' && !isCompany && (
-                <TabHistoricoDuelos 
-                    meusDuelos={meusDuelos}
-                    perfilId={perfil.id}
-                    handleDueloAction={handleDueloAction}
-                />
-            )}
-
-            {activeTab === 'treinador' && !isCompany && perfil.is_coach && (
-                <TabTreinador 
-                    perfil={perfil}
-                    setPerfil={setPerfil}
-                />
-            )}
-
-            {activeTab === 'notificacoes' && (
-                <TabNotificacoes 
-                    notificacoes={notificacoes}
-                    convitesEquipe={convitesEquipe}
-                    handleDueloAction={handleDueloAction}
-                    handleEquipeAction={handleEquipeAction}
-                />
-            )}
-            
-            {activeTab === 'midia' && (
-                <TabMidia 
-                    perfil={perfil}
-                    setPerfil={setPerfil}
-                    handleSocialChange={handleSocialChange}
-                    handleDeleteImage={handleDeleteImage}
-                    userId={userId} // Necessário para Upload Supabase
-                />
-            )}
-            
-            {activeTab === 'metricas' && (
-                <TabMetricas 
-                    perfil={perfil}
-                    setPerfil={setPerfil}
-                    handleInstaStats={handleInstaStats}
-                    totalViews={totalViews}
-                    profileViews={profileViews}
-                    isPremium={isPremium}
-                    formatNumber={formatNumber}
-                    ageRange={ageRange} setAgeRange={setAgeRange}
-                    genderSplit={genderSplit} setGenderSplit={setGenderSplit}
-                />
-            )}
-            
-            {activeTab === 'contato' && (
-                <TabContato 
-                    perfil={perfil}
-                    handleContactChange={handleContactChange}
-                />
-            )}
+            {activeTab === 'geral' && (isCompany ? <TabGeralEmpresa perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} /> : <TabGeral perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} />)}
+            {activeTab === 'cartel' && !isCompany && perfil.is_athlete && <TabCartel perfil={perfil} setPerfil={setPerfil} handleStatsChange={handleStatsChange} handleRecordChange={handleRecordChange} />}
+            {activeTab === 'lutas' && !isCompany && perfil.is_athlete && <TabLutas perfil={perfil} setPerfil={setPerfil} handleNextFightChange={handleNextFightChange} />}
+            {activeTab === 'historico_duelos' && !isCompany && <TabHistoricoDuelos meusDuelos={meusDuelos} perfilId={perfil.id} handleDueloAction={handleDueloAction} />}
+            {activeTab === 'treinador' && !isCompany && perfil.is_coach && <TabTreinador perfil={perfil} setPerfil={setPerfil} />}
+            {activeTab === 'notificacoes' && <TabNotificacoes notificacoes={notificacoes} convitesEquipe={convitesEquipe} handleDueloAction={handleDueloAction} handleEquipeAction={handleEquipeAction} />}
+            {activeTab === 'midia' && <TabMidia perfil={perfil} setPerfil={setPerfil} handleSocialChange={handleSocialChange} handleDeleteImage={handleDeleteImage} userId={userId} />}
+            {activeTab === 'metricas' && <TabMetricas perfil={perfil} setPerfil={setPerfil} handleInstaStats={handleInstaStats} totalViews={totalViews} profileViews={profileViews} isPremium={isPremium} formatNumber={formatNumber} ageRange={ageRange} setAgeRange={setAgeRange} genderSplit={genderSplit} setGenderSplit={setGenderSplit} />}
+            {activeTab === 'contato' && <TabContato perfil={perfil} handleContactChange={handleContactChange} />}
         </div>
 
+        {/* BOTÃO SALVAR */}
         <div className="fixed bottom-6 right-6 z-50">
             <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-8 rounded-full shadow-lg transition transform hover:scale-105">
                 <Save size={24} /> {saving ? '...' : 'Salvar'}

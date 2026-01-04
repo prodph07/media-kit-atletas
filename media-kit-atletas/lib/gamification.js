@@ -10,76 +10,50 @@ export function getXpToNextLevel(currentLevel) {
 }
 
 export function getLevelProgress(currentXp, currentLevel) {
-  // Converte para número e garante que não seja NaN
   const xp = Number(currentXp);
   const level = Number(currentLevel) || 1;
   
-  // Se xp for inválido (null, undefined, NaN), retorna 0
   if (isNaN(xp) || xp < 0) return 0;
-
   const target = getXpToNextLevel(level);
-  
   if (!target || target <= 0) return 0;
   
-  // Calcula porcentagem e trava entre 0 e 100
   const percentage = (xp / target) * 100;
-  
   return Math.min(100, Math.max(0, percentage));
-
 }
 
-// --- LÓGICA DE MOLDURAS (FRAMES) COM ESCALA VARIÁVEL ---
+// --- LÓGICA DE MOLDURAS (FRAMES) ---
 export function getRankInfo(levelInput) {
   const level = Number(levelInput) || 1;
-  const basePath = "/frames"; // Certifique-se que a pasta public/frames existe
+  const basePath = "/frames"; 
 
-  // DICA DE AJUSTE (frameScale):
-  // 1.0 = Tamanho exato da foto.
-  // 1.1 = 10% maior que a foto (para bordas finas).
-  // 1.5 = 50% maior que a foto (para cinturões gigantes).
-  // Ajuste esses valores olhando no site até a borda não cortar a foto nem sobrar buraco.
-
-  // FERRO (1-30) - Geralmente bordas mais finas
   if (level <= 10) return { title: "Iron I", tier: "iron", frameUrl: `${basePath}/iron_1.png`, textColor: "text-zinc-500", frameScale: 1.4 };
   if (level <= 20) return { title: "Iron II", tier: "iron", frameUrl: `${basePath}/iron_2.png`, textColor: "text-zinc-400", frameScale: 2 };
   if (level <= 30) return { title: "Iron III", tier: "iron", frameUrl: `${basePath}/iron_3.png`, textColor: "text-zinc-300", frameScale: 1.9 };
-
-  // BRONZE (31-60)
+  
   if (level <= 40) return { title: "Bronze I", tier: "bronze", frameUrl: `${basePath}/bronze_1.png`, textColor: "text-amber-700", frameScale: 1.5 };
   if (level <= 50) return { title: "Bronze II", tier: "bronze", frameUrl: `${basePath}/bronze_2.png`, textColor: "text-amber-600", frameScale: 1.85 };
   if (level <= 60) return { title: "Bronze III", tier: "bronze", frameUrl: `${basePath}/bronze_3.png`, textColor: "text-amber-500", frameScale: 2 };
-
-  // PRATA (61-90)
+  
   if (level <= 70) return { title: "Silver I", tier: "silver", frameUrl: `${basePath}/silver_1.png`, textColor: "text-slate-400", frameScale: 1.9 };
   if (level <= 80) return { title: "Silver II", tier: "silver", frameUrl: `${basePath}/silver_2.png`, textColor: "text-slate-300", frameScale: 1.95 };
   if (level <= 90) return { title: "Silver III", tier: "silver", frameUrl: `${basePath}/silver_3.png`, textColor: "text-slate-200", frameScale: 1.73 };
-
-  // OURO (91-120)
+  
   if (level <= 100) return { title: "Gold I", tier: "gold", frameUrl: `${basePath}/gold_1.png`, textColor: "text-yellow-600", frameScale: 2.2 };
   if (level <= 110) return { title: "Gold II", tier: "gold", frameUrl: `${basePath}/gold_2.png`, textColor: "text-yellow-500", frameScale: 2.3};
   if (level <= 120) return { title: "Gold III", tier: "gold", frameUrl: `${basePath}/gold_3.png`, textColor: "text-yellow-400", frameScale: 1.73 };
-
-  // PLATINA (121-150)
+  
   if (level <= 130) return { title: "Platinum I", tier: "platinum", frameUrl: `${basePath}/platinum_1.png`, textColor: "text-cyan-600", frameScale: 1.35 };
   if (level <= 140) return { title: "Platinum II", tier: "platinum", frameUrl: `${basePath}/platinum_2.png`, textColor: "text-cyan-500", frameScale: 1.35 };
   if (level <= 150) return { title: "Platinum III", tier: "platinum", frameUrl: `${basePath}/platinum_3.png`, textColor: "text-cyan-400", frameScale: 1.73 };
-
-  // DIAMANTE (151-199) - Cinturões largos
+  
   if (level <= 165) return { title: "Diamond I", tier: "diamond", frameUrl: `${basePath}/diamond_1.png`, textColor: "text-indigo-500", frameScale: 1.40 };
   if (level <= 180) return { title: "Diamond II", tier: "diamond", frameUrl: `${basePath}/diamond_2.png`, textColor: "text-indigo-400", frameScale: 1.40 };
   if (level <= 199) return { title: "Diamond III", tier: "diamond", frameUrl: `${basePath}/diamond_3.png`, textColor: "text-indigo-300", frameScale: 1.73 };
-
-  // GOAT (200+) - O maior
-  return { 
-      title: "G.O.A.T.", 
-      tier: "goat", 
-      frameUrl: `${basePath}/goat.png`,
-      textColor: "text-pink-500",
-      frameScale: 1.50 
-  };
+  
+  return { title: "G.O.A.T.", tier: "goat", frameUrl: `${basePath}/goat.png`, textColor: "text-pink-500", frameScale: 1.50 };
 }
 
-// --- ENGINE DE TAREFAS (Setup) ---
+// --- ENGINE DE TAREFAS (XP e Recompensas) ---
 const REWARDS = {
   SETUP_BUNDLE_BASIC: 100,
   COMPLETE_PHYSICAL_STATS: 25,
@@ -89,8 +63,40 @@ const REWARDS = {
   GALLERY_TIER_1: 15,
   GALLERY_TIER_2: 50,
   VIDEO_TIER_1: 15,
-  VIDEO_TIER_2: 50
+  VIDEO_TIER_2: 50,
+  
+  // Novas Tarefas
+  JOIN_TEAM: 200,      
+  SOCIAL_PRO: 50,       
+  STORYTELLER: 30,      
+  FIGHT_VETERAN: 40,
+  
+  // Eventos Dinâmicos (Valores de referência)
+  CONNECTION_BONUS: 150, 
+  WEIGHT_CHECKIN: 50,
+  DAILY_LOGIN: 10,
+  SHARE_BONUS: 30,
+  VOTE_BONUS: 15
 };
+
+// Função auxiliar para calcular novo nível
+export function calculateNewLevelState(currentXp, currentLevel, xpGained) {
+    let newXp = (currentXp || 0) + xpGained;
+    let newLevel = (currentLevel || 1);
+    let levelUp = false;
+
+    while (true) {
+        const target = getXpToNextLevel(newLevel);
+        if (newXp >= target) {
+            newLevel++;
+            newXp -= target;
+            levelUp = true;
+        } else {
+            break;
+        }
+    }
+    return { newXp, newLevel, levelUp };
+}
 
 export function processGamification(perfil, currentTasks = []) {
   let xpGained = 0;
@@ -105,6 +111,7 @@ export function processGamification(perfil, currentTasks = []) {
     }
   };
 
+  // 1. TAREFAS BÁSICAS
   const hasSocial = perfil.socials && Object.values(perfil.socials).some(s => s.active && s.user);
   checkTask('SETUP_BUNDLE_BASIC', (perfil.foto_url && perfil.about && hasSocial), 'Perfil Básico Configurado');
 
@@ -125,10 +132,26 @@ export function processGamification(perfil, currentTasks = []) {
   checkTask('VIDEO_TIER_1', (videoCount >= 1), 'Primeiro Vídeo Adicionado');
   checkTask('VIDEO_TIER_2', (videoCount >= 5), 'Videoteca (5 vídeos)');
 
+  // 2. TAREFAS DE EQUIPE
+  const hasCoach = perfil.connected_coaches && perfil.connected_coaches.length > 0;
+  checkTask('JOIN_TEAM', hasCoach, 'Entrou para uma Equipe');
+  
+  // 3. TAREFAS EXTRAS
+  const activeSocialsCount = perfil.socials ? Object.values(perfil.socials).filter(s => s.active && s.user && s.user.length > 0).length : 0;
+  checkTask('SOCIAL_PRO', (activeSocialsCount >= 3), 'Influenciador (3+ Redes Conectadas)');
+
+  const bioLength = perfil.about ? perfil.about.length : 0;
+  checkTask('STORYTELLER', (bioLength >= 100), 'Biografia Detalhada');
+
+  const historyCount = perfil.historico ? perfil.historico.length : 0;
+  checkTask('FIGHT_VETERAN', (historyCount >= 5), 'Veterano (5+ Lutas no Histórico)');
+
   return { xpGained, newTasks, notifications };
 }
 
-// --- FUNÇÕES DE RECORRÊNCIA ---
+// --- FUNÇÕES DE RECORRÊNCIA (DIÁRIAS E SEMANAIS) ---
+
+// 1. Duelo (Semanal)
 export function processDuelParticipation(currentWeeklyStats) {
   const stats = currentWeeklyStats || {};
   const lastDate = stats.last_duel_participation_date ? new Date(stats.last_duel_participation_date) : null;
@@ -143,10 +166,10 @@ export function processDuelParticipation(currentWeeklyStats) {
       message: "XP Semanal de Duelo: +75 XP!"
     };
   }
-  const daysLeft = Math.ceil((SEVEN_DAYS_MS - (now.getTime() - lastDate.getTime())) / (1000 * 60 * 60 * 24));
-  return { xpGained: 0, updatedStats: stats, success: false, message: `Você já ganhou XP de duelo essa semana. Volte em ${daysLeft} dias.` };
+  return { xpGained: 0, updatedStats: stats, success: false };
 }
 
+// 2. Viralizou (Visitas)
 export function processVisitMilestone(currentViews, currentWeeklyStats) {
     const stats = { visits_snapshot: 0, visits_xp_earned: 0, last_weekly_reset: new Date().toISOString(), ...(currentWeeklyStats || {}) };
     const lastReset = stats.last_weekly_reset ? new Date(stats.last_weekly_reset) : new Date();
@@ -177,4 +200,102 @@ export function processVisitMilestone(currentViews, currentWeeklyStats) {
         }
     }
     return { xpGained: 0, updatedStats: stats, success: false };
+}
+
+// 3. Login Diário com Streak
+export function processDailyLogin(currentStats) {
+    const stats = currentStats || {};
+    const lastLogin = stats.last_login_date ? new Date(stats.last_login_date) : null;
+    const now = new Date();
+    
+    // Compara dia/mês/ano para garantir que é um novo dia
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const lastDate = lastLogin ? new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate()).getTime() : 0;
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+    // Se já logou hoje, retorna falso
+    if (lastDate === today) {
+        return { success: false, xpGained: 0, updatedStats: stats };
+    }
+
+    let streak = stats.login_streak || 0;
+    let message = "";
+    let xp = REWARDS.DAILY_LOGIN;
+
+    // Lógica de Streak: Se a diferença for ~1 dia, mantém a chama acesa
+    if (today - lastDate === ONE_DAY_MS) {
+        streak++;
+        message = `🔥 ${streak} Dias Seguidos! (+${xp} XP)`;
+        // Bônus semanal
+        if (streak % 7 === 0) {
+            xp += 100;
+            message = `🔥 ${streak} Dias! Bônus de Disciplina (+${xp} XP)`;
+        }
+    } else {
+        streak = 1; // Reseta se quebrou a corrente
+        message = `Login Diário (+${xp} XP)`;
+    }
+
+    return {
+        success: true,
+        xpGained: xp,
+        streak: streak,
+        message: message,
+        updatedStats: { ...stats, last_login_date: now.toISOString(), login_streak: streak }
+    };
+}
+
+// 4. Compartilhar Perfil (Semanal)
+export function processWeeklyShare(currentStats) {
+    const stats = currentStats || {};
+    const lastShare = stats.last_share_date ? new Date(stats.last_share_date) : null;
+    const now = new Date();
+    const COOLDOWN = 7 * 24 * 60 * 60 * 1000; // 7 dias
+
+    if (!lastShare || (now - lastShare) > COOLDOWN) {
+        return {
+            success: true,
+            xpGained: REWARDS.SHARE_BONUS,
+            message: `Hype da Semana: Link compartilhado (+${REWARDS.SHARE_BONUS} XP)`,
+            updatedStats: { ...stats, last_share_date: now.toISOString() }
+        };
+    }
+    return { success: false };
+}
+
+// 5. Atualizar Peso (Semanal)
+export function processWeightCheckIn(currentStats) {
+    const stats = currentStats || {};
+    const lastUpdate = stats.last_weight_update ? new Date(stats.last_weight_update) : null;
+    const now = new Date();
+    const COOLDOWN = 7 * 24 * 60 * 60 * 1000; // 7 dias
+
+    if (!lastUpdate || (now - lastUpdate) > COOLDOWN) {
+        return {
+            success: true,
+            xpGained: REWARDS.WEIGHT_CHECKIN,
+            message: `Disciplina: Peso atualizado (+${REWARDS.WEIGHT_CHECKIN} XP)`,
+            updatedStats: { ...stats, last_weight_update: now.toISOString() }
+        };
+    }
+    return { success: false };
+}
+
+// 6. Voto em Duelo (Diário)
+export function processDuelVoting(currentStats) {
+    const stats = currentStats || {};
+    const lastVote = stats.last_vote_date ? new Date(stats.last_vote_date) : null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const lastDate = lastVote ? new Date(lastVote.getFullYear(), lastVote.getMonth(), lastVote.getDate()).getTime() : 0;
+
+    if (lastDate !== today) {
+        return {
+            success: true,
+            xpGained: REWARDS.VOTE_BONUS,
+            message: `Juri Ativo: Você votou em um duelo (+${REWARDS.VOTE_BONUS} XP)`,
+            updatedStats: { ...stats, last_vote_date: now.toISOString() }
+        };
+    }
+    return { success: false };
 }
