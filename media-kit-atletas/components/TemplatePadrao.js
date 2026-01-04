@@ -1,21 +1,27 @@
 'use client';
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Mail, Share2, X as XIcon, GraduationCap } from 'lucide-react'; 
 
+// --- IMPORTAÇÕES MODULARES ---
 import HeroSection from './templates/padrao/HeroSection';
 import StatsSection from './templates/padrao/StatsSection';
 import MetricsSection from './templates/padrao/MetricsSection';
 import MediaSection from './templates/padrao/MediaSection';
 import ContactSection from './templates/padrao/ContactSection';
 import CoachSection from './templates/CoachSection';
-// NOVO IMPORT:
 import TeamSection from './templates/padrao/TeamSection';
+
+// --- NOVOS IMPORTES (Para corrigir a falta de dados) ---
+import BioStatsAwards from './templates/padrao/BioStatsAwards';
+import FightHistory from './templates/padrao/FightHistory';
 
 export function TemplatePadrao({ data }) {
     const athleteData = data;
     const [publicViewCount, setPublicViewCount] = useState(0);
 
+    // LÓGICA DE VIEWS
     useEffect(() => {
         const ATLETA_ID = athleteData?.id; 
         if (!ATLETA_ID) return;
@@ -27,10 +33,12 @@ export function TemplatePadrao({ data }) {
         handleViews();
     }, [athleteData]);
 
+    // LÓGICA DO MODAL DE MÍDIA
     const [selectedMedia, setSelectedMedia] = useState(null); 
     const openMedia = (type, src) => setSelectedMedia({ type, src });
     const closeMedia = () => setSelectedMedia(null);
 
+    // HELPERS
     const formatName = (name, nickname) => {
         if (!name) return { main: '', alias: '' };
         const mainName = nickname ? name.replace(new RegExp(`['"]?${nickname}['"]?`, 'i'), '').trim() : name;
@@ -48,6 +56,7 @@ export function TemplatePadrao({ data }) {
     }, [athleteData]);
 
     const hasInstaMetrics = athleteData.socials?.instagram?.stats?.reach || athleteData.socials?.instagram?.audience?.age;
+    
     const copyLink = () => { if (typeof window !== "undefined") { navigator.clipboard.writeText(window.location.href); alert("Link copiado!"); } };
 
     if (!athleteData) return <div className="text-white p-10 text-center">Carregando perfil...</div>;
@@ -56,6 +65,7 @@ export function TemplatePadrao({ data }) {
         <div className="min-h-screen bg-[#0a0a0c] text-slate-200 font-sans selection:bg-cyan-500/30 pb-20">
              <style jsx global>{` .custom-scrollbar::-webkit-scrollbar { width: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: #0a0a0c; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; } .scrollbar-hide::-webkit-scrollbar { display: none; } @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } } .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; } `}</style>
              
+             {/* MODAL MIDIA */}
              {selectedMedia && ( 
                  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 animate-fadeIn backdrop-blur-sm" onClick={closeMedia}> 
                     <div className="relative w-full max-w-5xl bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-800" onClick={e => e.stopPropagation()}> 
@@ -65,6 +75,7 @@ export function TemplatePadrao({ data }) {
                  </div> 
              )}
              
+             {/* BACKGROUND */}
              <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden"> <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-cyan-600/10 rounded-full blur-[80px] sm:blur-[120px]"></div> <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-red-600/10 rounded-full blur-[80px] sm:blur-[120px]"></div> </div>
              
              <nav className="sticky top-0 z-50 border-b border-slate-800 bg-[#0a0a0c]/90 backdrop-blur-md"> 
@@ -82,12 +93,14 @@ export function TemplatePadrao({ data }) {
              
              <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-16">
                 
+                {/* 1. HERO */}
                 <HeroSection 
                     athleteData={athleteData} 
                     formattedName={formattedName} 
                     publicViewCount={publicViewCount} 
                 />
 
+                {/* 2. MENU INTERNO */}
                 <div className="flex items-center gap-4 sm:gap-6 border-b border-slate-800 mb-8 overflow-x-auto pb-2 scrollbar-hide"> 
                     <a href="#stats-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-cyan-400 hover:text-white transition-colors whitespace-nowrap">Estatísticas</a> 
                     {athleteData.is_coach && (
@@ -100,28 +113,42 @@ export function TemplatePadrao({ data }) {
                     <a href="#contact-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-slate-500 hover:text-white transition-colors whitespace-nowrap">Contato</a> 
                 </div>
                 
+                {/* 3. STATS DE LUTA (Win/Loss/KO) */}
                 <StatsSection 
                     athleteData={athleteData} 
                     computedStats={computedStats} 
                 />
 
-                {/* --- SEÇÃO DO ATLETA: MOSTRAR TREINADORES --- */}
+                {/* --- 4. NOVAS SEÇÕES: BIO, ATRIBUTOS, PRÊMIOS E SOCIAL --- */}
+                <BioStatsAwards athleteData={athleteData} />
+
+                {/* --- 5. HISTÓRICO DE LUTAS (Só Atletas) --- */}
+                {athleteData.is_athlete && (
+                    <FightHistory history={athleteData.historico} />
+                )}
+
+                {/* 6. MEUS TREINADORES (Se for Atleta) */}
                 {athleteData.connected_coaches && athleteData.connected_coaches.length > 0 && (
                     <TeamSection coaches={athleteData.connected_coaches} />
                 )}
 
-                {/* --- SEÇÃO DO TREINADOR: MOSTRAR ALUNOS --- */}
+                {/* 7. ÁREA DO TREINADOR (Se for Coach) */}
                 {athleteData.is_coach && (
                     <div id="coach-section">
                         <CoachSection 
                             coachDetails={athleteData.coach_details} 
-                            studentsList={athleteData.connected_students} // Passa a lista real do banco
+                            studentsList={athleteData.connected_students} // Lista de alunos do banco
                             theme="default" 
                         />
                     </div>
                 )}
                 
-                {hasInstaMetrics && ( <MetricsSection athleteData={athleteData} /> )}
+                {/* 8. MÉTRICAS INSTAGRAM */}
+                {hasInstaMetrics && ( 
+                    <MetricsSection athleteData={athleteData} />
+                )}
+                
+                {/* 9. MÍDIA E CONTATO */}
                 <MediaSection athleteData={athleteData} onOpenMedia={openMedia} />
                 <ContactSection athleteData={athleteData} />
              

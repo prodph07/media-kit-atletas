@@ -168,7 +168,7 @@ export default function Painel() {
 
         // 4. CARREGA VIEWS
         setTotalViews(totalV);
-        const { data: viewsData } = await supabase.from('profile_views').select('created_at, visitante_tipo, visitante_id').eq('perfil_visitado_id', ATLETA_ID_NUMERICO).neq('visitante_tipo', 'anonimo').order('created_at', { ascending: false }).limit(data.plano === 'premium' ? 20 : 5);
+        const { data: viewsData } = await supabase.from('profile_views').select('created_at, visitante_tipo, visitante_id').eq('perfil_visitado_id', ATLETA_ID_NUMERICO).neq('visitante_tipo', 'anonimo').order('created_at', { ascending: false }).limit(data.plano === 'premium' ? 100 : 20);
         
         let viewsCompletas = viewsData || [];
         if (viewsData && viewsData.length > 0) {

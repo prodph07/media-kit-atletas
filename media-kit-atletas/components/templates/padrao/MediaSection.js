@@ -1,41 +1,100 @@
 import React from 'react';
-import { Play } from 'lucide-react';
+import { Play, Image as ImageIcon, Video } from 'lucide-react';
 
 export default function MediaSection({ athleteData, onOpenMedia }) {
+    // Garante que pega as listas, mesmo que venham nulas
+    const videos = athleteData.video_lista || [];
+    const gallery = athleteData.galeria || [];
+
+    // Se não tiver nada, não renderiza a seção
+    if (videos.length === 0 && gallery.length === 0) return null;
+
     return (
-        <section id="media-section" className="animate-fadeIn scroll-mt-24"> 
-            <div className="flex items-center gap-4 mb-8">
-                <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-                    Galeria e <span className="text-cyan-400">Vídeos</span>
-                </h2>
-                <div className="h-px bg-slate-800 flex-grow"></div>
-            </div> 
+        <div id="media-section" className="w-full max-w-7xl mx-auto mb-20 animate-fadeIn">
             
-            {/* VÍDEOS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"> 
-                {athleteData.videos?.map((item, index) => ( 
-                    <div key={index} onClick={() => onOpenMedia('video', item.embedUrl)} className="group relative aspect-video bg-slate-900 rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-cyan-400/50 transition-all"> 
-                        <img src={item.thumb || "https://placehold.co/600x400/1e293b/FFF?text=VIDEO"} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" /> 
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-12 h-12 rounded-full bg-cyan-500/80 text-black flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
-                                <Play fill="currentColor" size={20} />
+            <div className="flex items-center gap-3 mb-8 px-4 sm:px-0">
+                <div className="p-2 bg-slate-800 rounded-lg text-slate-300">
+                    <Video size={24} />
+                </div>
+                <h3 className="text-2xl font-bold text-white uppercase tracking-tight">Galeria & Mídia</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 sm:px-0">
+                
+                {/* --- RENDERIZAÇÃO DOS VÍDEOS --- */}
+                {videos.map((video, idx) => {
+                    // Lógica Híbrida: Aceita tanto String (Link) quanto Objeto (do novo painel)
+                    const isString = typeof video === 'string';
+                    const embedUrl = isString ? video : (video.embedUrl || video.url);
+                    const title = isString ? "Vídeo" : (video.title || "Highlight");
+                    const thumb = isString ? null : video.thumb;
+
+                    if (!embedUrl) return null;
+
+                    return (
+                        <div 
+                            key={`vid-${idx}`} 
+                            onClick={() => onOpenMedia('video', embedUrl)}
+                            className="group relative aspect-video bg-black rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-cyan-500/50 transition-all shadow-lg"
+                        >
+                            {/* Thumbnail (Se existir, ou fallback escuro) */}
+                            {thumb ? (
+                                <img 
+                                    src={thumb} 
+                                    alt={title} 
+                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" 
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-slate-900 flex items-center justify-center group-hover:bg-slate-800 transition-colors">
+                                    <Play className="text-slate-700 w-12 h-12" />
+                                </div>
+                            )}
+
+                            {/* Ícone de Play Central */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center group-hover:scale-110 group-hover:bg-cyan-500 group-hover:border-cyan-400 transition-all duration-300">
+                                    <Play className="w-6 h-6 text-white ml-1 fill-white" />
+                                </div>
                             </div>
-                        </div> 
-                        <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black to-transparent">
-                            <p className="text-white font-bold text-sm truncate">{item.title}</p>
-                        </div> 
-                    </div> 
-                ))} 
-            </div> 
-            
-            {/* FOTOS */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4"> 
-                {athleteData.gallery?.map((item, index) => ( 
-                    <div key={index} onClick={() => onOpenMedia('image', item.full)} className="aspect-square bg-slate-800 rounded-lg overflow-hidden hover:opacity-80 transition-opacity cursor-pointer border border-slate-800 hover:border-cyan-400/30"> 
-                        <img src={item.thumb || "https://placehold.co/400x400/1e293b/FFF?text=FOTO"} alt={`Galeria ${index}`} className="w-full h-full object-cover" /> 
-                    </div> 
-                ))} 
-            </div> 
-        </section>
+
+                            {/* Título no Rodapé */}
+                            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black via-black/80 to-transparent">
+                                <p className="text-white font-bold text-sm truncate">{title}</p>
+                                <p className="text-xs text-slate-400 uppercase tracking-wider">Assistir</p>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {/* --- RENDERIZAÇÃO DA GALERIA --- */}
+                {gallery.map((img, idx) => {
+                    // Lógica Híbrida: Aceita String ou Objeto
+                    const src = typeof img === 'string' ? img : (img.thumb || img.full || img.url);
+                    const full = typeof img === 'string' ? img : (img.full || img.url || img.thumb);
+
+                    if (!src) return null;
+
+                    return (
+                        <div 
+                            key={`img-${idx}`} 
+                            onClick={() => onOpenMedia('image', full)}
+                            className="group relative aspect-square bg-slate-900 rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-slate-600 transition-all shadow-lg"
+                        >
+                            <img 
+                                src={src} 
+                                alt="Galeria" 
+                                className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" 
+                            />
+                            
+                            {/* Overlay ao passar o mouse */}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                                <ImageIcon className="text-white w-8 h-8 drop-shadow-md" />
+                            </div>
+                        </div>
+                    );
+                })}
+
+            </div>
+        </div>
     );
 }
