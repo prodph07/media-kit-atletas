@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Mail, Share2, X as XIcon, GraduationCap } from 'lucide-react'; 
 
-// --- IMPORTAÇÕES MODULARES ---
+// --- IMPORTAÇÕES ---
 import HeroSection from './templates/padrao/HeroSection';
 import StatsSection from './templates/padrao/StatsSection';
 import MetricsSection from './templates/padrao/MetricsSection';
@@ -12,16 +12,14 @@ import MediaSection from './templates/padrao/MediaSection';
 import ContactSection from './templates/padrao/ContactSection';
 import CoachSection from './templates/CoachSection';
 import TeamSection from './templates/padrao/TeamSection';
-
-// --- NOVOS IMPORTES (Para corrigir a falta de dados) ---
 import BioStatsAwards from './templates/padrao/BioStatsAwards';
 import FightHistory from './templates/padrao/FightHistory';
+import NextFightSection from './templates/padrao/NextFightSection';
 
 export function TemplatePadrao({ data }) {
     const athleteData = data;
     const [publicViewCount, setPublicViewCount] = useState(0);
 
-    // LÓGICA DE VIEWS
     useEffect(() => {
         const ATLETA_ID = athleteData?.id; 
         if (!ATLETA_ID) return;
@@ -33,12 +31,10 @@ export function TemplatePadrao({ data }) {
         handleViews();
     }, [athleteData]);
 
-    // LÓGICA DO MODAL DE MÍDIA
     const [selectedMedia, setSelectedMedia] = useState(null); 
     const openMedia = (type, src) => setSelectedMedia({ type, src });
     const closeMedia = () => setSelectedMedia(null);
 
-    // HELPERS
     const formatName = (name, nickname) => {
         if (!name) return { main: '', alias: '' };
         const mainName = nickname ? name.replace(new RegExp(`['"]?${nickname}['"]?`, 'i'), '').trim() : name;
@@ -56,7 +52,6 @@ export function TemplatePadrao({ data }) {
     }, [athleteData]);
 
     const hasInstaMetrics = athleteData.socials?.instagram?.stats?.reach || athleteData.socials?.instagram?.audience?.age;
-    
     const copyLink = () => { if (typeof window !== "undefined") { navigator.clipboard.writeText(window.location.href); alert("Link copiado!"); } };
 
     if (!athleteData) return <div className="text-white p-10 text-center">Carregando perfil...</div>;
@@ -75,7 +70,6 @@ export function TemplatePadrao({ data }) {
                  </div> 
              )}
              
-             {/* BACKGROUND */}
              <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden"> <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-cyan-600/10 rounded-full blur-[80px] sm:blur-[120px]"></div> <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-red-600/10 rounded-full blur-[80px] sm:blur-[120px]"></div> </div>
              
              <nav className="sticky top-0 z-50 border-b border-slate-800 bg-[#0a0a0c]/90 backdrop-blur-md"> 
@@ -91,65 +85,70 @@ export function TemplatePadrao({ data }) {
                 </div> 
              </nav>
              
-             <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-16">
+             {/* AUMENTO DO ESPAÇAMENTO GERAL: gap-24 (96px) */}
+             <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col gap-24">
                 
-                {/* 1. HERO */}
-                <HeroSection 
-                    athleteData={athleteData} 
-                    formattedName={formattedName} 
-                    publicViewCount={publicViewCount} 
-                />
+                {/* GRUPO DE CABEÇALHO */}
+                <div className="flex flex-col gap-6">
+                    <HeroSection 
+                        athleteData={athleteData} 
+                        formattedName={formattedName} 
+                        publicViewCount={publicViewCount} 
+                    />
 
-                {/* 2. MENU INTERNO */}
-                <div className="flex items-center gap-4 sm:gap-6 border-b border-slate-800 mb-8 overflow-x-auto pb-2 scrollbar-hide"> 
-                    <a href="#stats-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-cyan-400 hover:text-white transition-colors whitespace-nowrap">Estatísticas</a> 
-                    {athleteData.is_coach && (
-                        <a href="#coach-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-orange-500 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1">
-                           <GraduationCap size={14}/> Treinador
-                        </a>
-                    )}
-                    {hasInstaMetrics && <a href="#metrics-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-pink-500 hover:text-white transition-colors whitespace-nowrap">Métricas</a>} 
-                    <a href="#media-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-slate-500 hover:text-white transition-colors whitespace-nowrap">Galeria</a> 
-                    <a href="#contact-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-slate-500 hover:text-white transition-colors whitespace-nowrap">Contato</a> 
+                    <NextFightSection nextFight={athleteData.nextFight} />
+
+                    <div className="flex items-center gap-4 sm:gap-6 border-b border-slate-800 overflow-x-auto pb-2 scrollbar-hide"> 
+                        <a href="#stats-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-cyan-400 hover:text-white transition-colors whitespace-nowrap">Estatísticas</a> 
+                        {athleteData.is_coach && (
+                            <a href="#coach-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-orange-500 hover:text-white transition-colors whitespace-nowrap flex items-center gap-1">
+                            <GraduationCap size={14}/> Treinador
+                            </a>
+                        )}
+                        {hasInstaMetrics && <a href="#metrics-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-pink-500 hover:text-white transition-colors whitespace-nowrap">Métricas</a>} 
+                        <a href="#media-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-slate-500 hover:text-white transition-colors whitespace-nowrap">Galeria</a> 
+                        <a href="#contact-section" className="text-xs sm:text-sm font-bold uppercase tracking-widest pb-4 text-slate-500 hover:text-white transition-colors whitespace-nowrap">Contato</a> 
+                    </div>
                 </div>
                 
-                {/* 3. STATS DE LUTA (Win/Loss/KO) */}
                 <StatsSection 
                     athleteData={athleteData} 
                     computedStats={computedStats} 
                 />
 
-                {/* --- 4. NOVAS SEÇÕES: BIO, ATRIBUTOS, PRÊMIOS E SOCIAL --- */}
                 <BioStatsAwards athleteData={athleteData} />
 
-                {/* --- 5. HISTÓRICO DE LUTAS (Só Atletas) --- */}
                 {athleteData.is_athlete && (
                     <FightHistory history={athleteData.historico} />
                 )}
 
-                {/* 6. MEUS TREINADORES (Se for Atleta) */}
                 {athleteData.connected_coaches && athleteData.connected_coaches.length > 0 && (
                     <TeamSection coaches={athleteData.connected_coaches} />
                 )}
 
-                {/* 7. ÁREA DO TREINADOR (Se for Coach) */}
+                {/* SEM LINHA BRANCA - APENAS ESPAÇO EXTRA (MT-10) */}
                 {athleteData.is_coach && (
-                    <div id="coach-section">
+                    <div id="coach-section" className="mt-10">
                         <CoachSection 
                             coachDetails={athleteData.coach_details} 
-                            studentsList={athleteData.connected_students} // Lista de alunos do banco
+                            studentsList={athleteData.connected_students} 
                             theme="default" 
                         />
                     </div>
                 )}
                 
-                {/* 8. MÉTRICAS INSTAGRAM */}
+                {/* SEM LINHA BRANCA - APENAS ESPAÇO EXTRA (MT-10) */}
                 {hasInstaMetrics && ( 
-                    <MetricsSection athleteData={athleteData} />
+                    <div id="metrics-section" className="mt-10">
+                        <MetricsSection athleteData={athleteData} />
+                    </div>
                 )}
                 
-                {/* 9. MÍDIA E CONTATO */}
-                <MediaSection athleteData={athleteData} onOpenMedia={openMedia} />
+                {/* SEM LINHA BRANCA - APENAS ESPAÇO EXTRA (MT-10) */}
+                <div className="mt-10">
+                    <MediaSection athleteData={athleteData} onOpenMedia={openMedia} />
+                </div>
+
                 <ContactSection athleteData={athleteData} />
              
              </main>

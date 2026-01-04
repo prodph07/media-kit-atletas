@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Script from 'next/script'; 
+// Removido Script do Cloudinary
 import { Save, LogOut, Eye, Bell, Swords, GraduationCap } from 'lucide-react';
 
 import { processGamification, getXpToNextLevel, processDuelParticipation, processVisitMilestone } from '../../lib/gamification';
@@ -22,8 +22,7 @@ import TabHistoricoDuelos from '../../components/panel/athlete/TabHistoricoDuelo
 import TabGeralEmpresa from '../../components/panel/company/TabGeralEmpresa';
 import TabTreinador from '../../components/panel/coach/TabTreinador';
 
-const CLOUD_NAME = "dgn8bzilm"; 
-const UPLOAD_PRESET = "atletas_upload"; 
+// Inicialização do Supabase
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const safeVal = (val) => val === null || val === undefined ? '' : val;
 
@@ -44,8 +43,8 @@ export default function Painel() {
   const [totalViews, setTotalViews] = useState(0);
   
   // Estados de Notificações
-  const [notificacoes, setNotificacoes] = useState([]); // Duelos
-  const [convitesEquipe, setConvitesEquipe] = useState([]); // Convites de Treinador (NOVO)
+  const [notificacoes, setNotificacoes] = useState([]); 
+  const [convitesEquipe, setConvitesEquipe] = useState([]); 
   
   const [meusDuelos, setMeusDuelos] = useState([]);
 
@@ -87,7 +86,7 @@ export default function Painel() {
       if (data) {
         const ATLETA_ID_NUMERICO = data.id; 
         
-        // --- LÓGICA DE VISITAS (Mantida) ---
+        // --- LÓGICA DE VISITAS ---
         const { count: viewCount } = await supabase.from('profile_views').select('*', { count: 'exact', head: true }).eq('perfil_visitado_id', ATLETA_ID_NUMERICO);
         const totalV = viewCount || 0;
         
@@ -147,26 +146,20 @@ export default function Painel() {
             historico: data.historico || [], video_lista: data.video_lista || [], galeria: data.galeria || [], premios: data.premios || []
         });
 
-        // 1. CARREGA DUELOS PENDENTES
+        // CARREGA DADOS RELACIONADOS
         const { data: duelosPendentes } = await supabase.from('duelos').select(`id, created_at, atleta_1_id, desafiante:atletas!atleta_1_id(nome, apelido, foto_url)`).eq('atleta_2_id', ATLETA_ID_NUMERICO).eq('status', 'pending');
         setNotificacoes(duelosPendentes || []);
 
-        // 2. CARREGA CONVITES DE EQUIPE (NOVO!)
         const { data: convitesCoach } = await supabase
             .from('relacoes')
-            .select(`
-                id, created_at, coach_id, 
-                coach:atletas!coach_id(nome, apelido, foto_url, coach_details)
-            `)
+            .select(`id, created_at, coach_id, coach:atletas!coach_id(nome, apelido, foto_url, coach_details)`)
             .eq('student_id', ATLETA_ID_NUMERICO)
             .eq('status', 'pending');
         setConvitesEquipe(convitesCoach || []);
 
-        // 3. CARREGA HISTÓRICO DE DUELOS
         const { data: historico } = await supabase.from('duelos').select(`id, created_at, status, expires_at, votos_1, votos_2, p1:atletas!atleta_1_id(id, nome, apelido, foto_url), p2:atletas!atleta_2_id(id, nome, apelido, foto_url)`).or(`atleta_1_id.eq.${ATLETA_ID_NUMERICO},atleta_2_id.eq.${ATLETA_ID_NUMERICO}`).order('created_at', { ascending: false });
         setMeusDuelos(historico || []);
 
-        // 4. CARREGA VIEWS
         setTotalViews(totalV);
         const { data: viewsData } = await supabase.from('profile_views').select('created_at, visitante_tipo, visitante_id').eq('perfil_visitado_id', ATLETA_ID_NUMERICO).neq('visitante_tipo', 'anonimo').order('created_at', { ascending: false }).limit(data.plano === 'premium' ? 100 : 20);
         
@@ -188,9 +181,48 @@ export default function Painel() {
     getData();
   }, []);
 
-  const handleDeleteImage = async (arrName, index, url) => { if(!confirm("Excluir?")) return; if(url && url.includes('cloudinary')) try { await fetch('/api/delete-image', { method: 'POST', body: JSON.stringify({ url }) }); } catch(e){} const n = [...perfil[arrName]]; n.splice(index, 1); setPerfil({...perfil, [arrName]: n}); };
-  const handleDeleteProfilePic = async () => { if(!perfil.foto_url || !confirm("Remover foto?")) return; if(perfil.foto_url.includes('cloudinary')) await fetch('/api/delete-image', { method: 'POST', body: JSON.stringify({ url: perfil.foto_url }) }); setPerfil({...perfil, foto_url: ''}); };
-  const openWidget = (onUpload, isSquare = true) => { if (!window.cloudinary) return; window.cloudinary.createUploadWidget({ cloudName: CLOUD_NAME, uploadPreset: UPLOAD_PRESET, sources: ['local', 'instagram'], multiple: false, cropping: isSquare, croppingAspectRatio: isSquare ? 1 : null, folder: 'atletas_assets' }, (error, result) => { if (!error && result && result.event === "success") onUpload(result.info.secure_url); }).open(); };
+  // --- NOVA FUNÇÃO DE DELEÇÃO SUPABASE ---
+  const deleteImageFromBucket = async (url) => {
+    // Só tenta deletar se for do nosso bucket media-kit
+    if (!url || typeof url !== 'string' || !url.includes('/media-kit/')) return;
+
+    try {
+        // Extrai o caminho: user_id/timestamp.webp
+        const path = url.split('/media-kit/')[1];
+        if (path) {
+            console.log("Deletando do Supabase:", path);
+            const { error } = await supabase.storage
+                .from('media-kit')
+                .remove([path]);
+            
+            if (error) console.error("Erro Supabase Storage:", error);
+        }
+    } catch (err) {
+        console.error("Erro ao limpar imagem:", err);
+    }
+  };
+
+  const handleDeleteImage = async (arrName, index, url) => { 
+      if(!confirm("Excluir imagem permanentemente?")) return; 
+      
+      // 1. Deleta do Bucket Supabase
+      await deleteImageFromBucket(url);
+
+      // 2. Atualiza Estado Visual
+      const n = [...perfil[arrName]]; 
+      n.splice(index, 1); 
+      setPerfil({...perfil, [arrName]: n}); 
+  };
+
+  const handleDeleteProfilePic = async () => { 
+      if(!perfil.foto_url || !confirm("Remover foto de perfil?")) return; 
+      
+      // 1. Deleta do Bucket Supabase
+      await deleteImageFromBucket(perfil.foto_url);
+
+      // 2. Atualiza Estado Visual
+      setPerfil({...perfil, foto_url: ''}); 
+  };
   
   // HANDLERS GENÉRICOS
   const handleChange = (e) => setPerfil({...perfil, [e.target.name]: e.target.value});
@@ -202,30 +234,18 @@ export default function Painel() {
   const handleInstaStats = (c, f, v) => setPerfil(prev => ({ ...prev, socials: { ...prev.socials, instagram: { ...prev.socials.instagram, [c]: { ...prev.socials.instagram[c], [f]: v } } } }));
   const handleSocialChange = (network, field, value) => { setPerfil(prev => ({ ...prev, socials: { ...prev.socials, [network]: { ...prev.socials[network], [field]: value, active: !!value || prev.socials[network].active } } })); };
   
-  // --- AÇÃO DE EQUIPE (ACEITAR/RECUSAR TREINADOR) ---
+  // DUELO E EQUIPE LOGIC
   const handleEquipeAction = async (inviteId, action) => {
     if (action === 'accept') {
-        const { error } = await supabase
-            .from('relacoes')
-            .update({ status: 'accepted' })
-            .eq('id', inviteId);
-            
-        if (!error) {
-            alert("Convite aceito! Você agora faz parte da equipe.");
-            setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId));
-        } else {
-            alert("Erro ao aceitar: " + error.message);
-        }
+        const { error } = await supabase.from('relacoes').update({ status: 'accepted' }).eq('id', inviteId);
+        if (!error) { alert("Convite aceito!"); setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId)); }
+        else { alert("Erro: " + error.message); }
     } else {
         const { error } = await supabase.from('relacoes').delete().eq('id', inviteId);
-        if (!error) {
-            alert("Convite recusado.");
-            setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId));
-        }
+        if (!error) { alert("Convite recusado."); setConvitesEquipe(prev => prev.filter(c => c.id !== inviteId)); }
     }
   };
 
-  // DUELO LOGIC
   const handleDueloAction = async (dueloId, action) => {
      if (action === 'accept') {
         try {
@@ -311,18 +331,17 @@ export default function Painel() {
   if (loading) return <div className="text-white p-10 text-center">Carregando...</div>;
   const isPremium = perfil.plano === 'premium';
   const isCompany = perfil.tipo_conta === 'empresa';
-  const totalNotificacoes = notificacoes.length + convitesEquipe.length; // Soma duelos + convites
+  const totalNotificacoes = notificacoes.length + convitesEquipe.length;
   
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-white p-4 pb-32 font-sans">
-      <Script src="https://upload-widget.cloudinary.com/global/all.js" strategy="lazyOnload" />
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6 bg-slate-900 p-4 rounded-xl border border-slate-800">
             <div className="flex items-center gap-2"><h1 className="text-2xl font-bold">Painel</h1>{isPremium ? <span className="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded border border-yellow-500/50 font-bold uppercase">PREMIUM</span> : <span className="bg-slate-700 text-slate-400 text-xs px-2 py-1 rounded font-bold uppercase">GRÁTIS</span>}</div>
             <div className="flex gap-3"><Link href={`/${perfil.slug || perfil.id}`} target="_blank" className="p-2 bg-slate-800 rounded hover:bg-slate-700"><Eye size={20}/></Link><button onClick={() => { supabase.auth.signOut(); router.push('/login'); }} className="p-2 bg-red-900/50 text-red-400 rounded"><LogOut size={20}/></button></div>
         </div>
 
-        {/* --- NAVEGAÇÃO INTELIGENTE --- */}
+        {/* --- NAVEGAÇÃO --- */}
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
             <button onClick={() => setActiveTab('geral')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase ${activeTab === 'geral' ? (isCompany ? 'bg-purple-600' : 'bg-cyan-600') : 'bg-slate-800 text-slate-400'}`}>Geral</button>
             <button onClick={() => setActiveTab('notificacoes')} className={`relative px-4 py-2 rounded-full text-sm font-bold uppercase flex items-center gap-2 ${activeTab === 'notificacoes' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400'}`}><Bell size={16}/> {totalNotificacoes > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white animate-pulse">{totalNotificacoes}</span>} Solicitações</button>
@@ -353,9 +372,9 @@ export default function Painel() {
                         setPerfil={setPerfil} 
                         handleChange={handleChange} 
                         handleSlugChange={handleSlugChange}
-                        openWidget={openWidget}
                         handleDeleteProfilePic={handleDeleteProfilePic}
                         isPremium={isPremium}
+                        userId={userId} // Necessário para Upload Supabase
                     />
                 ) : (
                     <TabGeral 
@@ -363,9 +382,9 @@ export default function Painel() {
                         setPerfil={setPerfil} 
                         handleChange={handleChange} 
                         handleSlugChange={handleSlugChange}
-                        openWidget={openWidget}
                         handleDeleteProfilePic={handleDeleteProfilePic}
                         isPremium={isPremium}
+                        userId={userId} // Necessário para Upload Supabase
                     />
                 )
             )}
@@ -416,8 +435,8 @@ export default function Painel() {
                     perfil={perfil}
                     setPerfil={setPerfil}
                     handleSocialChange={handleSocialChange}
-                    openWidget={openWidget}
                     handleDeleteImage={handleDeleteImage}
+                    userId={userId} // Necessário para Upload Supabase
                 />
             )}
             

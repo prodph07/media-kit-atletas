@@ -2,7 +2,7 @@ export const runtime = 'edge';
 
 import { supabase } from '../../lib/supabase'
 import { TemplatePadrao } from '../../components/TemplatePadrao'
-import TemplateCyber from '../../components/TemplateCyber' 
+// import TemplateCyber from '../../components/TemplateCyber' (Removido temporariamente)
 import Link from 'next/link' 
 import ViewTracker from '../../components/ViewTracker'
 
@@ -14,7 +14,7 @@ async function getAtleta(slug) {
     .eq('slug', slug)
     .maybeSingle()
 
-  // Fallback: Se não achar por slug, tenta por ID (caso slug seja número)
+  // Fallback: Se não achar por slug, tenta por ID
   if (!atleta && !isNaN(slug)) {
     const { data: atletaPorId } = await supabase.from('atletas').select('*').eq('id', slug).maybeSingle()
     if (atletaPorId) atleta = atletaPorId
@@ -25,22 +25,18 @@ async function getAtleta(slug) {
   const profileId = atleta.id;
 
   // 2. BUSCA RELAÇÕES (Conexões Reais do Banco)
-  
-  // A) Se ele é Treinador: Busque os Alunos ACEITOS
   const { data: alunosData } = await supabase
     .from('relacoes')
     .select(`student:atletas!student_id(id, nome, apelido, foto_url, slug, cartel, categoria, coach_details)`)
     .eq('coach_id', profileId)
     .eq('status', 'accepted');
 
-  // B) Se ele é Atleta (ou Aluno): Busque os Treinadores ACEITOS
   const { data: coachesData } = await supabase
     .from('relacoes')
     .select(`coach:atletas!coach_id(id, nome, apelido, foto_url, slug, coach_details)`)
     .eq('student_id', profileId)
     .eq('status', 'accepted');
 
-  // Limpeza dos dados
   const myStudents = alunosData ? alunosData.map(r => r.student) : [];
   const myCoaches = coachesData ? coachesData.map(r => r.coach) : [];
 
@@ -61,10 +57,8 @@ export default async function Page({ params }) {
     )
   }
 
-  // CONSTRUÇÃO DO OBJETO DE DADOS
-  // Aqui garantimos que os nomes das chaves batem com o que os componentes esperam
   const dadosCompletos = {
-    ...atleta.dados, // Pega dados extras se houver
+    ...atleta.dados, 
     id: atleta.id, 
     user_id: atleta.user_id,
     
@@ -84,25 +78,22 @@ export default async function Page({ params }) {
     is_coach: atleta.is_coach,
     coach_details: atleta.coach_details,
     
-    // --- CORREÇÃO AQUI ---
-    // Mapeando com os nomes que os componentes usam (Português do Banco)
-    stats: atleta.atributos || {},        // Componentes buscam .stats
-    premios: atleta.premios || [],        // Componentes buscam .premios
-    historico: atleta.historico || [],    // Componentes buscam .historico
-    socials: atleta.redes_sociais || {},  // Componentes buscam .socials
-    record: atleta.cartel || {},          // Componentes buscam .record
+    // Mapeamento de Dados
+    stats: atleta.atributos || {},
+    premios: atleta.premios || [],
+    historico: atleta.historico || [],
+    socials: atleta.redes_sociais || {},
+    record: atleta.cartel || {},
     video_lista: atleta.video_lista || [],
     galeria: atleta.galeria || [],
     contact: atleta.contato || {},
-    nextFight: atleta.prox_luta || {},
+    nextFight: atleta.prox_luta || {}, // Dados da próxima luta
 
-    // Outros campos
     fightingStyle: atleta.estilodeluta,
     category: atleta.categoria,
     template_style: atleta.template_style,
     plano: atleta.plano,
 
-    // Conexões
     connected_students: atleta.myStudents,
     connected_coaches: atleta.myCoaches,
   }
@@ -110,12 +101,8 @@ export default async function Page({ params }) {
   return (
     <div className="relative w-full min-h-screen">
         <ViewTracker profileId={dadosCompletos.id} profileUserId={dadosCompletos.user_id} />
-        
-        {dadosCompletos.template_style === 'cyber' ? (
-            <TemplateCyber data={dadosCompletos} />
-        ) : (
-            <TemplatePadrao data={dadosCompletos} />
-        )}
+        {/* Renderiza apenas o Padrão por enquanto */}
+        <TemplatePadrao data={dadosCompletos} />
     </div>
   )
 }

@@ -1,127 +1,135 @@
 import React from 'react';
-import { Camera, Link as LinkIcon, Check, Lock, User, Medal, GraduationCap } from 'lucide-react';
-import { AvatarLevel } from '../../AvatarLevel'; 
+import { User, MapPin, AlignLeft, Info } from 'lucide-react';
+// Substitua a linha do import por esta:
+import SmartImageUpload from '@/components/SmartImageUpload';
 
-const ESTILOS_LUTA = ["MMA", "Muay Thai", "Boxe", "Kickboxing", "Jiu-Jitsu Brasileiro (BJJ)", "Wrestling (Luta Olímpica)", "Judô", "Sambo", "Krav Maga", "Capoeira", "Karatê"];
-
-export default function TabGeral({ 
-    perfil, 
-    setPerfil, 
-    handleChange, 
-    handleSlugChange, 
-    openWidget, 
-    handleDeleteProfilePic, 
-    isPremium 
-}) {
+export default function TabGeral({ perfil, setPerfil, handleChange, handleSlugChange, handleDeleteProfilePic, isPremium, userId }) {
     
-    // Função auxiliar para mudar os checkboxes
-    const toggleRole = (role) => {
-        setPerfil(prev => ({ ...prev, [role]: !prev[role] }));
-    };
-
     return (
-        <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 grid gap-6">
-            <h3 className="text-cyan-400 font-bold uppercase text-sm">Informações Básicas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
             
-            {/* ÁREA DA FOTO */}
-            <div className="flex flex-col items-center justify-center p-6 bg-black/40 rounded-xl border border-slate-700 border-dashed">
-                <div onClick={() => openWidget((url) => setPerfil({...perfil, foto_url: url}))} className="cursor-pointer group relative transition-transform hover:scale-105">
-                    <AvatarLevel foto={perfil.foto_url} level={perfil.level} size="large" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/50 rounded-full z-30">
-                         <Camera size={24} className="text-white"/>
+            {/* COLUNA 1: FOTO E URL */}
+            <div className="md:col-span-1 space-y-6">
+                
+                {/* CARTÃO DE FOTO DE PERFIL */}
+                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex flex-col items-center">
+                    <div className="relative w-40 h-40 mb-4 group">
+                        <div className="w-full h-full rounded-full overflow-hidden border-4 border-slate-700 bg-black">
+                            {perfil.foto_url ? (
+                                <img src={perfil.foto_url} alt="Perfil" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-600">
+                                    <User size={48}/>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Botão de Remover Foto (só aparece se tiver foto) */}
+                        {perfil.foto_url && (
+                            <button 
+                                onClick={handleDeleteProfilePic}
+                                className="absolute top-0 right-0 bg-red-600 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                                title="Remover foto atual"
+                            >
+                                <User size={16} className="rotate-45" /> {/* Ícone de X improvisado ou import X */}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* COMPONENTE DE UPLOAD INTELIGENTE */}
+                    <div className="w-full">
+                        <SmartImageUpload
+                            userId={userId}
+                            aspect={1} // Quadrado para perfil
+                            buttonLabel="Alterar Foto"
+                            onUploadComplete={(newUrl) => {
+                                // Se já tinha foto antes (e não era placeholder), poderíamos deletar a antiga aqui
+                                // Mas por segurança, apenas atualizamos para a nova
+                                setPerfil(prev => ({ ...prev, foto_url: newUrl }));
+                            }}
+                        />
+                        <p className="text-[10px] text-slate-500 mt-2 text-center">
+                            Recomendado: Imagem quadrada, rosto centralizado.
+                        </p>
                     </div>
                 </div>
-                <div className="flex gap-4 text-xs mt-4">
-                    <button onClick={() => openWidget((url) => setPerfil({...perfil, foto_url: url}))} className="text-yellow-500 hover:underline font-bold uppercase">Alterar Foto</button>
-                    {perfil.foto_url && <button onClick={handleDeleteProfilePic} className="text-red-500 hover:underline">Remover</button>}
+
+                {/* SLUG / URL */}
+                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                    <label className="text-slate-400 text-xs font-bold uppercase mb-2 block">Seu Link Personalizado</label>
+                    <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-3 py-2">
+                        <span className="text-slate-500 text-sm mr-1">athlete.pro/</span>
+                        <input 
+                            type="text" 
+                            name="slug" 
+                            value={perfil.slug || ''} 
+                            onChange={handleSlugChange}
+                            placeholder="seu-nome"
+                            className="bg-transparent border-none text-white text-sm w-full focus:ring-0 p-0"
+                        />
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-2">Este é o link que você compartilhará no Instagram.</p>
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-                
-                {/* --- NOVO: SELEÇÃO DE PAPÉIS (CHECKBOXES) --- */}
-                <div className="md:col-span-2 bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <label className="text-xs text-slate-400 font-bold mb-3 block uppercase">O que você faz? (Selecione todos que aplicar)</label>
-                    <div className="flex gap-4">
-                        {/* Checkbox ATLETA */}
-                        <div 
-                            onClick={() => toggleRole('is_athlete')}
-                            className={`flex-1 flex items-center gap-3 p-3 rounded cursor-pointer border transition-all ${perfil.is_athlete ? 'bg-cyan-900/30 border-cyan-500' : 'bg-black/30 border-slate-700 hover:border-slate-500'}`}
-                        >
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center ${perfil.is_athlete ? 'bg-cyan-500 border-cyan-500' : 'border-slate-500'}`}>
-                                {perfil.is_athlete && <Check size={14} className="text-black font-bold"/>}
-                            </div>
-                            <div>
-                                <span className={`font-bold text-sm block ${perfil.is_athlete ? 'text-cyan-400' : 'text-slate-400'}`}>Sou Atleta</span>
-                                <span className="text-[10px] text-slate-500">Exibir Cartel e Lutas</span>
-                            </div>
+            {/* COLUNA 2: DADOS PESSOAIS */}
+            <div className="md:col-span-2 space-y-6">
+                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                    <h3 className="text-white font-bold mb-4 flex items-center gap-2"><AlignLeft size={18} className="text-cyan-500"/> Informações Básicas</h3>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Nome Completo</label>
+                            <input type="text" name="nome" value={perfil.nome} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
                         </div>
-
-                        {/* Checkbox TREINADOR */}
-                        <div 
-                            onClick={() => toggleRole('is_coach')}
-                            className={`flex-1 flex items-center gap-3 p-3 rounded cursor-pointer border transition-all ${perfil.is_coach ? 'bg-orange-900/30 border-orange-500' : 'bg-black/30 border-slate-700 hover:border-slate-500'}`}
-                        >
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center ${perfil.is_coach ? 'bg-orange-500 border-orange-500' : 'border-slate-500'}`}>
-                                {perfil.is_coach && <Check size={14} className="text-black font-bold"/>}
-                            </div>
-                            <div>
-                                <span className={`font-bold text-sm block ${perfil.is_coach ? 'text-orange-400' : 'text-slate-400'}`}>Sou Treinador</span>
-                                <span className="text-[10px] text-slate-500">Exibir Aulas e Graduação</span>
-                            </div>
+                        <div>
+                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Apelido (Fight Name)</label>
+                            <input type="text" name="apelido" value={perfil.apelido} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
                         </div>
                     </div>
 
-                    {/* Switch para EMPRESA (Mantido pequeno caso queira mudar) */}
-                    <div className="mt-4 pt-4 border-t border-slate-700 flex items-center gap-2">
-                        <span className="text-xs text-slate-500">Ou gerencie uma conta jurídica:</span>
-                        <label className="flex items-center gap-1 cursor-pointer text-xs text-purple-400 hover:underline">
-                            <input type="radio" name="tipo_conta" value="empresa" checked={perfil.tipo_conta === 'empresa'} onChange={handleChange} className="accent-purple-500"/> 
-                            Mudar para Perfil de Empresa
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Categoria de Peso</label>
+                            <input type="text" name="categoria" value={perfil.categoria} onChange={handleChange} placeholder="Ex: Peso Leve, 70kg" className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
+                        </div>
+                        <div>
+                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Estilo Base</label>
+                            <input type="text" name="fightingStyle" value={perfil.fightingStyle || ''} onChange={handleChange} placeholder="Ex: Muay Thai, Jiu-Jitsu" className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Sobre Você (Bio)</label>
+                        <textarea name="about" value={perfil.about || ''} onChange={handleChange} rows="4" placeholder="Conte um pouco da sua história, títulos e objetivos..." className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition"></textarea>
+                    </div>
+                </div>
+
+                {/* TIPOS DE PERFIL (CHECKBOXES) */}
+                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                    <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Info size={18} className="text-purple-500"/> Tipo de Perfil</h3>
+                    <div className="flex gap-6">
+                        <label className="flex items-center gap-2 cursor-pointer bg-slate-950 p-3 rounded border border-slate-800 hover:border-cyan-500 transition">
+                            <input 
+                                type="checkbox" 
+                                checked={perfil.is_athlete} 
+                                onChange={(e) => setPerfil({...perfil, is_athlete: e.target.checked})}
+                                className="accent-cyan-500 w-4 h-4"
+                            />
+                            <span className="text-sm font-bold">Sou Atleta</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer bg-slate-950 p-3 rounded border border-slate-800 hover:border-orange-500 transition">
+                            <input 
+                                type="checkbox" 
+                                checked={perfil.is_coach} 
+                                onChange={(e) => setPerfil({...perfil, is_coach: e.target.checked})}
+                                className="accent-orange-500 w-4 h-4"
+                            />
+                            <span className="text-sm font-bold">Sou Treinador</span>
                         </label>
                     </div>
                 </div>
-
-                {/* TEMPLATE STYLE */}
-                <div className="md:col-span-2 bg-slate-800 p-4 rounded-lg border border-slate-700 mt-2">
-                    <label className="text-xs text-slate-400 font-bold mb-3 block uppercase">Layout do Media Kit</label>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div onClick={() => setPerfil({...perfil, template_style: 'padrao'})} className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${perfil.template_style === 'padrao' ? 'border-cyan-500 bg-cyan-900/20' : 'border-slate-700 hover:border-slate-500'}`}>
-                            <div className="h-10 bg-slate-700 mb-2 rounded flex items-center justify-center text-xs text-slate-400">Padrão</div>
-                            <div className="flex justify-between items-center"><span className="font-bold text-white text-sm">Dark Pro</span>{perfil.template_style === 'padrao' && <Check size={16} className="text-cyan-500"/>}</div>
-                        </div>
-                        <div onClick={() => { if(isPremium) setPerfil({...perfil, template_style: 'cyber'}); else alert("Este template é exclusivo para assinantes Premium!"); }} className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all ${perfil.template_style === 'cyber' ? 'border-lime-400 bg-lime-900/20' : 'border-slate-700 hover:border-lime-500/50'}`}>
-                            <div className="h-10 bg-zinc-900 mb-2 rounded flex items-center justify-center text-xs text-lime-400 font-mono border border-zinc-700">CYBER</div>
-                            <div className="flex justify-between items-center"><span className="font-bold text-white text-sm">Cyber</span>{perfil.template_style === 'cyber' && <Check size={16} className="text-lime-400"/>}{!isPremium && <Lock size={16} className="text-yellow-500"/>}</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* CAMPOS DE TEXTO */}
-                <div><label className="text-xs text-slate-500">Nome Completo</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="nome" value={perfil.nome} onChange={handleChange} /></div>
-                <div><label className="text-xs text-slate-500">Apelido (Como é conhecido)</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="apelido" value={perfil.apelido} onChange={handleChange} /></div>
-                
-                <div className="md:col-span-2">
-                    <label className="text-xs text-slate-500 flex items-center gap-1">Link Personalizado {isPremium && <Check size={10} className="text-green-500"/>}</label>
-                    <div className={`flex items-center border p-2 rounded ${isPremium ? 'bg-black border-slate-700' : 'bg-slate-800/50 border-slate-800 opacity-60'}`}>
-                        <LinkIcon size={16} className="text-slate-500 mr-2"/>
-                        <span className="text-slate-500 text-sm mr-1 hidden sm:inline">nocautepages.com/</span>
-                        <input className="bg-transparent text-white w-full outline-none font-bold" name="slug" value={perfil.slug} onChange={handleSlugChange} disabled={!isPremium} />
-                        {!isPremium && <Lock size={16} className="text-yellow-500 ml-2" />}
-                    </div>
-                </div>
-
-                <div><label className="text-xs text-slate-500">Categoria de Peso (Principal)</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="categoria" value={perfil.categoria} onChange={handleChange} /></div>
-                
-                <div>
-                    <label className="text-xs text-slate-500">Estilo Base</label>
-                    <select className="w-full bg-black border border-slate-700 p-2 rounded text-white" name="fightingStyle" value={perfil.fightingStyle} onChange={handleChange}>
-                        <option value="">Selecione...</option>
-                        {ESTILOS_LUTA.map(e => <option key={e} value={e}>{e}</option>)}
-                    </select>
-                </div>
-
-                <div className="md:col-span-2"><label className="text-xs text-slate-500">Bio / Sobre Você</label><textarea className="w-full bg-black border border-slate-700 p-2 rounded text-white" rows={3} name="about" value={perfil.about} onChange={handleChange} /></div>
             </div>
         </div>
     );
