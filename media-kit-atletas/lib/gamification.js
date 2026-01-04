@@ -10,11 +10,22 @@ export function getXpToNextLevel(currentLevel) {
 }
 
 export function getLevelProgress(currentXp, currentLevel) {
-  const xp = Number(currentXp) || 0;
+  // Converte para número e garante que não seja NaN
+  const xp = Number(currentXp);
   const level = Number(currentLevel) || 1;
+  
+  // Se xp for inválido (null, undefined, NaN), retorna 0
+  if (isNaN(xp) || xp < 0) return 0;
+
   const target = getXpToNextLevel(level);
+  
   if (!target || target <= 0) return 0;
-  return Math.min(100, Math.max(0, (xp / target) * 100));
+  
+  // Calcula porcentagem e trava entre 0 e 100
+  const percentage = (xp / target) * 100;
+  
+  return Math.min(100, Math.max(0, percentage));
+
 }
 
 // --- LÓGICA DE MOLDURAS (FRAMES) COM ESCALA VARIÁVEL ---
