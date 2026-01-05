@@ -6,15 +6,17 @@ import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { UserPlus, X } from 'lucide-react';
 
+// --- IMPORTAÇÕES DE GAMIFICAÇÃO ---
+import { processDuelVoting, calculateNewLevelState, getXpToNextLevel } from '../lib/gamification';
+
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export default function VotacaoWrapper({ dueloId, p1, p2, initialVotes1, initialVotes2 }) {
     const [v1, setV1] = useState(initialVotes1 || 0);
     const [v2, setV2] = useState(initialVotes2 || 0);
     const [hasVoted, setHasVoted] = useState(false);
-    const [showInvite, setShowInvite] = useState(false); // Estado para mostrar o convite
+    const [showInvite, setShowInvite] = useState(false); 
 
-    // Verifica no carregamento se já votou neste duelo específico
     useEffect(() => {
         const localVote = localStorage.getItem(`voto_duelo_${dueloId}`);
         if (localVote) {
@@ -23,20 +25,19 @@ export default function VotacaoWrapper({ dueloId, p1, p2, initialVotes1, initial
     }, [dueloId]);
 
     const handleVote = async (athleteNum) => {
-        // Bloqueia se já votou (State ou LocalStorage)
         if(hasVoted || localStorage.getItem(`voto_duelo_${dueloId}`)) {
             alert("Você já votou neste duelo!");
             return;
         }
         
-        // 1. Atualização Visual Imediata (Otimista)
+        // 1. Atualização Visual
         if(athleteNum === 1) setV1(prev => prev + 1);
         else setV2(prev => prev + 1);
         
         setHasVoted(true);
-        localStorage.setItem(`voto_duelo_${dueloId}`, 'true'); // Salva no navegador
+        localStorage.setItem(`voto_duelo_${dueloId}`, 'true'); 
 
-        // 2. Atualizar no Banco de Dados
+        // 2. Atualizar Voto no Banco
         const field = athleteNum === 1 ? 'votos_1' : 'votos_2';
         const currentVal = athleteNum === 1 ? v1 : v2;
         
@@ -47,16 +48,47 @@ export default function VotacaoWrapper({ dueloId, p1, p2, initialVotes1, initial
 
         if(error) console.error("Erro ao salvar voto:", error);
 
-        // 3. Verificar se é anônimo para mostrar convite
+        // 3. GAMIFICAÇÃO: Dar XP se estiver logado
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        
+        if (session) {
+            const userId = session.user.id;
+            
+            // Busca dados atuais do usuário para calcular XP
+            const { data: userData } = await supabase
+                .from('atletas')
+                .select('xp, level, weekly_stats')
+                .eq('user_id', userId)
+                .single();
+
+            if (userData) {
+                // Processa a regra do voto diário
+                const voteResult = processDuelVoting(userData.weekly_stats);
+
+                if (voteResult.success) {
+                    // Calcula novo XP e Nível
+                    const newState = calculateNewLevelState(userData.xp, userData.level, voteResult.xpGained);
+                    
+                    // Salva no banco
+                    await supabase.from('atletas').update({
+                        xp: newState.newXp,
+                        level: newState.newLevel,
+                        weekly_stats: voteResult.updatedStats
+                    }).eq('user_id', userId);
+
+                    // Feedback Visual
+                    alert(`🗳️ Voto confirmado!\n\n${voteResult.message}`);
+                    if (newState.levelUp) alert(`🎉 LEVEL UP! Você subiu para o nível ${newState.newLevel}!`);
+                }
+            }
+        } else {
+            // Se não estiver logado, mostra convite
             setShowInvite(true);
         }
     };
 
     return (
         <div className="relative">
-            {/* O CARD DO DUELO */}
             <DueloCard 
                 p1={p1} 
                 p2={p2} 
@@ -66,14 +98,12 @@ export default function VotacaoWrapper({ dueloId, p1, p2, initialVotes1, initial
                 showVoting={!hasVoted} 
             />
 
-            {/* MENSAGEM DE "JÁ VOTOU" (feedback visual simples) */}
             {hasVoted && !showInvite && (
                 <div className="text-center mt-4 text-slate-500 text-sm animate-fadeIn">
                     ✓ Seu voto foi computado.
                 </div>
             )}
 
-            {/* MODAL / BANNER DE CONVITE PARA CADASTRO */}
             {showInvite && (
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
                     <div className="bg-[#121214] border border-yellow-500/30 rounded-2xl p-6 max-w-md w-full relative shadow-2xl">

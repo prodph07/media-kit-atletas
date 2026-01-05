@@ -68,6 +68,7 @@ export default async function Page({ params }) {
     foto_url: atleta.foto_url,
     about: atleta.sobre,
     slug: atleta.slug,
+    status_message: atleta.status_message,
     
     // Gamificação
     level: atleta.level, 

@@ -1,10 +1,26 @@
-import React from 'react';
-import { User, MapPin, AlignLeft, Info } from 'lucide-react';
-// Substitua a linha do import por esta:
+import React, { useState } from 'react';
+import { User, AlignLeft, Info, Lock, MessageSquareQuote } from 'lucide-react';
 import SmartImageUpload from '@/components/SmartImageUpload';
 
-export default function TabGeral({ perfil, setPerfil, handleChange, handleSlugChange, handleDeleteProfilePic, isPremium, userId }) {
-    
+export default function TabGeral({ 
+    perfil, 
+    setPerfil, 
+    handleChange, 
+    handleSlugChange, 
+    handleDeleteProfilePic, 
+    isPremium, 
+    userId,
+    onUpdateStatus 
+}) {
+    // Estado local para o input de status
+    const [statusTemp, setStatusTemp] = useState(perfil.status_message || "");
+
+    const handleStatusSave = () => {
+        if (onUpdateStatus) {
+            onUpdateStatus(statusTemp);
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
             
@@ -23,28 +39,23 @@ export default function TabGeral({ perfil, setPerfil, handleChange, handleSlugCh
                                 </div>
                             )}
                         </div>
-                        
-                        {/* Botão de Remover Foto (só aparece se tiver foto) */}
                         {perfil.foto_url && (
                             <button 
                                 onClick={handleDeleteProfilePic}
                                 className="absolute top-0 right-0 bg-red-600 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
                                 title="Remover foto atual"
                             >
-                                <User size={16} className="rotate-45" /> {/* Ícone de X improvisado ou import X */}
+                                <User size={16} className="rotate-45" /> 
                             </button>
                         )}
                     </div>
 
-                    {/* COMPONENTE DE UPLOAD INTELIGENTE */}
                     <div className="w-full">
                         <SmartImageUpload
                             userId={userId}
-                            aspect={1} // Quadrado para perfil
+                            aspect={1} 
                             buttonLabel="Alterar Foto"
                             onUploadComplete={(newUrl) => {
-                                // Se já tinha foto antes (e não era placeholder), poderíamos deletar a antiga aqui
-                                // Mas por segurança, apenas atualizamos para a nova
                                 setPerfil(prev => ({ ...prev, foto_url: newUrl }));
                             }}
                         />
@@ -54,25 +65,54 @@ export default function TabGeral({ perfil, setPerfil, handleChange, handleSlugCh
                     </div>
                 </div>
 
+                {/* NOVO: STATUS DO DIA */}
+                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                    <label className="text-green-400 text-xs font-bold uppercase mb-2 block flex items-center gap-2">
+                        <MessageSquareQuote size={14}/> Status do Dia (+15 XP)
+                    </label>
+                    <div className="flex gap-2">
+                        <input 
+                            type="text" 
+                            maxLength={50}
+                            value={statusTemp} 
+                            onChange={(e) => setStatusTemp(e.target.value)}
+                            placeholder="Ex: Focado no treino!"
+                            className="bg-slate-950 border border-slate-800 text-white text-sm w-full rounded-lg px-3 py-2 focus:border-green-500 outline-none transition"
+                        />
+                        <button 
+                            onClick={handleStatusSave}
+                            className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition"
+                            title="Atualizar Status"
+                        >
+                            <MessageSquareQuote size={18}/>
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-2">Uma frase curta que aparece no topo do seu perfil.</p>
+                </div>
+
                 {/* SLUG / URL */}
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                    <label className="text-slate-400 text-xs font-bold uppercase mb-2 block">Seu Link Personalizado</label>
-                    <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-3 py-2">
+                    <label className="text-slate-400 text-xs font-bold uppercase mb-2 block flex justify-between">
+                        Seu Link Personalizado
+                        {!isPremium && <span className="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 rounded border border-yellow-500/20 flex items-center gap-1"><Lock size={10}/> Fixo no Free</span>}
+                    </label>
+                    <div className={`flex items-center bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 ${!isPremium ? 'opacity-50 cursor-not-allowed' : ''}`}>
                         <span className="text-slate-500 text-sm mr-1">athlete.pro/</span>
                         <input 
                             type="text" 
                             name="slug" 
                             value={perfil.slug || ''} 
                             onChange={handleSlugChange}
+                            disabled={!isPremium}
                             placeholder="seu-nome"
-                            className="bg-transparent border-none text-white text-sm w-full focus:ring-0 p-0"
+                            className="bg-transparent border-none text-white text-sm w-full focus:ring-0 p-0 disabled:cursor-not-allowed"
                         />
                     </div>
                     <p className="text-[10px] text-slate-500 mt-2">Este é o link que você compartilhará no Instagram.</p>
                 </div>
             </div>
 
-            {/* COLUNA 2: DADOS PESSOAIS */}
+            {/* COLUNA 2: DADOS PESSOAIS (Mantido igual) */}
             <div className="md:col-span-2 space-y-6">
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                     <h3 className="text-white font-bold mb-4 flex items-center gap-2"><AlignLeft size={18} className="text-cyan-500"/> Informações Básicas</h3>
@@ -105,7 +145,7 @@ export default function TabGeral({ perfil, setPerfil, handleChange, handleSlugCh
                     </div>
                 </div>
 
-                {/* TIPOS DE PERFIL (CHECKBOXES) */}
+                {/* TIPOS DE PERFIL */}
                 <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                     <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Info size={18} className="text-purple-500"/> Tipo de Perfil</h3>
                     <div className="flex gap-6">

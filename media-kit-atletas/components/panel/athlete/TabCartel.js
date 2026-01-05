@@ -1,25 +1,22 @@
 import React, { useState } from 'react';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, Lock } from 'lucide-react';
 
-export default function TabCartel({ perfil, setPerfil, handleStatsChange, handleRecordChange }) {
-    // Estado local para o input de prêmio (limpa o pai)
+export default function TabCartel({ perfil, setPerfil, handleStatsChange, handleRecordChange, isPremium }) {
     const [novoPremio, setNovoPremio] = useState('');
 
     const handleAddPremio = () => { 
         if(!novoPremio) return; 
+        if (!isPremium && perfil.premios.length >= 1) return alert("Limite Free atingido (1 prêmio).");
         setPerfil({...perfil, premios: [...perfil.premios, novoPremio]}); 
         setNovoPremio(''); 
     };
 
     const handleDeletePremio = (index) => {
-        const n = [...perfil.premios]; 
-        n.splice(index, 1); 
-        setPerfil({...perfil, premios: n});
+        const n = [...perfil.premios]; n.splice(index, 1); setPerfil({...perfil, premios: n});
     };
 
     return (
         <div className="space-y-6">
-            {/* ATRIBUTOS FÍSICOS */}
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                 <h3 className="text-cyan-400 font-bold uppercase text-sm mb-4">Atributos Físicos</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -30,7 +27,6 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                 </div>
             </div>
 
-            {/* CARTEL */}
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                 <h3 className="text-cyan-400 font-bold uppercase text-sm mb-4">Cartel Profissional</h3>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -42,12 +38,14 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                 </div>
             </div>
 
-            {/* PRÊMIOS */}
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                <h3 className="text-cyan-400 font-bold uppercase text-sm mb-4">Prêmios</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-cyan-400 font-bold uppercase text-sm">Prêmios</h3>
+                    {!isPremium && perfil.premios.length >= 1 && <span className="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 rounded"><Lock size={10} className="inline"/> Max 1</span>}
+                </div>
                 <div className="flex gap-2 mb-4">
                     <input className="w-full bg-black border border-slate-700 p-2 rounded text-white" placeholder="Ex: Campeão 2024" value={novoPremio} onChange={(e) => setNovoPremio(e.target.value)} />
-                    <button onClick={handleAddPremio} className="bg-cyan-600 p-2 rounded"><PlusCircle size={20}/></button>
+                    <button onClick={handleAddPremio} disabled={!isPremium && perfil.premios.length >= 1} className={`p-2 rounded ${!isPremium && perfil.premios.length >= 1 ? 'bg-slate-800' : 'bg-cyan-600'}`}><PlusCircle size={20}/></button>
                 </div>
                 <ul className="space-y-2">
                     {perfil.premios.map((p, i) => (

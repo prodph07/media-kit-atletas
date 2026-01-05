@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Medal, Users, GraduationCap, Clock, Award, CheckCircle, Search, Plus, Trash2, ExternalLink, Clock3 } from 'lucide-react';
+import { Medal, Users, GraduationCap, Clock, Award, CheckCircle, Search, Plus, Trash2, ExternalLink, Clock3, Lock } from 'lucide-react';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -12,13 +12,14 @@ const SERVICOS_COMUNS = [
     { id: 'corner', label: 'Corner / Eventos', desc: 'Acompanhamento em lutas' }
 ];
 
-export default function TabTreinador({ perfil, setPerfil }) {
+// Adicione isPremium nas props
+export default function TabTreinador({ perfil, setPerfil, isPremium }) {
     
     // Estados locais
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
-    const [meusAlunos, setMeusAlunos] = useState([]); // Agora vem do banco, não do perfil JSON
+    const [meusAlunos, setMeusAlunos] = useState([]); 
 
     // Carregar alunos ao abrir a aba
     useEffect(() => {
@@ -62,10 +63,19 @@ export default function TabTreinador({ perfil, setPerfil }) {
         setIsSearching(false);
     };
 
-    // --- LÓGICA DE ENVIO DE CONVITE (INTELIGENTE) ---
+    // --- LÓGICA DE ENVIO DE CONVITE (COM TRAVA FREE) ---
     const sendInvite = async (student) => {
         const studentId = student.id;
         const coachId = perfil.id;
+
+        // TRAVA: Limite de 2 alunos para Free
+        // Conta apenas alunos com status 'accepted' (ativos) ou 'pending' (vaga reservada)
+        const activeStudentsCount = meusAlunos.filter(a => a.status === 'accepted' || a.status === 'pending').length;
+        
+        if (!isPremium && activeStudentsCount >= 2) {
+            alert("🔒 Limite do Plano Grátis Atingido (2 Alunos).\n\nFaça o upgrade para Premium para adicionar ilimitados alunos à sua equipe.");
+            return;
+        }
 
         // 1. Verifica se JÁ EXISTE uma relação inversa (O aluno me convidou antes?)
         const { data: existingReverse } = await supabase
@@ -154,9 +164,19 @@ export default function TabTreinador({ perfil, setPerfil }) {
 
             {/* --- LISTA E BUSCA DE ALUNOS --- */}
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                <h3 className="text-orange-500 font-bold uppercase text-sm mb-4 flex items-center gap-2">
-                    <Users size={18}/> Gerenciar Alunos
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-orange-500 font-bold uppercase text-sm flex items-center gap-2">
+                        <Users size={18}/> Gerenciar Alunos
+                    </h3>
+                    
+                    {/* Indicador de Limite Free */}
+                    {!isPremium && (
+                        <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700 flex items-center gap-1">
+                            {meusAlunos.length >= 2 ? <Lock size={12} className="text-red-500"/> : <Users size={12}/>}
+                            {meusAlunos.length} / 2 (Free)
+                        </span>
+                    )}
+                </div>
                 
                 {/* BUSCA */}
                 <div className="relative mb-6">
@@ -172,8 +192,11 @@ export default function TabTreinador({ perfil, setPerfil }) {
                                         <img src={atleta.foto_url || "https://placehold.co/100"} className="w-10 h-10 rounded-full object-cover border border-slate-600"/>
                                         <div><p className="font-bold text-white text-sm">{atleta.apelido || atleta.nome}</p></div>
                                     </div>
-                                    <button onClick={() => sendInvite(atleta)} className="bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
-                                        <Plus size={14}/> Convidar
+                                    <button 
+                                        onClick={() => sendInvite(atleta)} 
+                                        className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 ${!isPremium && meusAlunos.length >= 2 ? 'bg-slate-600 text-slate-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-500 text-white'}`}
+                                    >
+                                        {!isPremium && meusAlunos.length >= 2 ? <Lock size={14}/> : <Plus size={14}/>} Convidar
                                     </button>
                                 </div>
                             ))}

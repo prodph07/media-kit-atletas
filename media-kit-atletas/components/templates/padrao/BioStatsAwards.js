@@ -25,7 +25,8 @@ export default function BioStatsAwards({ athleteData }) {
                     <h3 className="text-white font-bold uppercase text-lg mb-4 flex items-center gap-2">
                         <Activity className="text-cyan-500"/> Sobre
                     </h3>
-                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">
+                    {/* CORREÇÃO AQUI: Adicionado 'break-words' */}
+                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap break-words">
                         {athleteData.about || "Sem biografia cadastrada."}
                     </p>
                 </div>

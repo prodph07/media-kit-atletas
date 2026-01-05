@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { BarChart3, Users, MapPin, Activity, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart3, Users, MapPin, Activity, Eye, ChevronLeft, ChevronRight, Lock, Instagram, Youtube, Twitter, Video, Link as LinkIcon } from 'lucide-react';
 
 export default function TabMetricas({ 
     perfil, 
     setPerfil, 
     handleInstaStats, 
+    handleSocialChange, // Recebendo a função de atualização
     totalViews, 
     profileViews, 
     isPremium, 
@@ -22,16 +23,18 @@ export default function TabMetricas({
     const currentViews = profileViews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     // Handlers de Navegação
-    const goToNextPage = () => {
-        if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-    };
-
-    const goToPrevPage = () => {
-        if (currentPage > 1) setCurrentPage(prev => prev - 1);
-    };
+    const goToNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
+    const goToPrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
 
     const socials = perfil.socials || {};
     const instaStats = socials.instagram?.stats || {};
+
+    const networks = [
+        { id: 'instagram', icon: <Instagram size={18} className="text-pink-500"/>, label: 'Instagram' },
+        { id: 'youtube', icon: <Youtube size={18} className="text-red-500"/>, label: 'YouTube' },
+        { id: 'tiktok', icon: <Video size={18} className="text-cyan-500"/>, label: 'TikTok' },
+        { id: 'x', icon: <Twitter size={18} className="text-white"/>, label: 'X (Twitter)' }
+    ];
 
     return (
         <div className="space-y-6 animate-fadeIn">
@@ -56,7 +59,82 @@ export default function TabMetricas({
                 </div>
             </div>
 
-            {/* 2. QUEM VISITOU SEU PERFIL (COM PAGINAÇÃO) */}
+            {/* 2. NOVO: CONEXÕES SOCIAIS (Movido da TabGeral) */}
+            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                <h3 className="text-white font-bold uppercase text-sm mb-6 flex items-center gap-2">
+                    <LinkIcon size={18} className="text-cyan-500"/> Conexões Sociais
+                </h3>
+                
+                <div className="space-y-4">
+                    {networks.map((net) => {
+                        const isLocked = !isPremium && net.id !== 'instagram'; // Bloqueia tudo menos Instagram no Free
+                        
+                        return (
+                            <div key={net.id} className={`bg-slate-950 p-4 rounded-lg border border-slate-800 relative ${isLocked ? 'opacity-60' : ''}`}>
+                                
+                                {isLocked && (
+                                    <div className="absolute inset-0 z-10 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
+                                        <div className="flex items-center gap-2 text-yellow-500 bg-black/80 px-3 py-1 rounded border border-yellow-500/30">
+                                            <Lock size={12} /> <span className="text-xs font-bold uppercase">Premium</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex items-center gap-2 mb-3">
+                                    {net.icon}
+                                    <span className="font-bold text-sm text-slate-300">{net.label}</span>
+                                    {/* Checkbox Ativo */}
+                                    <input 
+                                        type="checkbox" 
+                                        checked={perfil.socials?.[net.id]?.active || false}
+                                        onChange={(e) => handleSocialChange(net.id, 'active', e.target.checked)}
+                                        disabled={isLocked}
+                                        className="ml-auto accent-cyan-500"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">Usuário (@)</label>
+                                        <input 
+                                            type="text" 
+                                            value={perfil.socials?.[net.id]?.user || ''} 
+                                            onChange={(e) => handleSocialChange(net.id, 'user', e.target.value)}
+                                            disabled={isLocked}
+                                            placeholder="@usuario"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">Seguidores</label>
+                                        <input 
+                                            type="text" 
+                                            value={perfil.socials?.[net.id]?.followers || ''} 
+                                            onChange={(e) => handleSocialChange(net.id, 'followers', e.target.value)}
+                                            disabled={isLocked}
+                                            placeholder="Ex: 10k"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">Link do Perfil</label>
+                                        <input 
+                                            type="text" 
+                                            value={perfil.socials?.[net.id]?.url || ''} 
+                                            onChange={(e) => handleSocialChange(net.id, 'url', e.target.value)}
+                                            disabled={isLocked}
+                                            placeholder="https://..."
+                                            className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 3. VISITAS RASTREADAS */}
             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
                 <h3 className="text-green-500 font-bold uppercase text-sm mb-6 flex items-center gap-2">
                     <Eye size={18}/> Visitas Rastreadas
@@ -69,7 +147,7 @@ export default function TabMetricas({
                     </div>
                 )}
 
-                <div className="space-y-3 min-h-[300px]"> {/* Altura mínima para não pular layout */}
+                <div className="space-y-3 min-h-[300px]">
                     {profileViews.length === 0 ? (
                         <p className="text-slate-500 text-center py-8 text-sm">Nenhuma visita rastreada recentemente.</p>
                     ) : (
@@ -105,38 +183,40 @@ export default function TabMetricas({
                     )}
                 </div>
 
-                {/* --- PAGINAÇÃO (CONTROLES) --- */}
+                {/* --- PAGINAÇÃO --- */}
                 {profileViews.length > ITEMS_PER_PAGE && (
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800">
-                        <button 
-                            onClick={goToPrevPage}
-                            disabled={currentPage === 1}
-                            className={`flex items-center gap-1 text-xs font-bold uppercase px-3 py-2 rounded transition-colors ${currentPage === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-800'}`}
-                        >
+                        <button onClick={goToPrevPage} disabled={currentPage === 1} className={`flex items-center gap-1 text-xs font-bold uppercase px-3 py-2 rounded transition-colors ${currentPage === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-800'}`}>
                             <ChevronLeft size={16}/> Anterior
                         </button>
-
-                        <span className="text-xs text-slate-500">
-                            Página <span className="text-white font-bold">{currentPage}</span> de <span className="text-white font-bold">{totalPages}</span>
-                        </span>
-
-                        <button 
-                            onClick={goToNextPage}
-                            disabled={currentPage === totalPages}
-                            className={`flex items-center gap-1 text-xs font-bold uppercase px-3 py-2 rounded transition-colors ${currentPage === totalPages ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-800'}`}
-                        >
+                        <span className="text-xs text-slate-500">Página <span className="text-white font-bold">{currentPage}</span> de <span className="text-white font-bold">{totalPages}</span></span>
+                        <button onClick={goToNextPage} disabled={currentPage === totalPages} className={`flex items-center gap-1 text-xs font-bold uppercase px-3 py-2 rounded transition-colors ${currentPage === totalPages ? 'text-slate-600 cursor-not-allowed' : 'text-white hover:bg-slate-800'}`}>
                             Próximo <ChevronRight size={16}/>
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* 3. DADOS DO INSTAGRAM (Manuais) */}
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+            {/* 4. DADOS DO INSTAGRAM (Manuais) - BLOQUEADO SE NÃO FOR PREMIUM */}
+            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 relative">
+                
+                {/* TRAVA VISUAL (Overlay) */}
+                {!isPremium && (
+                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-xl border border-slate-700/50">
+                        <div className="bg-slate-800 p-3 rounded-full mb-2 border border-slate-700 shadow-lg">
+                            <Lock size={24} className="text-yellow-500" />
+                        </div>
+                        <h4 className="text-white font-bold text-sm mb-1">Métricas Manuais Bloqueadas</h4>
+                        <p className="text-slate-400 text-xs text-center max-w-[200px] mb-4">
+                            Faça upgrade para informar seus números de alcance e engajamento aos patrocinadores.
+                        </p>
+                    </div>
+                )}
+
                 <h3 className="text-pink-500 font-bold uppercase text-sm mb-6 flex items-center gap-2">
                     <Activity size={18}/> Métricas do Instagram (Manual)
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 ${!isPremium ? 'opacity-20 pointer-events-none' : ''}`}>
                     <div>
                         <label className="text-[10px] text-slate-500 font-bold uppercase">Alcance (Reach)</label>
                         <input className="w-full bg-black border border-slate-700 p-2 rounded text-white text-sm mt-1" placeholder="Ex: 15.4k" value={instaStats.reach || ''} onChange={(e) => handleInstaStats('stats', 'reach', e.target.value)} />
@@ -155,7 +235,7 @@ export default function TabMetricas({
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className={`grid md:grid-cols-2 gap-6 ${!isPremium ? 'opacity-20 pointer-events-none' : ''}`}>
                     {/* Faixa Etária */}
                     <div>
                         <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Público (Idade)</label>
@@ -182,16 +262,26 @@ export default function TabMetricas({
                 </div>
             </div>
 
-            {/* 4. CIDADES (Manual) */}
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+            {/* 5. CIDADES (Manual) - TAMBÉM BLOQUEADO */}
+            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 relative">
+                
+                {/* TRAVA VISUAL (Overlay) - Reusado */}
+                {!isPremium && (
+                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-xl border border-slate-700/50">
+                        <Lock size={24} className="text-yellow-500 mb-2" />
+                        <p className="text-white font-bold text-xs">Recurso Premium</p>
+                    </div>
+                )}
+
                 <h3 className="text-purple-500 font-bold uppercase text-sm mb-6 flex items-center gap-2">
                     <MapPin size={18}/> Principais Cidades
                 </h3>
                 <textarea 
-                    className="w-full bg-black border border-slate-700 p-3 rounded text-white text-sm min-h-[100px]"
+                    className={`w-full bg-black border border-slate-700 p-3 rounded text-white text-sm min-h-[100px] ${!isPremium ? 'opacity-20' : ''}`}
                     placeholder="Ex: São Paulo (45%), Rio de Janeiro (20%), Curitiba (10%)..."
                     value={perfil.socials.instagram?.audience?.cities || ''}
                     onChange={(e) => handleInstaStats('audience', 'cities', e.target.value)}
+                    disabled={!isPremium}
                 />
                 <p className="text-[10px] text-slate-500 mt-2">Digite as cidades e porcentagens conforme aparecem nos seus insights do Instagram.</p>
             </div>
