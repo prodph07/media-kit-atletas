@@ -1,7 +1,7 @@
 'use client'; 
 
 import React, { useState } from 'react';
-import { MapPin, Trophy, Shield, GraduationCap, Users, ThumbsUp, MessageSquareQuote } from 'lucide-react';
+import { MapPin, Trophy, Shield, GraduationCap, Users, ThumbsUp, MessageSquareQuote, Share2 } from 'lucide-react';
 import { AvatarLevel } from '../../AvatarLevel';
 import { createClient } from '@supabase/supabase-js';
 import { processDailyAction, calculateNewLevelState } from '../../../lib/gamification';
@@ -11,6 +11,22 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
 export default function HeroSection({ athleteData, formattedName, publicViewCount }) {
     
     const [hasGivenRespect, setHasGivenRespect] = useState(false);
+
+    // Função para Copiar Link
+    const handleShare = () => {
+        if (typeof window !== "undefined") {
+            navigator.clipboard.writeText(window.location.href);
+            // Feedback visual simples
+            const btn = document.getElementById('share-btn');
+            if(btn) {
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copiado!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            } else {
+                alert("Link do perfil copiado!");
+            }
+        }
+    };
 
     const handleRespect = async () => {
         if (hasGivenRespect) return;
@@ -80,9 +96,10 @@ export default function HeroSection({ athleteData, formattedName, publicViewCoun
     return (
         <div className="relative pt-20 pb-10 flex flex-col items-center justify-center text-center animate-fadeIn">
             
-            {/* AVATAR */}
+            {/* AVATAR COM BOTÃO DE SHARE */}
             <div className="relative mb-6 group">
                 <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full group-hover:bg-cyan-500/40 transition-all duration-500"></div>
+                
                 <AvatarLevel 
                     foto={profilePic} 
                     level={athleteData.level} 
@@ -90,6 +107,17 @@ export default function HeroSection({ athleteData, formattedName, publicViewCoun
                     size="xlarge" 
                     className="relative z-10"
                 />
+
+                {/* BOTÃO DE COMPARTILHAR - NOVO */}
+                <button 
+                    id="share-btn"
+                    onClick={handleShare}
+                    className="absolute top-0 right-[-10px] bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:border-cyan-500 p-2 rounded-full shadow-xl z-30 transition-all transform hover:scale-110 flex items-center justify-center"
+                    title="Copiar Link do Perfil"
+                >
+                    <Share2 size={16} />
+                </button>
+
                 {isCoach && (
                     <div className="absolute -bottom-2 -right-2 bg-orange-600 text-white p-2 rounded-full border-4 border-[#0a0a0c] z-20 shadow-lg" title="Treinador Verificado">
                         <GraduationCap size={16} />
@@ -105,7 +133,7 @@ export default function HeroSection({ athleteData, formattedName, publicViewCoun
                 {formattedName.main}
             </h1>
 
-            {/* --- FRASE DO DIA (NOVO) --- */}
+            {/* FRASE DO DIA */}
             {athleteData.status_message && (
                 <div className="mb-6 inline-flex items-center gap-2 bg-slate-900/60 backdrop-blur-sm border border-slate-800 px-4 py-2 rounded-full">
                     <MessageSquareQuote size={14} className="text-green-400 opacity-80"/>
@@ -141,7 +169,6 @@ export default function HeroSection({ athleteData, formattedName, publicViewCoun
                     LVL {athleteData.level || 1}
                 </div>
 
-                {/* BOTÃO RESPECT */}
                 <button 
                     onClick={handleRespect}
                     disabled={hasGivenRespect}

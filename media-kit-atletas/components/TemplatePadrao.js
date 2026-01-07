@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Mail, Share2, X as XIcon, GraduationCap } from 'lucide-react'; 
+import { X as XIcon } from 'lucide-react'; 
 
 // --- IMPORTAÇÕES ---
 import HeroSection from './templates/padrao/HeroSection';
@@ -52,7 +52,6 @@ export function TemplatePadrao({ data }) {
     }, [athleteData]);
 
     const hasInstaMetrics = athleteData.socials?.instagram?.stats?.reach || athleteData.socials?.instagram?.audience?.age;
-    const copyLink = () => { if (typeof window !== "undefined") { navigator.clipboard.writeText(window.location.href); alert("Link copiado!"); } };
 
     if (!athleteData) return <div className="text-white p-10 text-center">Carregando perfil...</div>;
 
@@ -67,7 +66,7 @@ export function TemplatePadrao({ data }) {
                 .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; } 
              `}</style>
              
-             {/* MODAL MIDIA (Responsivo Ajustado) */}
+             {/* MODAL MIDIA */}
              {selectedMedia && ( 
                  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 animate-fadeIn backdrop-blur-md" onClick={closeMedia}> 
                     <div className="relative w-full max-w-5xl bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-800 flex flex-col" onClick={e => e.stopPropagation()}> 
@@ -91,27 +90,7 @@ export function TemplatePadrao({ data }) {
                 <div className="absolute bottom-[-10%] left-[-10%] w-[200px] h-[200px] sm:w-[500px] sm:h-[500px] bg-red-600/10 rounded-full blur-[60px] sm:blur-[120px]"></div> 
              </div>
              
-             {/* NAVBAR */}
-             <nav className="sticky top-0 z-50 border-b border-slate-800 bg-[#0a0a0c]/90 backdrop-blur-md"> 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"> 
-                    <div className="flex items-center gap-2"> 
-                        <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded flex items-center justify-center font-bold text-black italic text-sm">A</div> 
-                        <span className="font-bold text-lg tracking-tighter text-white">ATHLETE<span className="text-cyan-500">.PRO</span></span> 
-                    </div> 
-                    <div className="flex items-center gap-3"> 
-                        <button onClick={copyLink} className="p-2 text-slate-400 hover:text-white transition-colors" title="Compartilhar"><Share2 size={20} /></button> 
-                        
-                        {/* Botão de Contato Responsivo */}
-                        <a href="#contact-section" className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full font-bold text-sm hover:bg-cyan-400 transition-colors">
-                            <Mail size={16} /> 
-                            <span className="hidden sm:inline">Contato</span>
-                        </a> 
-                    </div> 
-                </div> 
-             </nav>
-             
              {/* CONTAINER PRINCIPAL */}
-             {/* CORREÇÃO: Alterado gap-24 fixo para gap-12 no mobile e gap-24 no desktop */}
              <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-12 sm:gap-16 lg:gap-24">
                 
                 {/* GRUPO DE CABEÇALHO */}
@@ -124,12 +103,13 @@ export function TemplatePadrao({ data }) {
 
                     <NextFightSection nextFight={athleteData.nextFight} />
 
-                    {/* MENU DE ANCORAGEM (SCROLL HORIZONTAL) */}
+                    {/* MENU DE ANCORAGEM */}
                     <div className="flex items-center gap-6 border-b border-slate-800 overflow-x-auto pb-1 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0"> 
                         <a href="#stats-section" className="text-sm font-bold uppercase tracking-widest pb-3 text-cyan-400 border-b-2 border-transparent hover:border-cyan-400 hover:text-white transition-all whitespace-nowrap">Estatísticas</a> 
                         {athleteData.is_coach && (
                             <a href="#coach-section" className="text-sm font-bold uppercase tracking-widest pb-3 text-orange-500 border-b-2 border-transparent hover:border-orange-500 hover:text-white transition-all whitespace-nowrap flex items-center gap-1">
-                            <GraduationCap size={14}/> Treinador
+                            {/* GraduationCap icon was here, removed import to clean up if not used in nav, added back below if needed inside link */}
+                            Treinador
                             </a>
                         )}
                         {hasInstaMetrics && <a href="#metrics-section" className="text-sm font-bold uppercase tracking-widest pb-3 text-pink-500 border-b-2 border-transparent hover:border-pink-500 hover:text-white transition-all whitespace-nowrap">Métricas</a>} 
@@ -138,31 +118,16 @@ export function TemplatePadrao({ data }) {
                     </div>
                 </div>
                 
-                {/* SEÇÕES DE CONTEÚDO (ID para ancoragem com scroll margin para não ficar escondido pelo header) */}
                 <div id="stats-section" className="scroll-mt-24 flex flex-col gap-12 sm:gap-16 lg:gap-24">
-                    <StatsSection 
-                        athleteData={athleteData} 
-                        computedStats={computedStats} 
-                    />
-
+                    <StatsSection athleteData={athleteData} computedStats={computedStats} />
                     <BioStatsAwards athleteData={athleteData} />
-
-                    {athleteData.is_athlete && (
-                        <FightHistory history={athleteData.historico} />
-                    )}
-
-                    {athleteData.connected_coaches && athleteData.connected_coaches.length > 0 && (
-                        <TeamSection coaches={athleteData.connected_coaches} />
-                    )}
+                    {athleteData.is_athlete && <FightHistory history={athleteData.historico} />}
+                    {athleteData.connected_coaches && athleteData.connected_coaches.length > 0 && <TeamSection coaches={athleteData.connected_coaches} />}
                 </div>
 
                 {athleteData.is_coach && (
                     <div id="coach-section" className="scroll-mt-24">
-                        <CoachSection 
-                            coachDetails={athleteData.coach_details} 
-                            studentsList={athleteData.connected_students} 
-                            theme="default" 
-                        />
+                        <CoachSection coachDetails={athleteData.coach_details} studentsList={athleteData.connected_students} theme="default" />
                     </div>
                 )}
                 

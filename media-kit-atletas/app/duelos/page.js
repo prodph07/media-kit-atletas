@@ -11,7 +11,6 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
 
 export default async function ListaDuelos() {
     // Busca apenas duelos ATIVOS e não expirados
-    // Adicionei 'categoria' no select para o filtro funcionar
     const { data: duelos } = await supabase
         .from('duelos')
         .select(`
@@ -26,21 +25,31 @@ export default async function ListaDuelos() {
     return (
         <div className="min-h-screen bg-[#0a0a0c] text-white p-4">
             <div className="max-w-6xl mx-auto">
-                {/* HEADER */}
-                <div className="flex justify-between items-center mb-10 mt-6">
-                    <div>
-                        <h1 className="text-3xl font-black text-white uppercase flex items-center gap-2">
+                
+                {/* HEADER RESPONSIVO */}
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 mt-6 gap-6">
+                    <div className="text-center md:text-left">
+                        <h1 className="text-3xl md:text-4xl font-black text-white uppercase flex justify-center md:justify-start items-center gap-2">
                             <span className="text-red-600">ARENA</span> DE DUELOS
                         </h1>
-                        <p className="text-slate-400">Vote nos combates ativos da semana.</p>
+                        <p className="text-slate-400 text-sm md:text-base">Vote nos combates ativos da semana.</p>
                     </div>
-                    <Link href="/duelos/criar" className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-full flex items-center gap-2 transition">
-                        <Swords size={20}/> CRIAR NOVO
+                    
+                    {/* BOTÃO ATUALIZADO:
+                        - !bg-yellow-600 (Dourado mais escuro para contraste)
+                        - !text-white (Texto Branco)
+                        - Ícone Branco
+                    */}
+                    <Link 
+                        href="/duelos/criar" 
+                        className="relative z-10 w-full md:w-auto !bg-yellow-600 hover:!bg-yellow-500 !text-white font-black uppercase tracking-wide px-8 py-3 rounded-full flex items-center justify-center gap-2 transition transform hover:scale-105 shadow-[0_0_20px_rgba(202,138,4,0.4)] border border-yellow-500"
+                    >
+                        <Swords size={20} className="text-white"/> 
+                        <span className="text-white">CRIAR NOVO</span>
                     </Link>
                 </div>
 
                 {/* LISTA COM FILTROS (Componente Client-Side) */}
-                {/* Passamos os dados carregados no servidor para o componente interativo */}
                 <ArenaList initialDuelos={duelos || []} />
 
                 {/* EMPTY STATE (Caso não tenha nada no banco) */}

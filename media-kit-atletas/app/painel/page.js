@@ -14,7 +14,7 @@ import {
     processDailyLogin,      
     processWeeklyShare,     
     processWeightCheckIn,
-    processDailyAction // Adicionado para Status
+    processDailyAction 
 } from '../../lib/gamification';
 
 import TabGeral from '../../components/panel/athlete/TabGeral';
@@ -52,7 +52,7 @@ export default function Painel() {
 
   const [perfil, setPerfil] = useState({
     id: null, nome: '', apelido: '', categoria: '', foto_url: '', about: '', slug: '', fightingStyle: '', 
-    status_message: '', // Novo campo
+    status_message: '', 
     plano: 'free', tipo_conta: 'atleta', template_style: 'padrao', 
     is_athlete: true, is_coach: false, coach_details: {}, 
     xp: 0, level: 1, completed_tasks: [], weekly_stats: {},
@@ -135,7 +135,7 @@ export default function Painel() {
             ...data,
             nome: safeVal(data.nome), apelido: safeVal(data.apelido), categoria: safeVal(data.categoria), foto_url: safeVal(data.foto_url),
             about: safeVal(data.sobre), plano: data.plano || 'free', tipo_conta: data.tipo_conta || 'atleta', template_style: data.template_style || 'padrao', slug: safeVal(data.slug),
-            status_message: safeVal(data.status_message), // Carregar status
+            status_message: safeVal(data.status_message), 
             is_athlete: data.is_athlete ?? true, is_coach: data.is_coach ?? false, coach_details: data.coach_details || {},
             xp: finalXp, level: finalLevel, weekly_stats: finalWeeklyStats, completed_tasks: data.completed_tasks || [],
             stats: { height: safeVal(data.atributos?.height), weight: safeVal(data.atributos?.weight), reach: safeVal(data.atributos?.reach), age: safeVal(data.atributos?.age) },
@@ -193,16 +193,12 @@ export default function Painel() {
     }
   };
 
-  // --- NOVA FUNÇÃO: ATUALIZAR STATUS E DAR XP ---
   const handleUpdateStatus = async (newStatus) => {
-      // 1. Processa a missão diária (DAILY_STATUS)
       const result = processDailyAction(perfil.weekly_stats, 'DAILY_STATUS');
-      
       let finalXp = perfil.xp;
       let finalLevel = perfil.level;
       let finalStats = perfil.weekly_stats;
 
-      // 2. Se a missão for válida (não fez hoje), ganha XP
       if (result.success) {
           const state = calculateNewLevelState(perfil.xp, perfil.level, result.xpGained);
           finalXp = state.newXp;
@@ -213,7 +209,6 @@ export default function Painel() {
           alert("💬 Status atualizado!");
       }
 
-      // 3. Atualiza no Banco (Status + XP + Stats)
       const { error } = await supabase.from('atletas').update({ 
           status_message: newStatus,
           xp: finalXp,
@@ -396,7 +391,7 @@ export default function Painel() {
         contato: dadosParaSalvar.contato, prox_luta: dadosParaSalvar.nextFight, redes_sociais: dadosParaSalvar.socials, 
         historico: dadosParaSalvar.historico, video_lista: dadosParaSalvar.video_lista, galeria: dadosParaSalvar.galeria, premios: dadosParaSalvar.premios, 
         tipo_conta: dadosParaSalvar.tipo_conta, template_style: dadosParaSalvar.template_style,
-        status_message: dadosParaSalvar.status_message, // Salvando Status
+        status_message: dadosParaSalvar.status_message, 
         is_athlete: dadosParaSalvar.is_athlete, is_coach: dadosParaSalvar.is_coach, coach_details: dadosParaSalvar.coach_details,
         xp: finalXp, level: finalLevel, completed_tasks: newTasks, weekly_stats: currentWeeklyStats
     };
@@ -419,14 +414,41 @@ export default function Painel() {
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-white p-4 pb-32 font-sans">
       <div className="max-w-4xl mx-auto">
+        
+        {/* =============================================================
+            HEADER DO PAINEL (AGORA ESTÁTICO / NÃO FLUTUA MAIS)
+            Removido 'sticky top-16 z-40' para evitar bugs de sobreposição
+           ============================================================= */}
         <div className="flex justify-between items-center mb-6 bg-slate-900 p-4 rounded-xl border border-slate-800">
-            <div className="flex items-center gap-2"><h1 className="text-2xl font-bold">Painel</h1>{isPremium ? <span className="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded border border-yellow-500/50 font-bold uppercase">PREMIUM</span> : <span className="bg-slate-700 text-slate-400 text-xs px-2 py-1 rounded font-bold uppercase">GRÁTIS</span>}</div>
-            <div className="flex gap-3">
-                <button onClick={handleOpenProfile} className="p-2 bg-slate-800 rounded hover:bg-slate-700 text-white border border-slate-700" title="Ver Perfil & Ganhar XP"><Eye size={20}/></button>
-                <button onClick={() => { supabase.auth.signOut(); router.push('/login'); }} className="p-2 bg-red-900/50 text-red-400 rounded"><LogOut size={20}/></button>
+            <div className="flex items-center gap-2">
+                <h1 className="text-xl md:text-2xl font-bold">Painel</h1>
+                {isPremium 
+                    ? <span className="bg-yellow-500/20 text-yellow-500 text-[10px] md:text-xs px-2 py-1 rounded border border-yellow-500/50 font-bold uppercase">PRO</span> 
+                    : <span className="bg-slate-700 text-slate-400 text-[10px] md:text-xs px-2 py-1 rounded font-bold uppercase">FREE</span>
+                }
+            </div>
+            
+            <div className="flex gap-2 md:gap-3">
+                <button 
+                    onClick={handleSave} 
+                    disabled={saving} 
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-3 md:px-4 rounded-lg transition"
+                    title="Salvar Alterações"
+                >
+                    <Save size={18} /> 
+                    <span className="hidden md:inline">{saving ? '...' : 'Salvar'}</span>
+                </button>
+
+                <button onClick={handleOpenProfile} className="p-2 bg-slate-800 rounded hover:bg-slate-700 text-white border border-slate-700" title="Ver Perfil Público">
+                    <Eye size={20}/>
+                </button>
+                <button onClick={() => { supabase.auth.signOut(); router.push('/login'); }} className="p-2 bg-red-900/50 text-red-400 rounded" title="Sair">
+                    <LogOut size={20}/>
+                </button>
             </div>
         </div>
 
+        {/* LISTA DE ABAS */}
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
             <button onClick={() => setActiveTab('geral')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase ${activeTab === 'geral' ? (isCompany ? 'bg-purple-600' : 'bg-cyan-600') : 'bg-slate-800 text-slate-400'}`}>Geral</button>
             <button onClick={() => setActiveTab('missoes')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase flex items-center gap-2 ${activeTab === 'missoes' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400'}`}><Trophy size={16}/> Missões</button> 
@@ -446,12 +468,10 @@ export default function Painel() {
             <button onClick={() => setActiveTab('contato')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase ${activeTab === 'contato' ? (isCompany ? 'bg-purple-600' : 'bg-cyan-600') : 'bg-slate-800 text-slate-400'}`}>Contato</button>
         </div>
 
+        {/* CONTEÚDO DAS ABAS */}
         <div className="space-y-6">
             {activeTab === 'missoes' && <TabMissoes perfil={perfil} />}
-
-            {/* TAB GERAL COM A NOVA FUNÇÃO DE STATUS */}
             {activeTab === 'geral' && (isCompany ? <TabGeralEmpresa perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} /> : <TabGeral perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} onUpdateStatus={handleUpdateStatus} />)}
-            
             {activeTab === 'cartel' && !isCompany && perfil.is_athlete && <TabCartel perfil={perfil} setPerfil={setPerfil} handleStatsChange={handleStatsChange} handleRecordChange={handleRecordChange} isPremium={isPremium} />}
             {activeTab === 'lutas' && !isCompany && perfil.is_athlete && <TabLutas perfil={perfil} setPerfil={setPerfil} handleNextFightChange={handleNextFightChange} isPremium={isPremium} />}
             {activeTab === 'historico_duelos' && !isCompany && <TabHistoricoDuelos meusDuelos={meusDuelos} perfilId={perfil.id} handleDueloAction={handleDueloAction} />}
@@ -462,11 +482,18 @@ export default function Painel() {
             {activeTab === 'contato' && <TabContato perfil={perfil} handleContactChange={handleContactChange} />}
         </div>
 
-        <div className="fixed bottom-6 right-6 z-50">
-            <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-8 rounded-full shadow-lg transition transform hover:scale-105">
-                <Save size={24} /> {saving ? '...' : 'Salvar'}
+        {/* BOTÃO SALVAR FINAL (NO RODAPÉ DO CONTEÚDO) */}
+        <div className="mt-8 mb-4">
+            <button 
+                onClick={handleSave} 
+                disabled={saving} 
+                className="w-full flex justify-center items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg transition active:scale-95"
+            >
+                <Save size={24} /> 
+                {saving ? 'Salvando...' : 'SALVAR ALTERAÇÕES'}
             </button>
         </div>
+
       </div>
     </div>
   );
