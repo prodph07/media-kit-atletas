@@ -59,7 +59,7 @@ export function getRankInfo(levelInput) {
 }
 
 // --- ENGINE DE TAREFAS (XP e Recompensas) ---
-const REWARDS = {
+export const REWARDS = {
   SETUP_BUNDLE_BASIC: 100,
   COMPLETE_PHYSICAL_STATS: 25,
   COMPLETE_FIGHT_RECORD: 50,
@@ -81,7 +81,12 @@ const REWARDS = {
   VOTE_BONUS: 15,
   DAILY_SCOUT: 20,      
   DAILY_RESPECT: 10,    
-  DAILY_STATUS: 15      
+  DAILY_STATUS: 15,
+  
+  // NOVAS MISSÕES I.A.
+  DAILY_STORY: 100, 
+  DAILY_GEAR: 30,
+  LINK_IN_BIO: 200
 };
 
 export function calculateNewLevelState(currentXp, currentLevel, xpGained) {
@@ -143,7 +148,6 @@ export function processGamification(perfil, currentTasks = []) {
 
 // --- FUNÇÕES DE RECORRÊNCIA ---
 
-// 1. Duelo (Semanal)
 export function processDuelParticipation(currentWeeklyStats) {
   const stats = currentWeeklyStats || {};
   const lastDate = stats.last_duel_participation_date ? new Date(stats.last_duel_participation_date) : null;
@@ -161,7 +165,6 @@ export function processDuelParticipation(currentWeeklyStats) {
   return { xpGained: 0, updatedStats: stats, success: false };
 }
 
-// 2. Viralizou (Visitas)
 export function processVisitMilestone(currentViews, currentWeeklyStats) {
     const stats = { visits_snapshot: 0, visits_xp_earned: 0, last_weekly_reset: new Date().toISOString(), ...(currentWeeklyStats || {}) };
     const lastReset = stats.last_weekly_reset ? new Date(stats.last_weekly_reset) : new Date();
@@ -194,7 +197,6 @@ export function processVisitMilestone(currentViews, currentWeeklyStats) {
     return { xpGained: 0, updatedStats: stats, success: false };
 }
 
-// 3. Login Diário com Streak
 export function processDailyLogin(currentStats) {
     const stats = currentStats || {};
     const today = getTodayString();
@@ -208,7 +210,6 @@ export function processDailyLogin(currentStats) {
     let message = "";
     let xp = REWARDS.DAILY_LOGIN;
 
-    // Calcula diferença em dias
     const diffTime = Math.abs(new Date(today) - new Date(lastLogin));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -233,7 +234,6 @@ export function processDailyLogin(currentStats) {
     };
 }
 
-// 4. Compartilhar Perfil
 export function processWeeklyShare(currentStats) {
     const stats = currentStats || {};
     const lastShare = stats.last_share_date ? new Date(stats.last_share_date) : null;
@@ -251,7 +251,6 @@ export function processWeeklyShare(currentStats) {
     return { success: false };
 }
 
-// 5. Atualizar Peso
 export function processWeightCheckIn(currentStats) {
     const stats = currentStats || {};
     const lastUpdate = stats.last_weight_update ? new Date(stats.last_weight_update) : null;
@@ -269,7 +268,6 @@ export function processWeightCheckIn(currentStats) {
     return { success: false };
 }
 
-// 6. Voto em Duelo
 export function processDuelVoting(currentStats) {
     const stats = currentStats || {};
     const today = getTodayString();
@@ -286,12 +284,10 @@ export function processDuelVoting(currentStats) {
     return { success: false };
 }
 
-// 7. Ação Genérica Diária (Status, Respect)
 export function processDailyAction(currentStats, actionKey) {
     const stats = currentStats || {};
     const today = getTodayString();
     
-    // Mapeia chaves: 'DAILY_RESPECT' -> 'last_daily_respect_date'
     const dbKey = `last_${actionKey.toLowerCase()}_date`;
     const lastAction = getDateString(stats[dbKey]);
 
@@ -307,7 +303,6 @@ export function processDailyAction(currentStats, actionKey) {
     };
 }
 
-// 8. OLHEIRO (Scouting - Visitar 3 perfis diferentes)
 export function processScouting(currentStats) {
     const stats = currentStats || {};
     const today = getTodayString();
@@ -315,27 +310,22 @@ export function processScouting(currentStats) {
 
     let scoutCount = stats.daily_scout_count || 0;
 
-    // Se mudou o dia, reseta a contagem
     if (lastScout !== today) {
         scoutCount = 0;
     }
 
-    // Se já completou hoje, não faz nada
     if (scoutCount >= 3 && lastScout === today) {
         return { success: false, updatedStats: stats };
     }
 
-    // Incrementa
     scoutCount++;
     
-    // Atualiza Stats
     const newStats = { 
         ...stats, 
         last_scout_date: new Date().toISOString(),
         daily_scout_count: scoutCount
     };
 
-    // Se atingiu a meta (3), ganha XP
     if (scoutCount === 3) {
         return {
             success: true,
@@ -345,11 +335,56 @@ export function processScouting(currentStats) {
         };
     }
 
-    // Apenas atualiza a contagem sem XP
     return { 
         success: true, 
         xpGained: 0, 
         updatedStats: newStats, 
         message: `Perfil visitado (${scoutCount}/3)` 
     };
+}
+
+// --- PROCESSADOR GENÉRICO DE MISSÃO DE I.A. ---
+export function processAIMission(currentStats, currentTasks, missionType) {
+    const stats = { ...currentStats };
+    const tasks = [...currentTasks];
+    const today = getTodayString();
+    
+    let xpAwarded = 0;
+    let message = "";
+    let success = false;
+
+    // Lógica para cada tipo de missão
+    if (missionType === 'STORY_INSTAGRAM') {
+        // Missão Diária: Verifica data
+        const lastDate = getDateString(stats.last_daily_story_date);
+        if (lastDate !== today) {
+            xpAwarded = REWARDS.DAILY_STORY;
+            stats.last_daily_story_date = new Date().toISOString();
+            message = "Story Validado! (+100 XP)";
+            success = true;
+        }
+    } 
+    else if (missionType === 'GEAR_CHECK') {
+        // Missão Diária
+        const lastDate = getDateString(stats.last_daily_gear_date);
+        if (lastDate !== today) {
+            xpAwarded = REWARDS.DAILY_GEAR;
+            stats.last_daily_gear_date = new Date().toISOString();
+            message = "Equipamento Pronto! Bom treino. (+30 XP)";
+            success = true;
+        }
+    }
+    else if (missionType === 'LINK_IN_BIO') {
+        // Missão Única (checa lista de tasks)
+        if (!tasks.includes('LINK_IN_BIO')) {
+            xpAwarded = REWARDS.LINK_IN_BIO;
+            tasks.push('LINK_IN_BIO');
+            message = "Parceiro Oficial! Link na Bio verificado. (+200 XP)";
+            success = true;
+        } else {
+            return { success: false, message: "Você já reivindicou esta recompensa única." };
+        }
+    }
+
+    return { success, xpGained: xpAwarded, updatedStats: stats, updatedTasks: tasks, message };
 }
