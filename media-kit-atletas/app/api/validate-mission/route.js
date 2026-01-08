@@ -2,6 +2,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
+// --- CORREÇÃO PARA CLOUDFLARE PAGES ---
+export const runtime = 'edge';
+
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 // Dicionário de Prompts: O cérebro de cada missão
