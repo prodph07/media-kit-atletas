@@ -12,7 +12,7 @@ import {
 
 const ADMIN_EMAIL = 'prod.ph07@gmail.com';
 const PLAN_PRICE = 9.97; 
-const COMISSAO_VALOR = 50.00;
+const COMISSAO_VALOR = 5.00;
 
 const getRankName = (level) => {
     if (level <= 10) return "Iron";
