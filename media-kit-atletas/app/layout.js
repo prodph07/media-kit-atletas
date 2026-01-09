@@ -1,6 +1,7 @@
 import './globals.css';
 import Navbar from '../components/Navbar';
-import ReferralListener from '../components/ReferralListener'; // <--- IMPORTANTE: O Rastreador
+import ReferralListener from '../components/ReferralListener';
+import { Suspense } from 'react'; // <--- IMPORTANTE: Importar Suspense
 
 export const metadata = {
   title: 'Nocaute Pages - O Mídia Kit do Lutador',
@@ -12,10 +13,15 @@ export default function RootLayout({ children }) {
     <html lang="pt-br">
       <body className="bg-[#0a0a0c] text-white">
         
-        {/* Componente Invisível que captura o link de indicação */}
-        <ReferralListener />
+        {/* ENVOLVEMOS O REFERRAL LISTENER COM SUSPENSE 
+            Isso corrige o erro de "useSearchParams" no build
+        */}
+        <Suspense fallback={null}>
+            <ReferralListener />
+        </Suspense>
         
         <Navbar />
+        
         <main>
             {children}
         </main>

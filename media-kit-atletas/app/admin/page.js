@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { 
     LayoutDashboard, Users, DollarSign, AlertTriangle, 
     Search, ExternalLink, ShieldCheck, 
     Crown, Loader2, Swords, UserPlus, Clock, 
-    ChevronLeft, ChevronRight, UserMinus, TrendingUp, Handshake, CheckCircle
+    ChevronLeft, ChevronRight, TrendingUp, Handshake, CheckCircle
 } from 'lucide-react';
 
 const ADMIN_EMAIL = 'prod.ph07@gmail.com';
 const PLAN_PRICE = 9.97; 
-const COMISSAO_VALOR = 5.00; // Valor que você paga pro influencer por cabeça
+const COMISSAO_VALOR = 50.00;
 
 const getRankName = (level) => {
     if (level <= 10) return "Iron";
@@ -24,10 +24,11 @@ const getRankName = (level) => {
     return "GOAT";
 };
 
-export default function AdminPanel() {
+// --- COMPONENTE INTERNO COM A LÓGICA (ANTIGO AdminPanel) ---
+function AdminContent() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-    const [processingPayment, setProcessingPayment] = useState(false); // Estado de loading do botão pagar
+    const [processingPayment, setProcessingPayment] = useState(false);
     const [users, setUsers] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
     
@@ -64,7 +65,6 @@ export default function AdminPanel() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || user.email !== ADMIN_EMAIL) { alert("Acesso Negado."); router.push('/'); return; }
 
-        // IMPORTANTE: Agora trazemos 'affiliate_paid_at' também
         const { data: atletas, error } = await supabase
             .from('atletas')
             .select('*') 
@@ -155,7 +155,6 @@ export default function AdminPanel() {
         setRecentActivity(logs.sort((a, b) => b.date - a.date));
     };
 
-    // --- NOVA LÓGICA DE PARCEIROS (COM PAGAMENTOS) ---
     const partnersData = useMemo(() => {
         const partnersMap = {};
         const cutoffDate = new Date();
@@ -170,27 +169,18 @@ export default function AdminPanel() {
                         id: partnerId,
                         name: partnerInfo?.nome || partnerInfo?.apelido || `ID: ${partnerId}`,
                         totalInvites: 0,
-                        conversionsPeriod: 0, // No filtro de data
-                        
-                        // Financeiro (Sempre total lifetime para não esquecer dívidas antigas)
+                        conversionsPeriod: 0,
                         totalPaid: 0,
                         totalPending: 0,
-                        pendingUsersIds: [] // Lista de IDs para marcar como pago
+                        pendingUsersIds: []
                     };
                 }
-                
                 partnersMap[partnerId].totalInvites++;
-
-                // Lógica de Conversão
                 if (user.first_premium_at) {
                     const conversionDate = new Date(user.first_premium_at);
-                    
-                    // Conta para o gráfico/display se estiver no período
                     if (conversionDate >= cutoffDate) {
                         partnersMap[partnerId].conversionsPeriod++;
                     }
-
-                    // Lógica Financeira (Lifetime)
                     if (user.affiliate_paid_at) {
                         partnersMap[partnerId].totalPaid++;
                     } else {
@@ -203,7 +193,6 @@ export default function AdminPanel() {
         return Object.values(partnersMap).sort((a, b) => b.conversionsPeriod - a.conversionsPeriod);
     }, [users, partnerDateRange]);
 
-    // --- FUNÇÃO PARA REGISTRAR PAGAMENTO ---
     const handleMarkAsPaid = async (partnerId, pendingIds) => {
         if (pendingIds.length === 0) return;
         if (!confirm(`Confirmar pagamento de ${pendingIds.length} comissões para este parceiro?\nTotal: R$ ${pendingIds.length * COMISSAO_VALOR}`)) return;
@@ -211,15 +200,11 @@ export default function AdminPanel() {
         setProcessingPayment(true);
         const now = new Date().toISOString();
 
-        const { error } = await supabase
-            .from('atletas')
-            .update({ affiliate_paid_at: now })
-            .in('id', pendingIds);
+        const { error } = await supabase.from('atletas').update({ affiliate_paid_at: now }).in('id', pendingIds);
 
         if (error) {
             alert("Erro ao registrar pagamento.");
         } else {
-            // Atualiza estado local para refletir na hora
             const updatedUsers = users.map(u => {
                 if (pendingIds.includes(u.id)) {
                     return { ...u, affiliate_paid_at: now };
@@ -232,7 +217,6 @@ export default function AdminPanel() {
         setProcessingPayment(false);
     };
 
-    // --- FILTROS ---
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
             const searchMatch = user.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || user.email?.toLowerCase().includes(searchTerm.toLowerCase()) || user.apelido?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -315,7 +299,7 @@ export default function AdminPanel() {
                     </div>
                 </div>
 
-                {/* GRÁFICO */}
+                {/* GRÁFICO EMPILHADO */}
                 <div className="bg-slate-900 p-4 md:p-6 rounded-xl border border-slate-800">
                     <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                         <h3 className="text-white font-bold text-sm uppercase flex items-center gap-2 w-full md:w-auto">
@@ -381,7 +365,6 @@ export default function AdminPanel() {
                                             <div className="font-bold text-white">{partner.totalInvites}</div>
                                         </div>
                                     </div>
-                                    
                                     <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
                                         <div className="bg-slate-900 p-2 rounded">
                                             <div className="text-slate-400">Conversões</div>
@@ -399,7 +382,6 @@ export default function AdminPanel() {
                                             <div className="text-[8px] text-orange-600">Total</div>
                                         </div>
                                     </div>
-
                                     {partner.totalPending > 0 ? (
                                         <button 
                                             onClick={() => handleMarkAsPaid(partner.id, partner.pendingUsersIds)}
@@ -421,13 +403,14 @@ export default function AdminPanel() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* LOGS E TABELA MANTIDOS IGUAIS (Código Longo anterior repetido aqui para integridade) */}
+                    {/* LOGS */}
                     <div className="lg:col-span-1 bg-slate-900 rounded-xl border border-slate-800 flex flex-col">
                         <div className="p-4 md:p-6 border-b border-slate-800"><h3 className="text-white font-bold text-sm uppercase flex items-center gap-2"><Clock size={16}/> Atividade Recente</h3></div>
                         <div className="p-4 flex-1 space-y-3">{paginatedLogs.map((log, i) => (<div key={i} className={`p-3 rounded-lg border ${log.color} flex gap-3 items-start`}><div className="mt-1">{log.icon}</div><div className="overflow-hidden"><p className="text-white font-bold text-xs truncate">{log.title}</p><p className="text-slate-400 text-[10px] leading-tight mb-1 truncate">{log.message}</p><p className="text-slate-600 text-[9px]">{log.date.toLocaleString()}</p></div></div>))}</div>
                         <div className="p-4 border-t border-slate-800 flex justify-between items-center text-xs"><button onClick={() => setLogPage(p => Math.max(1, p-1))} disabled={logPage===1} className="text-slate-400 hover:text-white disabled:opacity-30"><ChevronLeft size={16}/></button><span className="text-slate-500">{logPage} / {totalLogPages}</span><button onClick={() => setLogPage(p => Math.min(totalLogPages, p+1))} disabled={logPage===totalLogPages} className="text-slate-400 hover:text-white disabled:opacity-30"><ChevronRight size={16}/></button></div>
                     </div>
 
+                    {/* TABELA */}
                     <div className="lg:col-span-2 bg-slate-900 p-4 md:p-6 rounded-xl border border-slate-800">
                         <h3 className="text-white font-bold text-sm uppercase mb-6 flex items-center gap-2"><LayoutDashboard size={16}/> Visão Geral</h3>
                         <div className="space-y-6 mb-8">
@@ -442,5 +425,14 @@ export default function AdminPanel() {
                 </div>
             </div>
         </div>
+    );
+}
+
+// --- EXPORTAÇÃO DEFAULT COM SUSPENSE (A MÁGICA) ---
+export default function AdminPanel() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-white"><Loader2 className="animate-spin mr-2"/> Carregando Admin...</div>}>
+            <AdminContent />
+        </Suspense>
     );
 }
