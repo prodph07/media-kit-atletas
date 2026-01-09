@@ -28,7 +28,8 @@ import TabHistoricoDuelos from '../../components/panel/athlete/TabHistoricoDuelo
 import TabGeralEmpresa from '../../components/panel/company/TabGeralEmpresa';
 import TabTreinador from '../../components/panel/coach/TabTreinador';
 import TabMissoes from '../../components/panel/athlete/TabMissoes';
-import ReferralCard from '../../components/panel/athlete/ReferralCard'; // <--- IMPORTADO
+import ReferralCard from '../../components/panel/athlete/ReferralCard';
+import BannerPremium from '../../components/panel/BannerPremium'; // <--- IMPORTADO AQUI
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const safeVal = (val) => val === null || val === undefined ? '' : val;
@@ -468,6 +469,11 @@ export default function Painel() {
             {activeTab === 'missoes' && <TabMissoes perfil={perfil} />}
             {activeTab === 'geral' && (
                 <>
+                    {/* --- BANNER PREMIUM (TOPO) --- */}
+                    <div className="mb-6">
+                        <BannerPremium atleta={perfil} />
+                    </div>
+
                     {/* --- REFERRAL CARD (SÓ PARA ATLETAS) --- */}
                     {!isCompany && <div className="mb-6"><ReferralCard perfil={perfil} /></div>}
                     
