@@ -11,7 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const MISSION_PROMPTS = {
   'STORY_INSTAGRAM': `
     Analise esta imagem.
-    1. É um print de um Story do Instagram? (Interface, fontes, layout).
+    1. É um print de um Story do Instagram? Pode ser do desktop, não seja muito rígido com os critérios (Interface, fontes, layout).
     2. Contém o texto "@nocautepages" ou "nocautepages" visível? (Pode ser texto pequeno ou sticker).
     Retorne JSON: { "valid": boolean, "reason": "motivo curto em pt-br" }
   `,

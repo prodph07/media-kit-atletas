@@ -28,6 +28,7 @@ import TabHistoricoDuelos from '../../components/panel/athlete/TabHistoricoDuelo
 import TabGeralEmpresa from '../../components/panel/company/TabGeralEmpresa';
 import TabTreinador from '../../components/panel/coach/TabTreinador';
 import TabMissoes from '../../components/panel/athlete/TabMissoes';
+import ReferralCard from '../../components/panel/athlete/ReferralCard'; // <--- IMPORTADO
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const safeVal = (val) => val === null || val === undefined ? '' : val;
@@ -415,10 +416,6 @@ export default function Painel() {
     <div className="min-h-screen bg-[#0a0a0c] text-white p-4 pb-32 font-sans">
       <div className="max-w-4xl mx-auto">
         
-        {/* =============================================================
-            HEADER DO PAINEL (AGORA ESTÁTICO / NÃO FLUTUA MAIS)
-            Removido 'sticky top-16 z-40' para evitar bugs de sobreposição
-           ============================================================= */}
         <div className="flex justify-between items-center mb-6 bg-slate-900 p-4 rounded-xl border border-slate-800">
             <div className="flex items-center gap-2">
                 <h1 className="text-xl md:text-2xl font-bold">Painel</h1>
@@ -448,7 +445,6 @@ export default function Painel() {
             </div>
         </div>
 
-        {/* LISTA DE ABAS */}
         <div className="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
             <button onClick={() => setActiveTab('geral')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase ${activeTab === 'geral' ? (isCompany ? 'bg-purple-600' : 'bg-cyan-600') : 'bg-slate-800 text-slate-400'}`}>Geral</button>
             <button onClick={() => setActiveTab('missoes')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase flex items-center gap-2 ${activeTab === 'missoes' ? 'bg-yellow-600 text-white' : 'bg-slate-800 text-slate-400'}`}><Trophy size={16}/> Missões</button> 
@@ -468,10 +464,19 @@ export default function Painel() {
             <button onClick={() => setActiveTab('contato')} className={`px-4 py-2 rounded-full text-sm font-bold uppercase ${activeTab === 'contato' ? (isCompany ? 'bg-purple-600' : 'bg-cyan-600') : 'bg-slate-800 text-slate-400'}`}>Contato</button>
         </div>
 
-        {/* CONTEÚDO DAS ABAS */}
         <div className="space-y-6">
             {activeTab === 'missoes' && <TabMissoes perfil={perfil} />}
-            {activeTab === 'geral' && (isCompany ? <TabGeralEmpresa perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} /> : <TabGeral perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} onUpdateStatus={handleUpdateStatus} />)}
+            {activeTab === 'geral' && (
+                <>
+                    {/* --- REFERRAL CARD (SÓ PARA ATLETAS) --- */}
+                    {!isCompany && <div className="mb-6"><ReferralCard perfil={perfil} /></div>}
+                    
+                    {isCompany 
+                        ? <TabGeralEmpresa perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} /> 
+                        : <TabGeral perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} onUpdateStatus={handleUpdateStatus} />
+                    }
+                </>
+            )}
             {activeTab === 'cartel' && !isCompany && perfil.is_athlete && <TabCartel perfil={perfil} setPerfil={setPerfil} handleStatsChange={handleStatsChange} handleRecordChange={handleRecordChange} isPremium={isPremium} />}
             {activeTab === 'lutas' && !isCompany && perfil.is_athlete && <TabLutas perfil={perfil} setPerfil={setPerfil} handleNextFightChange={handleNextFightChange} isPremium={isPremium} />}
             {activeTab === 'historico_duelos' && !isCompany && <TabHistoricoDuelos meusDuelos={meusDuelos} perfilId={perfil.id} handleDueloAction={handleDueloAction} />}
@@ -482,7 +487,6 @@ export default function Painel() {
             {activeTab === 'contato' && <TabContato perfil={perfil} handleContactChange={handleContactChange} />}
         </div>
 
-        {/* BOTÃO SALVAR FINAL (NO RODAPÉ DO CONTEÚDO) */}
         <div className="mt-8 mb-4">
             <button 
                 onClick={handleSave} 

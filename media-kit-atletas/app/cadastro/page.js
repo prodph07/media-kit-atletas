@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -20,21 +20,43 @@ export default function Cadastro() {
   });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [referrerId, setReferrerId] = useState(null);
 
-  // --- FUNÇÃO PARA GERAR SLUG (LINK AMIGÁVEL) ---
+  // --- BUSCA INDICAÇÃO AO CARREGAR ---
+  useEffect(() => {
+    async function checkReferral() {
+      // Verifica se estamos no browser antes de acessar localStorage
+      if (typeof window !== 'undefined') {
+        const referralSlug = localStorage.getItem('fightnexus_referral');
+        if (referralSlug) {
+          const { data } = await supabase
+            .from('atletas')
+            .select('id')
+            .eq('slug', referralSlug)
+            .single();
+          
+          if (data) {
+            setReferrerId(data.id);
+            console.log("Cadastro com indicação de ID:", data.id);
+          }
+        }
+      }
+    }
+    checkReferral();
+  }, []);
+
   const gerarSlug = (texto) => {
     return texto
       .toString()
       .toLowerCase()
       .trim()
-      .normalize('NFD') // Separa acentos das letras
-      .replace(/[\u0300-\u036f]/g, '') // Remove os acentos
-      .replace(/[^\w\s-]/g, '') // Remove caracteres especiais (ex: @, #, !)
-      .replace(/[\s_-]+/g, '-') // Troca espaços por hífens
-      .replace(/^-+|-+$/g, ''); // Remove hífens do começo e fim
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   };
 
-  // --- MÁSCARA DE CPF ---
   const mascaraCPF = (value) => {
     return value
       .replace(/\D/g, '') 
@@ -44,7 +66,6 @@ export default function Cadastro() {
       .replace(/(-\d{2})\d+?$/, '$1'); 
   };
 
-  // --- VALIDAÇÃO MATEMÁTICA DE CPF ---
   function validarCPF(cpf) {
     cpf = cpf.replace(/[^\d]+/g, '');
     if (cpf == '') return false;
@@ -84,7 +105,6 @@ export default function Cadastro() {
     setLoading(true);
     setMsg('');
 
-    // Validações
     if (formData.senha !== formData.confirmarSenha) {
       setMsg('As senhas não coincidem.'); setLoading(false); return;
     }
@@ -99,16 +119,20 @@ export default function Cadastro() {
         password: formData.senha,
       });
 
-      if (error) throw error;
+      // TRATAMENTO DE ERRO ESPECÍFICO AQUI
+      if (error) {
+        if (error.message.includes('already registered') || error.message.includes('User already registered')) {
+            throw new Error('Este email já está cadastrado. Tente fazer login.');
+        }
+        throw error;
+      }
 
       if (data.user) {
-        // 2. Prepara os dados (Limpa CPF e Gera Slug)
+        // 2. Prepara os dados
         const cpfLimpo = formData.cpf.replace(/\D/g, '');
-        
-        // Gera slug: "pedro silva" vira "pedro-silva-4821" (número aleatório pra garantir que é único)
         const slugFinal = `${gerarSlug(formData.nome)}-${Math.floor(Math.random() * 10000)}`;
 
-        // 3. Salva no banco de dados
+        // 3. Salva no banco de dados com a indicação
         const { error: dbError } = await supabase
           .from('atletas')
           .insert([
@@ -117,14 +141,22 @@ export default function Cadastro() {
               nome: formData.nome,
               email: formData.email,
               cpf: cpfLimpo,
-              slug: slugFinal, // <--- AQUI ESTÁ A MÁGICA
-              plano: 'free'
+              slug: slugFinal,
+              plano: 'free',
+              invited_by: referrerId // Salva o ID de quem indicou
             }
           ]);
 
         if (dbError) {
+            // Se der erro no banco (ex: CPF duplicado), deleta o usuário Auth para não ficar "fantasma"
+            // await supabase.auth.admin.deleteUser(data.user.id); // Requer service_role, então deixamos o erro aparecer
             if (dbError.code === '23505') throw new Error("Este CPF já está cadastrado.");
             throw dbError;
+        }
+
+        // Limpa o referral após uso
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('fightnexus_referral');
         }
 
         setMsg('Cadastro realizado com sucesso! Redirecionando...');
@@ -145,10 +177,18 @@ export default function Cadastro() {
         <h1 className="text-3xl font-bold text-center mb-2 text-white">Crie sua Conta</h1>
         <p className="text-center text-slate-400 mb-8">Comece a construir seu legado.</p>
 
+        {/* Mensagem de Feedback */}
         {msg && (
           <div className={`p-3 rounded text-center text-sm mb-4 ${msg.includes('sucesso') ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
             {msg}
           </div>
+        )}
+
+        {/* Feedback visual se houver indicação */}
+        {referrerId && (
+            <div className="mb-4 text-center text-xs text-green-400 bg-green-900/20 py-2 rounded border border-green-900/50">
+                ✨ Você está se cadastrando com um convite especial!
+            </div>
         )}
 
         <form onSubmit={handleCadastro} className="space-y-4">

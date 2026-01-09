@@ -1,5 +1,6 @@
 import './globals.css';
-import Navbar from '../components/Navbar'; // <--- IMPORTANTE
+import Navbar from '../components/Navbar';
+import ReferralListener from '../components/ReferralListener'; // <--- IMPORTANTE: O Rastreador
 
 export const metadata = {
   title: 'Nocaute Pages - O Mídia Kit do Lutador',
@@ -9,8 +10,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-br">
-      <body className="bg-[#0a0a0c] text-white"> {/* Adicionei classes globais aqui */}
-        <Navbar /> {/* <--- AQUI ESTÁ A MÁGICA */}
+      <body className="bg-[#0a0a0c] text-white">
+        
+        {/* Componente Invisível que captura o link de indicação */}
+        <ReferralListener />
+        
+        <Navbar />
         <main>
             {children}
         </main>
