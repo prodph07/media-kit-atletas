@@ -209,47 +209,35 @@ export default function TabMissoes({ perfil }) {
 
             <div className="max-w-7xl mx-auto space-y-8">
 
-                {/* RANK HEADER */}
-                <div className="bg-[#161616] industrial-border p-6 lg:p-10 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                        <span className="material-symbols-outlined text-9xl text-white">military_tech</span>
-                    </div>
-                    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 relative z-10">
-                        <div className="flex flex-col items-center justify-center md:border-r md:border-gray-700 md:pr-12 min-w-[140px]">
-                            <span
-                                className="text-7xl lg:text-9xl font-display font-bold text-white leading-none drop-shadow-lg"
-                                style={{ WebkitTextStroke: '2px #FF4500' }}
-                            >
-                                {perfil.level}
-                            </span>
-                            <span className="text-xl lg:text-2xl font-display font-bold uppercase tracking-[0.2em] text-gray-400 mt-2">
-                                {rank.tier}
-                            </span>
+                {/* RANK HEADER (COMPACT) */}
+                <div className="bg-[#161616] industrial-border p-4 flex flex-col md:flex-row items-center gap-4 relative overflow-hidden rounded-sm shadow-lg">
+                    <div className="flex items-center gap-4 flex-1 w-full md:w-auto">
+                        {/* Small Static Icon Container */}
+                        <div className="h-10 w-10 bg-[#0c0c0c] border border-[#333] flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-[#FF4500]">military_tech</span>
                         </div>
-                        <div className="flex-1 w-full">
-                            <div className="flex flex-col sm:flex-row justify-between items-end mb-3 gap-2">
-                                <h2 className="text-3xl lg:text-4xl font-display font-bold uppercase text-white tracking-wide">
-                                    {rank.title}
-                                </h2>
-                                <span className="font-mono text-[#FF4500] font-bold text-lg">{perfil.xp} / {nextXp} XP</span>
+
+                        {/* Level & Rank Info */}
+                        <div className="flex flex-col">
+                            <div className="flex items-baseline gap-2">
+                                <span className="font-display font-bold text-2xl text-white leading-none">LVL {perfil.level}</span>
+                                <span className="font-display font-bold text-sm text-[#FF4500] uppercase tracking-wider border-l border-[#333] pl-2">{rank.tier}</span>
                             </div>
-                            <div className="h-6 w-full bg-gray-900 border border-gray-700 relative shadow-inner">
-                                <div
-                                    className="absolute left-0 top-0 h-full bg-gradient-to-r from-[#FF4500] to-[#FFD700] progress-stripe flex items-center justify-end px-2 transition-all duration-1000"
-                                    style={{ width: `${progress}%` }}
-                                >
-                                    <div className="h-full w-1 bg-white opacity-50 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
-                                </div>
-                                <div className="absolute inset-0 flex justify-between px-[25%] pointer-events-none">
-                                    <div className="h-full w-px bg-gray-800"></div>
-                                    <div className="h-full w-px bg-gray-800"></div>
-                                    <div className="h-full w-px bg-gray-800"></div>
-                                </div>
-                            </div>
-                            <div className="mt-3 flex justify-between text-xs font-bold uppercase text-gray-500 tracking-wider">
-                                <span>Current Tier: {rank.tier}</span>
-                                <span>Next Tier: Next Level</span>
-                            </div>
+                            <span className="text-xs text-gray-500 uppercase tracking-widest font-bold leading-none mt-1">{rank.title}</span>
+                        </div>
+                    </div>
+
+                    {/* XP Progress - Compact */}
+                    <div className="w-full md:w-1/3 flex flex-col gap-1">
+                        <div className="flex justify-between text-[10px] font-bold uppercase text-gray-500">
+                            <span>XP Atual</span>
+                            <span className="text-white font-mono">{perfil.xp} / {nextXp}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-900 border border-gray-700 relative overflow-hidden">
+                            <div
+                                className="absolute left-0 top-0 h-full bg-gradient-to-r from-[#FF4500] to-[#FFD700] transition-all duration-1000"
+                                style={{ width: `${progress}%` }}
+                            ></div>
                         </div>
                     </div>
                 </div>

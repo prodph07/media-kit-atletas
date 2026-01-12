@@ -80,35 +80,7 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
 
             <main className="w-full max-w-5xl space-y-6">
 
-                {/* HEADERA */}
-                <header className="w-full bg-[#161616] border border-[#2a2a2a] p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-[#FFA500]/5 to-transparent pointer-events-none"></div>
-                    <div className="flex items-center gap-6 z-10">
-                        <div className="relative w-20 h-20 flex items-center justify-center">
-                            <div className="absolute inset-0 bg-[#FFA500]/20 rounded-full blur-md"></div>
-                            <span className="material-symbols-outlined text-6xl text-gray-300 relative z-10 drop-shadow-md">shield</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-[#FFA500] font-display font-bold text-4xl leading-none">{level}</span>
-                                <span className="text-white font-display font-medium text-2xl tracking-wide uppercase">{rank.tier}</span>
-                            </div>
-                            <span className="text-[#9ca3af] text-sm uppercase tracking-wider font-bold">Rank Atual</span>
-                        </div>
-                    </div>
-                    <div className="w-full md:max-w-md flex flex-col gap-2 z-10">
-                        <div className="flex justify-between items-end text-xs font-bold uppercase tracking-wider text-[#9ca3af]">
-                            <span>Progresso de XP</span>
-                            <span className="text-white">{xp} / {nextXp} XP</span>
-                        </div>
-                        <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                            <div
-                                className="h-full bg-[#FFA500] w-[1%] shadow-[0_0_10px_rgba(255,165,0,0.5)] transition-all duration-1000"
-                                style={{ width: `${progress}%` }}
-                            ></div>
-                        </div>
-                    </div>
-                </header>
+                {/* HEADER REMOVED AS REQUESTED */}
 
                 <div className="space-y-6">
 

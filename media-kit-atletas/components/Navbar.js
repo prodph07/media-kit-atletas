@@ -263,7 +263,7 @@ export default function Navbar() {
                 </div>
             </div>
 
-            <div className="md:hidden h-20 w-full"></div>
+            <div className="md:hidden h-20 w-full hidden"></div>
         </>
     );
 }

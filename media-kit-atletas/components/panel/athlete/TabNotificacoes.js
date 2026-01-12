@@ -63,53 +63,25 @@ export default function TabNotificacoes({
 
             <main className="w-full max-w-5xl space-y-6">
 
-                {/* HEADERA (Only render if perfil data exists, otherwise functionality implies just requests) */}
-                <header className="w-full bg-[#161616] border border-[#2a2a2a] p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-[#FFA500]/5 to-transparent pointer-events-none"></div>
-                    <div className="flex items-center gap-6 z-10">
-                        <div className="relative w-20 h-20 flex items-center justify-center">
-                            <div className="absolute inset-0 bg-[#FFA500]/20 rounded-full blur-md"></div>
-                            <span className="material-symbols-outlined text-6xl text-gray-300 relative z-10 drop-shadow-md">shield</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-[#FFA500] font-display font-bold text-4xl leading-none">{level}</span>
-                                <span className="text-white font-display font-medium text-2xl tracking-wide uppercase">{rank.tier}</span>
-                            </div>
-                            <span className="text-[#9ca3af] text-sm uppercase tracking-wider font-bold">Rank Atual</span>
-                        </div>
-                    </div>
-                    <div className="w-full md:max-w-md flex flex-col gap-2 z-10">
-                        <div className="flex justify-between items-end text-xs font-bold uppercase tracking-wider text-[#9ca3af]">
-                            <span>Progresso de XP</span>
-                            <span className="text-white">{xp} / {nextXp} XP</span>
-                        </div>
-                        <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                            <div
-                                className="h-full bg-[#FFA500] w-[1%] shadow-[0_0_10px_rgba(255,165,0,0.5)] transition-all duration-1000"
-                                style={{ width: `${progress}%` }}
-                            ></div>
-                        </div>
-                    </div>
-                </header>
+                {/* HEADERA REMOVED AS REQUESTED */}
 
                 {/* NAV */}
-                <nav className="flex w-full border-b border-[#2a2a2a] gap-4">
+                <nav className="flex w-full border-b border-[#2a2a2a] gap-4 overflow-x-auto pb-2 scrollbar-none">
                     <button
                         onClick={() => setActiveTab('all')}
-                        className={`px-8 py-3 text-lg font-display font-bold tracking-wider uppercase transition-colors focus:outline-none ${activeTab === 'all' ? 'text-[#FFA500] border-b-2 border-[#FFA500] bg-[#FFA500]/5' : 'text-[#9ca3af] hover:text-white'}`}
+                        className={`px-4 md:px-8 py-3 text-lg font-display font-bold tracking-wider uppercase transition-colors focus:outline-none whitespace-nowrap flex-shrink-0 ${activeTab === 'all' ? 'text-[#FFA500] border-b-2 border-[#FFA500] bg-[#FFA500]/5' : 'text-[#9ca3af] hover:text-white'}`}
                     >
                         Todos
                     </button>
                     <button
                         onClick={() => setActiveTab('convites')}
-                        className={`px-8 py-3 text-lg font-display font-bold tracking-wider uppercase transition-colors focus:outline-none ${activeTab === 'convites' ? 'text-[#FFA500] border-b-2 border-[#FFA500] bg-[#FFA500]/5' : 'text-[#9ca3af] hover:text-white'}`}
+                        className={`px-4 md:px-8 py-3 text-lg font-display font-bold tracking-wider uppercase transition-colors focus:outline-none whitespace-nowrap flex-shrink-0 ${activeTab === 'convites' ? 'text-[#FFA500] border-b-2 border-[#FFA500] bg-[#FFA500]/5' : 'text-[#9ca3af] hover:text-white'}`}
                     >
                         Convites ({convitesEquipe.length})
                     </button>
                     <button
                         onClick={() => setActiveTab('duelos')}
-                        className={`px-8 py-3 text-lg font-display font-bold tracking-wider uppercase transition-colors focus:outline-none ${activeTab === 'duelos' ? 'text-[#FFA500] border-b-2 border-[#FFA500] bg-[#FFA500]/5' : 'text-[#9ca3af] hover:text-white'}`}
+                        className={`px-4 md:px-8 py-3 text-lg font-display font-bold tracking-wider uppercase transition-colors focus:outline-none whitespace-nowrap flex-shrink-0 ${activeTab === 'duelos' ? 'text-[#FFA500] border-b-2 border-[#FFA500] bg-[#FFA500]/5' : 'text-[#9ca3af] hover:text-white'}`}
                     >
                         Duelos ({notificacoes.length})
                     </button>
@@ -136,7 +108,7 @@ export default function TabNotificacoes({
 
                             {convitesEquipe.map(convite => (
                                 <div key={convite.id} className="bg-[#161616] rounded-xl border border-[#2a2a2a] p-5 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-[#FFA500]/30 transition-all duration-300 group">
-                                    <div className="flex flex-col md:flex-row items-center md:items-start gap-5 text-center md:text-left w-full">
+                                    <div className="flex flex-col md:flex-row items-center md:items-start gap-5 text-center md:text-left w-full overflow-hidden">
                                         {/* Avatar / Initials */}
                                         <div className="w-14 h-14 rounded bg-[#2a2a2a] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-[#FFA500]/50 transition-colors shadow-md">
                                             {convite.coach?.foto_url ? (
@@ -148,14 +120,14 @@ export default function TabNotificacoes({
                                             )}
                                         </div>
 
-                                        <div className="flex flex-col justify-center h-full">
+                                        <div className="flex flex-col justify-center h-full overflow-hidden w-full">
                                             <span className="text-[10px] uppercase font-bold tracking-widest text-[#FFA500] mb-1">
                                                 Novo Pedido
                                             </span>
-                                            <h3 className="text-2xl font-display font-bold leading-none mb-1 text-white tracking-wide">
+                                            <h3 className="text-2xl font-display font-bold leading-none mb-1 text-white tracking-wide truncate w-full">
                                                 {convite.coach?.apelido || convite.coach?.nome || 'Unknown Coach'}
                                             </h3>
-                                            <p className="text-xs text-[#9ca3af] uppercase font-bold tracking-wider">
+                                            <p className="text-xs text-[#9ca3af] uppercase font-bold tracking-wider truncate w-full">
                                                 {convite.coach?.coach_details?.team ? `Equipe: ${convite.coach.coach_details.team}` : 'Quer te adicionar como aluno'}
                                             </p>
                                         </div>
@@ -163,13 +135,13 @@ export default function TabNotificacoes({
                                     <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end shrink-0">
                                         <button
                                             onClick={() => handleEquipeAction(convite.id, 'reject')}
-                                            className="h-10 px-6 rounded border border-white/10 text-[#9ca3af] hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-xs tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-white/20"
+                                            className="h-10 px-6 rounded border border-white/10 text-[#9ca3af] hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-xs tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-white/20 flex-1 md:flex-none"
                                         >
                                             Recusar
                                         </button>
                                         <button
                                             onClick={() => handleEquipeAction(convite.id, 'accept')}
-                                            className="h-10 px-8 rounded bg-[#FFA500] hover:bg-orange-600 text-black font-bold text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(255,165,0,0.3)] hover:shadow-[0_0_20px_rgba(255,165,0,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 clip-path-slant"
+                                            className="h-10 px-8 rounded bg-[#FFA500] hover:bg-orange-600 text-black font-bold text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(255,165,0,0.3)] hover:shadow-[0_0_20px_rgba(255,165,0,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 clip-path-slant flex-1 md:flex-none"
                                         >
                                             Aceitar
                                         </button>
@@ -192,7 +164,7 @@ export default function TabNotificacoes({
                             <div className="space-y-3">
                                 {notificacoes.map(duelo => (
                                     <div key={duelo.id} className="bg-[#161616] rounded-xl border border-[#2a2a2a] p-5 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-[#FFA500]/30 transition-all duration-300 group">
-                                        <div className="flex flex-col md:flex-row items-center md:items-start gap-5 text-center md:text-left w-full">
+                                        <div className="flex flex-col md:flex-row items-center md:items-start gap-5 text-center md:text-left w-full overflow-hidden">
                                             {/* Avatar / Initials */}
                                             <div className="w-14 h-14 rounded bg-[#2a2a2a] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-[#FFA500]/50 transition-colors shadow-md">
                                                 {duelo.desafiante?.foto_url ? (
@@ -202,14 +174,14 @@ export default function TabNotificacoes({
                                                 )}
                                             </div>
 
-                                            <div className="flex flex-col justify-center h-full">
+                                            <div className="flex flex-col justify-center h-full overflow-hidden w-full">
                                                 <span className="text-[10px] uppercase font-bold tracking-widest text-[#FFA500] mb-1">
                                                     Desafiante
                                                 </span>
-                                                <h3 className="text-2xl font-display font-bold leading-none mb-1 text-white tracking-wide">
+                                                <h3 className="text-2xl font-display font-bold leading-none mb-1 text-white tracking-wide truncate w-full">
                                                     {duelo.desafiante?.apelido || duelo.desafiante?.nome || 'Unknown Fighter'}
                                                 </h3>
-                                                <p className="text-xs text-[#9ca3af] uppercase font-bold tracking-wider">
+                                                <p className="text-xs text-[#9ca3af] uppercase font-bold tracking-wider truncate w-full">
                                                     Criado em {new Date(duelo.created_at).toLocaleDateString()}
                                                 </p>
                                             </div>
@@ -217,13 +189,13 @@ export default function TabNotificacoes({
                                         <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end shrink-0">
                                             <button
                                                 onClick={() => handleDueloAction(duelo.id, 'reject')}
-                                                className="h-10 px-6 rounded border border-white/10 text-[#9ca3af] hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-xs tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-white/20"
+                                                className="h-10 px-6 rounded border border-white/10 text-[#9ca3af] hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-xs tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-white/20 flex-1 md:flex-none"
                                             >
                                                 Recusar
                                             </button>
                                             <button
                                                 onClick={() => handleDueloAction(duelo.id, 'accept')}
-                                                className="h-10 px-8 rounded bg-[#FFA500] hover:bg-orange-600 text-black font-bold text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(255,165,0,0.3)] hover:shadow-[0_0_20px_rgba(255,165,0,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                                                className="h-10 px-8 rounded bg-[#FFA500] hover:bg-orange-600 text-black font-bold text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(255,165,0,0.3)] hover:shadow-[0_0_20px_rgba(255,165,0,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 flex-1 md:flex-none"
                                             >
                                                 Aceitar
                                             </button>

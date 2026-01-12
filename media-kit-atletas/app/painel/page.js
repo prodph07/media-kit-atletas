@@ -518,7 +518,7 @@ export default function Painel() {
             </div>
 
             {/* MAIN CONTENT */}
-            <main className="flex-1 overflow-y-auto p-4 lg:p-8 relative scroll-smooth pb-40 md:pb-32">
+            <main className="flex-1 overflow-y-auto px-4 pb-40 pt-2 lg:px-8 lg:pb-32 lg:pt-4 relative scroll-smooth md:pb-32">
                 <div className="max-w-7xl mx-auto space-y-6">
                     {activeTab === 'missoes' && <TabMissoes perfil={perfil} />}
                     {activeTab === 'geral' && (
@@ -539,23 +539,21 @@ export default function Painel() {
                     {activeTab === 'midia' && <TabMidia perfil={perfil} setPerfil={setPerfil} handleSocialChange={handleSocialChange} handleDeleteImage={handleDeleteImage} userId={userId} />}
                     {activeTab === 'metricas' && <TabMetricas perfil={perfil} setPerfil={setPerfil} handleInstaStats={handleInstaStats} handleSocialChange={handleSocialChange} totalViews={totalViews} profileViews={profileViews} isPremium={isPremium} formatNumber={formatNumber} ageRange={ageRange} setAgeRange={setAgeRange} genderSplit={genderSplit} setGenderSplit={setGenderSplit} />}
                     {activeTab === 'contato' && <TabContato perfil={perfil} handleContactChange={handleContactChange} />}
+
+                    {/* STATIC SAVE BUTTON */}
+                    {activeTab !== 'treinador' && (
+                        <div className="pt-6 pb-8">
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="w-full bg-[#00E676] hover:bg-green-500 text-black font-display font-bold text-lg md:text-xl uppercase py-3 md:py-4 shadow-[0_0_20px_rgba(0,230,118,0.2)] transition-all transform hover:scale-[1.005] hover:shadow-[0_0_30px_rgba(0,230,118,0.4)] rounded-sm"
+                            >
+                                {saving ? 'Salvando...' : 'SALVAR ALTERAÇÕES'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
-
-            {/* FLOATING ACTION BAR */}
-            {activeTab !== 'treinador' && (
-                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-[#0c0c0c]/95 backdrop-blur-sm border-t border-[#222] p-3 md:p-6 z-40">
-                    <div className="max-w-7xl mx-auto">
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="w-full bg-[#00E676] hover:bg-green-500 text-black font-display font-bold text-lg md:text-xl uppercase py-3 md:py-4 shadow-[0_0_20px_rgba(0,230,118,0.2)] transition-all transform hover:scale-[1.005] hover:shadow-[0_0_30px_rgba(0,230,118,0.4)]"
-                        >
-                            {saving ? 'Salvando...' : 'SALVAR ALTERAÇÕES'}
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
