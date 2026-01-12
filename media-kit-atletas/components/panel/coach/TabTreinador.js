@@ -1,41 +1,44 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Medal, Users, GraduationCap, Clock, Award, CheckCircle, Search, Plus, Trash2, ExternalLink, Clock3, Lock } from 'lucide-react';
+import { Lock, Search, MoreVertical, Check, ExternalLink } from 'lucide-react';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const SERVICOS_COMUNS = [
     { id: 'personal', label: 'Personal Fight', desc: 'Aulas particulares 1x1' },
     { id: 'group', label: 'Aulas em Grupo', desc: 'Turmas regulares na academia' },
-    { id: 'online', label: 'Consultoria Online', desc: 'Análise de vídeo e treinos' },
     { id: 'seminar', label: 'Seminários', desc: 'Disponível para viagens' },
+    { id: 'sparring', label: 'Sparring Supervisionado', desc: 'Treino prático de luta' },
     { id: 'corner', label: 'Corner / Eventos', desc: 'Acompanhamento em lutas' }
 ];
 
-// Adicione isPremium nas props
 export default function TabTreinador({ perfil, setPerfil, isPremium }) {
-    
-    // Estados locais
+
+    // --- ESTADOS ---
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
-    const [meusAlunos, setMeusAlunos] = useState([]); 
+    const [meusAlunos, setMeusAlunos] = useState([]);
 
-    // Carregar alunos ao abrir a aba
+    const details = perfil.coach_details || {};
+
+    // --- EFEITOS ---
     useEffect(() => {
         fetchStudents();
     }, [perfil.id]);
 
+    // --- FUNÇÕES ---
     const fetchStudents = async () => {
         if (!perfil.id) return;
-        // Busca na tabela RELACOES
         const { data, error } = await supabase
             .from('relacoes')
             .select(`
                 id, status, initiated_by,
                 student:atletas!student_id(id, nome, apelido, foto_url, slug)
             `)
-            .eq('coach_id', perfil.id); // Onde EU sou o treinador
+            .eq('coach_id', perfil.id);
 
         if (!error && data) {
             setMeusAlunos(data);
@@ -46,7 +49,14 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
         setPerfil(prev => ({ ...prev, coach_details: { ...prev.coach_details, [field]: value } }));
     };
 
-    // BUSCA DE ATLETAS
+    const toggleService = (serviceId) => {
+        const currentServices = details.services || [];
+        let newServices;
+        if (currentServices.includes(serviceId)) newServices = currentServices.filter(s => s !== serviceId);
+        else newServices = [...currentServices, serviceId];
+        updateCoachDetail('services', newServices);
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         if (!searchTerm || searchTerm.length < 3) return;
@@ -63,21 +73,16 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
         setIsSearching(false);
     };
 
-    // --- LÓGICA DE ENVIO DE CONVITE (COM TRAVA FREE) ---
     const sendInvite = async (student) => {
         const studentId = student.id;
         const coachId = perfil.id;
-
-        // TRAVA: Limite de 2 alunos para Free
-        // Conta apenas alunos com status 'accepted' (ativos) ou 'pending' (vaga reservada)
         const activeStudentsCount = meusAlunos.filter(a => a.status === 'accepted' || a.status === 'pending').length;
-        
+
         if (!isPremium && activeStudentsCount >= 2) {
-            alert("🔒 Limite do Plano Grátis Atingido (2 Alunos).\n\nFaça o upgrade para Premium para adicionar ilimitados alunos à sua equipe.");
+            alert("🔒 Limite do Plano Grátis Atingido (2 Alunos).\n\nFaça o upgrade para Premium.");
             return;
         }
 
-        // 1. Verifica se JÁ EXISTE uma relação inversa (O aluno me convidou antes?)
         const { data: existingReverse } = await supabase
             .from('relacoes')
             .select('*')
@@ -86,165 +91,286 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
             .single();
 
         if (existingReverse) {
-            if (existingReverse.status === 'accepted') {
-                alert("Vocês já estão conectados!");
-                return;
-            }
-            // Se existe e fui EU que criei, não faz nada
-            if (existingReverse.initiated_by === coachId) {
-                alert("Você já enviou um convite. Aguarde o aceite.");
-                return;
-            }
-            // Se existe e foi ELE que criou, ACEITA AUTOMATICAMENTE (Aceite Mútuo)
-            const { error: updateError } = await supabase
-                .from('relacoes')
-                .update({ status: 'accepted' })
-                .eq('id', existingReverse.id);
-            
-            if (!updateError) {
-                alert(`Vínculo confirmado! ${student.apelido || student.nome} agora é seu aluno.`);
-                fetchStudents(); // Recarrega lista
-                setSearchResults([]);
-                setSearchTerm('');
-            }
+            if (existingReverse.status === 'accepted') return alert("Já conectados!");
+            if (existingReverse.initiated_by === coachId) return alert("Convite já enviado.");
+
+            await supabase.from('relacoes').update({ status: 'accepted' }).eq('id', existingReverse.id);
+            alert(`Vínculo confirmado com ${student.apelido || student.nome}!`);
+            fetchStudents();
+            setSearchResults([]);
+            setSearchTerm('');
             return;
         }
 
-        // 2. Se não existe relação nenhuma, CRIA O CONVITE PENDENTE
         const { error: insertError } = await supabase
             .from('relacoes')
-            .insert({
-                coach_id: coachId,
-                student_id: studentId,
-                initiated_by: coachId, // Fui eu
-                status: 'pending'
-            });
+            .insert({ coach_id: coachId, student_id: studentId, initiated_by: coachId, status: 'pending' });
 
-        if (insertError) {
-            alert("Erro ao convidar: " + insertError.message);
-        } else {
-            alert("Convite enviado! O atleta precisa aceitar.");
+        if (insertError) alert("Erro: " + insertError.message);
+        else {
+            alert("Convite enviado!");
             fetchStudents();
             setSearchResults([]);
             setSearchTerm('');
         }
     };
 
-    // Remover vínculo ou cancelar convite
     const removeRelation = async (relationId) => {
-        if (!confirm("Tem certeza que deseja remover este vínculo/convite?")) return;
+        if (!confirm("Remover vínculo?")) return;
         const { error } = await supabase.from('relacoes').delete().eq('id', relationId);
         if (!error) fetchStudents();
     };
 
-    const details = perfil.coach_details || {};
-
-    // Função de serviços (checkboxes)
-    const toggleService = (serviceId) => {
-        const currentServices = perfil.coach_details?.services || [];
-        let newServices;
-        if (currentServices.includes(serviceId)) newServices = currentServices.filter(s => s !== serviceId);
-        else newServices = [...currentServices, serviceId];
-        updateCoachDetail('services', newServices);
-    };
-
+    // --- RENDER ---
     return (
-        <div className="space-y-6">
-            
-            {/* AUTORIDADE */}
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                <div className="flex items-center gap-2 mb-6"><GraduationCap className="text-orange-500" /><h3 className="text-orange-500 font-bold uppercase text-sm">Credenciais</h3></div>
-                <div className="grid md:grid-cols-2 gap-4">
-                    <div><label className="text-xs text-slate-500">Graduação</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={details.graduation || ''} onChange={(e) => updateCoachDetail('graduation', e.target.value)} /></div>
-                    <div><label className="text-xs text-slate-500">Tempo (Anos)</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" type="number" value={details.experience_years || ''} onChange={(e) => updateCoachDetail('experience_years', e.target.value)} /></div>
-                    <div><label className="text-xs text-slate-500">Equipe</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={details.team || ''} onChange={(e) => updateCoachDetail('team', e.target.value)} /></div>
-                    <div><label className="text-xs text-slate-500">Linhagem</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={details.lineage || ''} onChange={(e) => updateCoachDetail('lineage', e.target.value)} /></div>
-                </div>
-            </div>
-
-            {/* --- LISTA E BUSCA DE ALUNOS --- */}
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-orange-500 font-bold uppercase text-sm flex items-center gap-2">
-                        <Users size={18}/> Gerenciar Alunos
-                    </h3>
-                    
-                    {/* Indicador de Limite Free */}
-                    {!isPremium && (
-                        <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700 flex items-center gap-1">
-                            {meusAlunos.length >= 2 ? <Lock size={12} className="text-red-500"/> : <Users size={12}/>}
-                            {meusAlunos.length} / 2 (Free)
-                        </span>
-                    )}
-                </div>
+        <div className="bg-[#f3f4f6] dark:bg-[#0c0c0c] text-gray-800 dark:text-gray-200 font-body min-h-screen">
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
                 
-                {/* BUSCA */}
-                <div className="relative mb-6">
-                    <div className="flex gap-2">
-                        <input className="w-full bg-black border border-slate-700 p-2 rounded text-white focus:border-orange-500" placeholder="Buscar atleta..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}/>
-                        <button onClick={handleSearch} disabled={isSearching} className="bg-slate-800 text-white px-4 rounded border border-slate-700">{isSearching ? '...' : <Search size={20}/>}</button>
-                    </div>
-                    {searchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 bg-slate-800 border border-slate-700 rounded-b-lg shadow-xl z-50 max-h-60 overflow-y-auto">
-                            {searchResults.map(atleta => (
-                                <div key={atleta.id} className="flex items-center justify-between p-3 hover:bg-slate-700 transition border-b border-slate-700/50">
-                                    <div className="flex items-center gap-3">
-                                        <img src={atleta.foto_url || "https://placehold.co/100"} className="w-10 h-10 rounded-full object-cover border border-slate-600"/>
-                                        <div><p className="font-bold text-white text-sm">{atleta.apelido || atleta.nome}</p></div>
-                                    </div>
-                                    <button 
-                                        onClick={() => sendInvite(atleta)} 
-                                        className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 ${!isPremium && meusAlunos.length >= 2 ? 'bg-slate-600 text-slate-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-500 text-white'}`}
-                                    >
-                                        {!isPremium && meusAlunos.length >= 2 ? <Lock size={14}/> : <Plus size={14}/>} Convidar
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                .font-display { font-family: 'Oswald', sans-serif; }
+                .font-body { font-family: 'Roboto', sans-serif; }
+                
+                .industrial-border {
+                    border: 1px solid;
+                    border-color: #333333;
+                }
+                
+                .checkbox-wrapper input:checked + div {
+                    background-color: #FF4500;
+                    border-color: #FF4500;
+                    color: white;
+                }
+                .checkbox-wrapper input:checked + div .text-check-white {
+                    color: white !important;
+                }
+                
+                .material-symbols-outlined {
+                    font-family: 'Material Symbols Outlined';
+                    font-weight: normal;
+                    font-style: normal;
+                    font-size: 24px;
+                    line-height: 1;
+                    letter-spacing: normal;
+                    text-transform: none;
+                    display: inline-block;
+                    white-space: nowrap;
+                    word-wrap: normal;
+                    direction: ltr;
+                    -webkit-font-feature-settings: 'liga';
+                    -webkit-font-smoothing: antialiased;
+                }
+            `}</style>
 
-                {/* LISTA DE ALUNOS (DO BANCO) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {meusAlunos.length === 0 ? (
-                        <p className="text-slate-500 text-xs italic col-span-2 text-center py-4">Nenhum aluno vinculado.</p>
-                    ) : (
-                        meusAlunos.map((rel) => (
-                            <div key={rel.id} className={`flex items-center justify-between p-3 rounded border ${rel.status === 'pending' ? 'bg-yellow-900/10 border-yellow-500/30' : 'bg-black/40 border-slate-800'}`}>
-                                <div className="flex items-center gap-3">
-                                    <img src={rel.student?.foto_url || "https://placehold.co/100"} className={`w-10 h-10 rounded-full object-cover border ${rel.status === 'pending' ? 'border-yellow-500/50' : 'border-slate-700'}`}/>
-                                    <div>
-                                        <p className="font-bold text-white text-sm">{rel.student?.apelido || rel.student?.nome}</p>
-                                        
-                                        {rel.status === 'pending' ? (
-                                            <span className="text-[10px] font-bold text-yellow-500 flex items-center gap-1"><Clock3 size={10}/> Aguardando Aceite</span>
-                                        ) : (
-                                            <a href={`/${rel.student?.slug}`} target="_blank" className="text-[10px] text-cyan-500 hover:underline flex items-center gap-1">Ver Perfil <ExternalLink size={8}/></a>
-                                        )}
-                                    </div>
+            <main className="max-w-7xl mx-auto space-y-6 p-4 lg:p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    {/* COLUNA ESQUERDA (4 COL) */}
+                    <div className="lg:col-span-4 space-y-6">
+                        {/* CREDENCIAIS */}
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6">
+                            <h3 className="font-display font-bold uppercase text-xl text-gray-900 dark:text-white mb-6 border-l-4 border-[#FF4500] pl-3">Credenciais</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Graduação</label>
+                                    <input
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
+                                        placeholder="Ex: Mestre / Kru"
+                                        type="text"
+                                        value={details.graduation || ''}
+                                        onChange={(e) => updateCoachDetail('graduation', e.target.value)}
+                                    />
                                 </div>
-                                <button onClick={() => removeRelation(rel.id)} className="text-slate-600 hover:text-red-500 transition" title="Remover"><Trash2 size={16}/></button>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tempo (Anos)</label>
+                                    <input
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
+                                        placeholder="EX: 12"
+                                        type="number"
+                                        value={details.experience_years || ''}
+                                        onChange={(e) => updateCoachDetail('experience_years', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Equipe</label>
+                                    <input
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
+                                        placeholder="NOME DA EQUIPE"
+                                        type="text"
+                                        value={details.team || ''}
+                                        onChange={(e) => updateCoachDetail('team', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Linhagem</label>
+                                    <input
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
+                                        placeholder="MESTRE ANTERIOR"
+                                        type="text"
+                                        value={details.lineage || ''}
+                                        onChange={(e) => updateCoachDetail('lineage', e.target.value)}
+                                    />
+                                </div>
                             </div>
-                        ))
-                    )}
-                </div>
-            </div>
+                        </div>
 
-            {/* SERVIÇOS E METODOLOGIA (Mantidos iguais) */}
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                <h3 className="text-orange-500 font-bold uppercase text-sm mb-4">Serviços</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {SERVICOS_COMUNS.map((servico) => {
-                        const isSelected = (details.services || []).includes(servico.id);
-                        return <div key={servico.id} onClick={() => toggleService(servico.id)} className={`cursor-pointer p-4 rounded-lg border transition-all relative ${isSelected ? 'bg-orange-900/20 border-orange-500' : 'bg-black/40 border-slate-700 hover:border-slate-500'}`}><h4 className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-300'}`}>{servico.label}</h4>{isSelected && <CheckCircle size={16} className="absolute top-2 right-2 text-orange-500" />}</div>
-                    })}
+                        {/* SERVIÇOS */}
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6">
+                            <h3 className="font-display font-bold uppercase text-xl text-gray-900 dark:text-white mb-6 border-l-4 border-[#FF4500] pl-3">Serviços</h3>
+                            <div className="grid grid-cols-1 gap-3">
+                                {SERVICOS_COMUNS.map(servico => (
+                                    <label key={servico.id} className="checkbox-wrapper cursor-pointer group block relative">
+                                        <input
+                                            type="checkbox"
+                                            className="peer sr-only"
+                                            checked={(details.services || []).includes(servico.id)}
+                                            onChange={() => toggleService(servico.id)}
+                                        />
+                                        <div className="bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 p-3 flex items-center justify-between transition-all">
+                                            <span className="font-display font-bold uppercase text-gray-900 dark:text-white text-sm text-check-white">{servico.label}</span>
+                                            {/* Usando Check do Lucide ou Material Symbol */}
+                                            <span className="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* COLUNA DIREITA (8 COL) */}
+                    <div className="lg:col-span-8 space-y-6">
+
+                        {/* GERENCIAR ALUNOS */}
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6 lg:p-8">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                <h3 className="font-display font-bold uppercase text-3xl text-gray-900 dark:text-white border-l-4 border-[#FF4500] pl-3">Gerenciar Alunos</h3>
+                                {!isPremium && (
+                                    <div className="flex items-center gap-2 text-xs font-bold uppercase text-gray-500 dark:text-gray-400 bg-black/20 px-3 py-1 rounded border border-white/10">
+                                        <Lock size={14} />
+                                        <span>Limite Grátis: {meusAlunos.length}/2</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* SEARCH BAR */}
+                            <div className="relative mb-6">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search className="text-gray-500" size={20} />
+                                </div>
+                                <input
+                                    className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white pl-10 pr-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm transition-colors"
+                                    placeholder="BUSCAR NOVO ATLETA..."
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+                                />
+
+                                {/* DROPDOWN RESULTADOS */}
+                                {searchResults.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 bg-[#161616] border border-[#333] z-50 mt-1 max-h-60 overflow-y-auto shadow-2xl">
+                                        {searchResults.map(atleta => (
+                                            <div key={atleta.id} className="flex items-center justify-between p-3 hover:bg-white/5 border-b border-[#333]">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={atleta.foto_url || "https://placehold.co/100"} className="w-10 h-10 object-cover bg-gray-800" />
+                                                    <span className="font-display font-bold uppercase text-white">{atleta.apelido || atleta.nome}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => sendInvite(atleta)}
+                                                    className="bg-[#FF4500] text-white text-xs font-bold uppercase px-3 py-1 hover:bg-orange-600 transition"
+                                                >
+                                                    Convidar
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* STUDENT LIST */}
+                            <div className="space-y-3 min-h-[100px]">
+                                {meusAlunos.length === 0 ? (
+                                    <p className="text-gray-500 text-sm italic text-center py-8">Nenhum aluno vinculado.</p>
+                                ) : (
+                                    meusAlunos.map(rel => (
+                                        <div key={rel.id} className="bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 p-3 flex flex-col sm:flex-row items-center gap-4 hover:border-[#FF4500] transition-colors cursor-pointer group relative">
+                                            {/* Avatar Box */}
+                                            <div className="h-12 w-12 bg-gray-300 dark:bg-gray-800 flex-shrink-0 overflow-hidden border border-gray-600">
+                                                {rel.student?.foto_url ? (
+                                                    <img src={rel.student.foto_url} className="h-full w-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center font-bold text-gray-500 text-xs">{(rel.student?.nome || 'A').charAt(0)}</div>
+                                                )}
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="flex-1 text-center sm:text-left">
+                                                <h4 className="font-display font-bold uppercase text-gray-900 dark:text-white text-lg leading-tight">
+                                                    {rel.student?.apelido || rel.student?.nome}
+                                                </h4>
+                                                <p className="text-xs text-gray-500 uppercase">Aluno</p>
+                                            </div>
+
+                                            {/* Status Badge */}
+                                            <div className="flex items-center">
+                                                {rel.status === 'pending' ? (
+                                                    <span className="bg-[#FFD700] text-black text-[10px] font-bold uppercase px-3 py-1 border border-yellow-600 shadow-sm whitespace-nowrap">
+                                                        Aguardando Aceite
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30 text-[10px] font-bold uppercase px-3 py-1 shadow-sm whitespace-nowrap">
+                                                        Ativo
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="flex gap-2">
+                                                {rel.status !== 'pending' && (
+                                                    <a href={`/${rel.student?.slug}`} target="_blank" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white" title="Ver Perfil">
+                                                        <ExternalLink size={16} />
+                                                    </a>
+                                                )}
+                                                <button onClick={() => removeRelation(rel.id)} className="p-2 hover:bg-red-900/20 rounded-full transition-colors text-gray-400 hover:text-red-500" title="Remover">
+                                                    <MoreVertical size={16} />
+                                                    {/* Using MoreVertical as a placeholder for 'Actions' menu, but triggering delete directly for now or could implement dropdown if complex */}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* METODOLOGIA */}
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6 lg:p-8">
+                            <h3 className="font-display font-bold uppercase text-3xl text-gray-900 dark:text-white mb-6 border-l-4 border-[#FF4500] pl-3">Metodologia</h3>
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Especialidades</label>
+                                    <textarea
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] resize-none"
+                                        placeholder="EX: CLINCH, COTOVELADAS, PREPARAÇÃO FÍSICA..."
+                                        rows="2"
+                                        value={details.specialties || ''}
+                                        onChange={(e) => updateCoachDetail('specialties', e.target.value)}
+                                    ></textarea>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Sobre</label>
+                                    <textarea
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] resize-none h-40"
+                                        placeholder="Descreva sua filosofia de ensino, experiência..."
+                                        rows="6"
+                                        value={details.methodology || ''}
+                                        onChange={(e) => updateCoachDetail('methodology', e.target.value)}
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                <h3 className="text-orange-500 font-bold uppercase text-sm mb-4">Metodologia</h3>
-                <div className="mb-4"><label className="text-xs text-slate-500">Especialidades</label><input className="w-full bg-black border border-slate-700 p-2 rounded text-white" value={details.specialties || ''} onChange={(e) => updateCoachDetail('specialties', e.target.value)} /></div>
-                <div><label className="text-xs text-slate-500">Sobre</label><textarea className="w-full bg-black border border-slate-700 p-2 rounded text-white" rows={4} value={details.methodology || ''} onChange={(e) => updateCoachDetail('methodology', e.target.value)} /></div>
-            </div>
+            </main>
         </div>
     );
 }

@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import { 
-    Home, Search, Swords, LayoutDashboard, Trophy, 
-    Bell, LogIn, User, LogOut, ShieldCheck, ChevronDown, UserCircle 
+import {
+    Home, Search, Swords, LayoutDashboard, Trophy,
+    Bell, LogIn, User, LogOut, ShieldCheck, ChevronDown, UserCircle
 } from 'lucide-react';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -19,7 +19,7 @@ export default function Navbar() {
     const [hasNotification, setHasNotification] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
-    
+
     const pathname = usePathname();
     const router = useRouter();
 
@@ -46,16 +46,16 @@ export default function Navbar() {
                     .select('*')
                     .eq('user_id', currentSession.user.id)
                     .single();
-                
+
                 if (profile) {
                     setUserData(profile);
-                    
+
                     const { count } = await supabase
                         .from('duelos')
                         .select('*', { count: 'exact', head: true })
                         .eq('atleta_2_id', profile.id)
                         .eq('status', 'pending');
-                    
+
                     if (count > 0) setHasNotification(true);
                 }
             }
@@ -66,7 +66,7 @@ export default function Navbar() {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
-            if(!session) {
+            if (!session) {
                 setUserData(null);
                 setHasNotification(false);
             }
@@ -87,174 +87,182 @@ export default function Navbar() {
         { href: '/busca', label: 'Buscar', icon: <Search size={24} /> },
         { href: '/duelos', label: 'Arena', icon: <Swords size={24} /> },
         { href: '/ranking', label: 'Rank', icon: <Trophy size={24} /> },
-        { 
-            href: session ? '/painel' : '/login', 
-            label: session ? 'Painel' : 'Entrar', 
-            icon: session ? <LayoutDashboard size={24} /> : <LogIn size={24} /> 
+        {
+            href: session ? '/painel' : '/login',
+            label: session ? 'Painel' : 'Entrar',
+            icon: session ? <LayoutDashboard size={24} /> : <LogIn size={24} />
         },
     ];
 
     return (
         <>
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+                .font-display { font-family: 'Oswald', sans-serif; }
+                .font-body { font-family: 'Roboto', sans-serif; }
+                .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+                .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+            `}</style>
+
             {/* =======================
                 NAVBAR SUPERIOR (DESKTOP + MOBILE HEADER)
                ======================= */}
-            <nav className="sticky top-0 z-[100] w-full border-b border-slate-800 bg-[#0a0a0c] text-white h-16">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <header className="sticky top-0 z-[100] w-full border-b border-[#222] bg-[#0a0a0c] text-white h-16 shadow-md transition-colors duration-200">
+                <div className="max-w-7xl mx-auto px-4 lg:px-8 h-full">
                     <div className="flex items-center justify-between h-full w-full">
-                        
+
                         {/* 1. LOGO */}
-                        <div className="flex-shrink-0 flex items-center z-20">
+                        <div className="flex items-center gap-2 cursor-pointer group">
                             <Link href="/" className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center font-black text-black italic text-lg shadow-lg shadow-yellow-500/20">
-                                    N
+                                <div className="h-5 w-5 bg-[#FFD700] flex items-center justify-center rounded-sm group-hover:bg-yellow-400 transition-colors">
+                                    <span className="font-display font-bold text-black text-xs">N</span>
                                 </div>
-                                <span className="font-bold text-lg text-white tracking-tighter">
-                                    NOCAUTE<span className="text-yellow-500">.PRO</span>
-                                </span>
+                                <h1 className="font-display font-bold text-base tracking-tight text-white uppercase group-hover:text-gray-200 transition-colors">
+                                    NOCAUTE<span className="text-[#FFD700]">.PRO</span>
+                                </h1>
                             </Link>
                         </div>
 
                         {/* 2. MENU CENTRAL (Desktop) */}
-                        <div className="hidden md:flex flex-1 justify-center items-center gap-8">
-                            <Link href="/" className="text-slate-300 hover:text-white font-bold text-sm transition-colors">Início</Link>
-                            <Link href="/busca" className="text-slate-300 hover:text-white font-bold text-sm transition-colors">Buscar</Link>
-                            <Link href="/duelos" className="text-yellow-500 hover:text-yellow-400 font-bold text-sm transition-colors flex items-center gap-1">
-                                <Swords size={16}/> Arena
+                        <nav className="hidden md:flex items-center gap-8">
+                            <Link href="/" className="font-display font-bold text-sm text-gray-400 hover:text-white uppercase tracking-wide transition-colors">Início</Link>
+                            <Link href="/busca" className="font-display font-bold text-sm text-gray-400 hover:text-white uppercase tracking-wide transition-colors">Buscar</Link>
+                            <Link href="/duelos" className="flex items-center gap-1.5 font-display font-bold text-sm text-[#FFD700] uppercase tracking-wide transition-colors">
+                                <span className="material-symbols-outlined text-[18px]">swords</span>
+                                Arena
                             </Link>
-                            <Link href="/ranking" className="text-slate-300 hover:text-white font-bold text-sm transition-colors">Ranking</Link>
-                        </div>
+                            <Link href="/ranking" className="font-display font-bold text-sm text-gray-400 hover:text-white uppercase tracking-wide transition-colors">Ranking</Link>
+                        </nav>
 
                         {/* 3. DIREITA (User Actions) */}
-                        <div className="flex items-center gap-3 md:gap-4 z-20">
-                            
+                        <div className="flex items-center gap-4 lg:gap-6">
+
                             {session ? (
                                 <>
-                                    {/* SINO */}
-                                    <Link href="/painel" className="relative p-2 text-slate-400 hover:text-white transition-colors bg-slate-900 rounded-full border border-slate-800">
-                                        <Bell size={20} />
+                                    {/* Notifications */}
+                                    <Link href="/painel" className="relative text-gray-400 hover:text-white transition-colors" title="Notifications">
+                                        <span className="material-symbols-outlined">notifications</span>
                                         {hasNotification && (
-                                            <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-[#0a0a0c] animate-pulse"></span>
+                                            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500 shadow-sm animate-pulse"></span>
                                         )}
                                     </Link>
 
-                                    {/* MOBILE: FOTO (Leva ao Perfil) */}
-                                    {loadingUser ? (
-                                        <div className="md:hidden w-[36px] h-[36px] rounded-full bg-slate-800 animate-pulse border border-slate-700"></div>
-                                    ) : (
-                                        <Link 
-                                            href={`/${userData?.slug || userData?.id}`} 
-                                            // AQUI ESTÁ A CORREÇÃO: Forçando dimensões fixas com estilo inline e classes '!'
-                                            className="md:hidden relative rounded-full overflow-hidden border border-slate-600 bg-slate-800 block flex-shrink-0"
-                                            style={{ width: '36px', height: '36px', minWidth: '36px' }}
-                                        >
-                                            {userData?.foto_url ? (
-                                                <img 
-                                                    src={userData.foto_url} 
-                                                    // Forçando imagem a respeitar o pai
-                                                    className="!w-full !h-full !object-cover !max-w-none" 
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                    alt="Perfil"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-slate-400"><User size={18}/></div>
-                                            )}
-                                        </Link>
-                                    )}
-
-                                    {/* DESKTOP: DROPDOWN */}
-                                    <div className="hidden md:block relative" ref={dropdownRef}>
-                                        <button 
+                                    {/* Desktop Profile Pill (Dropdown Trigger) */}
+                                    <div className="relative" ref={dropdownRef}>
+                                        <button
                                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                            className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 transition-all"
+                                            className="hidden md:flex items-center gap-3 bg-[#161616] border border-[#333] pl-3 pr-1 py-1 rounded-full cursor-pointer hover:border-gray-600 transition-colors"
                                         >
-                                            <div className="text-right min-w-[60px]">
-                                                <p className="text-xs font-bold text-white leading-none truncate max-w-[100px]">{userData?.apelido || 'Atleta'}</p>
-                                                <p className="text-[10px] text-yellow-500 font-bold leading-none mt-1">LVL {userData?.level || 1}</p>
+                                            <div className="flex flex-col items-end leading-none">
+                                                <span className="font-display font-bold text-xs text-white uppercase max-w-[100px] truncate">{userData?.apelido || 'Atleta'}</span>
+                                                <span className="font-display font-bold text-[10px] text-[#FFD700]">LVL {userData?.level || 1}</span>
                                             </div>
-                                            
-                                            {/* CORREÇÃO FOTO DESKTOP */}
-                                            <div 
-                                                className="rounded-full overflow-hidden border border-slate-500 bg-slate-700 relative flex-shrink-0"
-                                                style={{ width: '36px', height: '36px', minWidth: '36px' }}
-                                            >
+                                            <div className="h-8 w-8 rounded-full bg-gray-800 border border-gray-700 overflow-hidden">
                                                 {userData?.foto_url ? (
-                                                    <img 
-                                                        src={userData.foto_url} 
-                                                        className="!w-full !h-full !object-cover !max-w-none" 
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        alt="User"
-                                                    />
+                                                    <img alt="User" className="h-full w-full object-cover" src={userData.foto_url} />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center"><User size={18}/></div>
+                                                    <div className="h-full w-full flex items-center justify-center text-gray-500"><User size={16} /></div>
                                                 )}
                                             </div>
-                                            <ChevronDown size={14} className="text-slate-400 mr-1"/>
                                         </button>
 
+                                        {/* Mobile Profile Icon (Just the image) */}
+                                        <button
+                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                            className="md:hidden h-8 w-8 rounded-full bg-gray-800 border border-gray-700 overflow-hidden"
+                                        >
+                                            {userData?.foto_url ? (
+                                                <img alt="User" className="h-full w-full object-cover" src={userData.foto_url} />
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-center text-gray-500"><User size={16} /></div>
+                                            )}
+                                        </button>
+
+                                        {/* Dropdown Menu */}
                                         {isDropdownOpen && (
-                                            <div className="absolute right-0 top-12 w-52 bg-[#0a0a0c] border border-slate-800 rounded-xl shadow-2xl py-2 z-[200]">
-                                                <Link href="/painel" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-900 hover:text-white transition-colors">
-                                                    <LayoutDashboard size={18}/> Meu Painel
+                                            <div className="absolute right-0 top-12 w-52 bg-[#0a0a0c] border border-[#333] rounded-sm shadow-2xl py-2 z-[200]">
+                                                <Link href="/painel" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-display uppercase tracking-wide text-gray-400 hover:bg-[#161616] hover:text-white transition-colors">
+                                                    <span className="material-symbols-outlined text-[18px]">dashboard</span> Meu Painel
                                                 </Link>
-                                                <Link href={`/${userData?.slug || userData?.id}`} onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-900 hover:text-white transition-colors">
-                                                    <UserCircle size={18}/> Perfil Público
+                                                <Link href={`/${userData?.slug || userData?.id}`} onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-display uppercase tracking-wide text-gray-400 hover:bg-[#161616] hover:text-white transition-colors">
+                                                    <span className="material-symbols-outlined text-[18px]">person</span> Perfil Público
                                                 </Link>
-                                                
+
                                                 {session?.user?.email === ADMIN_EMAIL && (
-                                                    <Link href="/admin" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-cyan-400 hover:bg-cyan-950/30 border-t border-slate-900 mt-1 pt-3">
-                                                        <ShieldCheck size={18}/> Área Admin
+                                                    <Link href="/admin" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-display uppercase tracking-wide text-cyan-400 hover:bg-cyan-950/30 border-t border-[#222] mt-1 pt-3">
+                                                        <span className="material-symbols-outlined text-[18px]">verified_user</span> Área Admin
                                                     </Link>
                                                 )}
 
-                                                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-950/20 border-t border-slate-900 text-left mt-1">
-                                                    <LogOut size={18}/> Sair
+                                                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-display uppercase tracking-wide text-red-500 hover:bg-red-950/20 border-t border-[#222] text-left mt-1">
+                                                    <span className="material-symbols-outlined text-[18px]">logout</span> Sair
                                                 </button>
                                             </div>
                                         )}
                                     </div>
                                 </>
                             ) : (
-                                <Link href="/login" className="bg-white text-black hover:bg-slate-200 px-6 py-2 rounded-full text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-white/10">
-                                    <LogIn size={16}/> Entrar
+                                <Link href="/login" className="bg-white text-black hover:bg-gray-200 px-6 py-2 rounded-full text-sm font-bold uppercase transition flex items-center gap-2 shadow-lg shadow-white/10">
+                                    <span className="material-symbols-outlined text-[18px]">login</span> Entrar
                                 </Link>
                             )}
                         </div>
                     </div>
                 </div>
-            </nav>
+            </header>
 
             {/* =======================
                 MOBILE BOTTOM BAR
                ======================= */}
-            <div 
-                className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-black border-t border-slate-800 shadow-[0_-5px_20px_rgba(0,0,0,0.8)]"
-                style={{ zIndex: 999999 }}
+            <div
+                className="md:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 z-50 px-2 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.8)]"
             >
-                <div className="flex justify-around items-center h-full w-full px-1">
+                <div className="flex justify-around items-center h-16">
                     {navItems.map((item, index) => {
-                        const isActive = item.href === '/' 
-                            ? pathname === '/' 
+                        const isActive = item.href === '/'
+                            ? pathname === '/'
                             : pathname.startsWith(item.href);
-                        
+
+                        // Special styling for "Arena" (index 2 usually, or check styling/label)
+                        // In navItems: 0=Home, 1=Search, 2=Arena, 3=Rank, 4=Panel
+                        const isSpecial = item.label === 'Arena';
+
+                        if (isSpecial) {
+                            return (
+                                <Link
+                                    key={index}
+                                    href={item.href}
+                                    className="flex flex-col items-center justify-center gap-1 text-[#FFD700] group w-full relative -top-4"
+                                >
+                                    <div className={`bg-[#1a1a1a] border ${isActive ? 'border-[#FFD700]' : 'border-gray-700'} p-3 rounded-full shadow-lg shadow-black group-hover:border-[#FFD700] transition-colors`}>
+                                        <span className="material-symbols-outlined text-[24px]">swords</span>
+                                    </div>
+                                    <span className="text-[10px] font-display font-bold uppercase tracking-wide text-[#FFD700]">Arena</span>
+                                </Link>
+                            );
+                        }
+
                         return (
-                            <Link 
-                                key={index} 
+                            <Link
+                                key={index}
                                 href={item.href}
-                                className={`flex-1 flex flex-col items-center justify-center h-full gap-1 active:scale-95 transition-all ${isActive ? 'text-yellow-500' : 'text-slate-500'}`}
+                                className={`flex flex-col items-center justify-center gap-1 group w-full transition-colors ${isActive ? 'text-white' : 'text-gray-500 hover:text-white'}`}
                             >
-                                <div className={`p-1 rounded-xl transition-colors ${isActive ? 'bg-yellow-500/10' : 'bg-transparent'}`}>
-                                    {item.icon}
-                                </div>
-                                <span className={`text-[10px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
-                                    {item.label}
+                                <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${isActive ? 'filled' : ''}`}>
+                                    {item.label === 'Início' && 'home'}
+                                    {item.label === 'Buscar' && 'search'}
+                                    {item.label === 'Rank' && 'emoji_events'}
+                                    {item.label === 'Painel' && 'dashboard'}
+                                    {item.label === 'Entrar' && 'login'}
                                 </span>
+                                <span className="text-[10px] font-display font-bold uppercase tracking-wide">{item.label}</span>
                             </Link>
-                        )
+                        );
                     })}
                 </div>
             </div>
-            
+
             <div className="md:hidden h-20 w-full"></div>
         </>
     );

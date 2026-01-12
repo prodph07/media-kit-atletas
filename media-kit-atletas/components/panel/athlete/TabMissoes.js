@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-    Trophy, CheckCircle, Circle, Clock, Calendar, Star, Zap, Flame, Swords, 
+import {
+    Trophy, CheckCircle, Circle, Clock, Calendar, Star, Zap, Flame, Swords,
     ScanEye, ThumbsUp, MessageSquareQuote, Instagram, Loader2, Upload, Dumbbell, Link as LinkIcon
 } from 'lucide-react';
 import { getXpToNextLevel, getLevelProgress, getRankInfo, calculateNewLevelState, processAIMission } from '../../../lib/gamification';
@@ -11,15 +11,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export default function TabMissoes({ perfil }) {
-    
+
     // --- HELPERS DE DATA ---
     const isToday = (dateString) => {
         if (!dateString) return false;
         const date = new Date(dateString);
         const now = new Date();
-        return date.getDate() === now.getDate() && 
-               date.getMonth() === now.getMonth() && 
-               date.getFullYear() === now.getFullYear();
+        return date.getDate() === now.getDate() &&
+            date.getMonth() === now.getMonth() &&
+            date.getFullYear() === now.getFullYear();
     };
 
     const isThisWeek = (dateString) => {
@@ -50,7 +50,7 @@ export default function TabMissoes({ perfil }) {
             label: 'Postar Story',
             desc: 'Marque @nocautepages',
             xp: 100,
-            icon: <Instagram size={18} className="text-pink-500"/>,
+            icon: <Instagram size={18} className="text-[#FF4500]" />,
             done: isToday(stats.last_daily_story_date),
             instruction: 'O print deve mostrar seu story com a marcação visível.'
         },
@@ -59,7 +59,7 @@ export default function TabMissoes({ perfil }) {
             label: 'Armadura Pronta',
             desc: 'Foto do Equipamento',
             xp: 30,
-            icon: <Dumbbell size={18} className="text-blue-500"/>,
+            icon: <Dumbbell size={18} className="text-[#FF4500]" />,
             done: isToday(stats.last_daily_gear_date),
             instruction: 'Foto das luvas, kimono ou material de treino arrumado.'
         }
@@ -70,71 +70,71 @@ export default function TabMissoes({ perfil }) {
         label: 'Link na Bio',
         desc: 'Divulgue seu Perfil',
         xp: 200,
-        icon: <LinkIcon size={18} className="text-green-500"/>,
+        icon: <LinkIcon size={18} className="text-[#FFD700]" />,
         done: tasks.includes('LINK_IN_BIO'),
         instruction: 'Print do seu perfil no Insta mostrando o link nocaute.pro na bio.'
     };
 
     // --- CONFIGURAÇÃO DAS MISSÕES PADRÃO (ANTIGAS) ---
     const DAILY_QUESTS = [
-        { 
-            label: currentStreak > 1 ? `Presença Confirmada (🔥 ${currentStreak})` : "Presença Confirmada", 
-            desc: currentStreak > 0 ? `Sequência: ${currentStreak} dias!` : "Fazer login na plataforma", 
-            xp: 10, 
+        {
+            label: currentStreak > 1 ? `Presença Confirmada (🔥 ${currentStreak})` : "Presença Confirmada",
+            desc: currentStreak > 0 ? `Sequência: ${currentStreak} dias!` : "Fazer login na plataforma",
+            xp: 10,
             done: isToday(stats.last_login_date),
-            icon: <Flame size={18} className={currentStreak > 2 ? "text-orange-600 animate-pulse" : "text-orange-500"}/>
+            icon: <Flame size={18} className={currentStreak > 2 ? "text-[#FF4500] animate-pulse" : "text-[#FF4500]"} />
         },
-        { 
-            label: `Olheiro (${scoutCount}/3)`, 
-            desc: "Visitar o perfil de 3 atletas diferentes", 
-            xp: 20, 
+        {
+            label: `Olheiro (${scoutCount}/3)`,
+            desc: "Visitar o perfil de 3 atletas diferentes",
+            xp: 20,
             done: scoutDone,
-            icon: <ScanEye size={18} className="text-blue-400"/>
+            icon: <ScanEye size={18} className="text-[#FF4500]" />
         },
-        { 
-            label: "Respect", 
-            desc: "Deixar um 'Respect' no perfil de alguém", 
-            xp: 10, 
+        {
+            label: "Respect",
+            desc: "Deixar um 'Respect' no perfil de alguém",
+            xp: 10,
             done: isToday(stats.last_daily_respect_date),
-            icon: <ThumbsUp size={18} className="text-purple-500"/>
+            icon: <ThumbsUp size={18} className="text-[#FF4500]" />
         },
-        { 
-            label: "Status de Combate", 
-            desc: "Atualizar seu Status do Dia (Painel Geral)", 
-            xp: 15, 
+        {
+            label: "Status de Combate",
+            desc: "Atualizar seu Status do Dia (Painel Geral)",
+            xp: 15,
             done: isToday(stats.last_daily_status_date),
-            icon: <MessageSquareQuote size={18} className="text-green-400"/>
+            icon: <MessageSquareQuote size={18} className="text-[#FF4500]" />
         },
-        { 
-            label: "Juri Ativo", 
-            desc: "Votar em pelo menos 1 duelo", 
-            xp: 15, 
+        {
+            label: "Juri Ativo",
+            desc: "Votar em pelo menos 1 duelo",
+            xp: 15,
             done: isToday(stats.last_vote_date),
-            icon: <Zap size={18} className="text-yellow-500"/>
+            icon: <Zap size={18} className="text-[#FFD700]" />
         }
     ];
 
     const WEEKLY_QUESTS = [
-        { 
-            label: "Disciplina de Peso", 
-            desc: "Atualizar peso no perfil", 
-            xp: 50, 
+        {
+            label: "Disciplina de Peso",
+            desc: "Atualizar peso no perfil",
+            xp: 50,
             done: isThisWeek(stats.last_weight_update),
-            icon: <Clock size={18} className="text-cyan-500"/>
+            icon: <Clock size={18} className="text-[#FFD700]" />
         },
-        { 
-            label: "Hype da Semana", 
-            desc: "Compartilhar perfil (Botão Olho)", 
-            xp: 30, 
+        {
+            label: "Hype da Semana",
+            desc: "Compartilhar perfil (Botão Olho)",
+            xp: 30,
             done: isThisWeek(stats.last_share_date),
-            icon: <Star size={18} className="text-purple-500"/>
+            icon: <Star size={18} className="text-[#FFD700]" />
         },
-        { 
-            label: "Gladiador", 
-            desc: "Participar de um Duelo", 
-            xp: 75, 
+        {
+            label: "Gladiador",
+            desc: "Participar de um Duelo",
+            xp: 75,
             done: isThisWeek(stats.last_duel_participation_date),
-            icon: <Swords size={18} className="text-red-500"/>
+            icon: <Swords size={18} className="text-[#FF4500]" />
         }
     ];
 
@@ -153,98 +153,174 @@ export default function TabMissoes({ perfil }) {
     ];
 
     return (
-        <div className="space-y-6 animate-fadeIn">
-            
-            {/* CABEÇALHO DE NÍVEL (Mantido IDÊNTICO) */}
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex flex-col md:flex-row items-center gap-6">
-                <div className="relative">
-                    <div className="w-24 h-24 rounded-full border-4 border-slate-700 bg-slate-950 flex items-center justify-center">
-                        <span className="text-3xl font-black text-white">{perfil.level}</span>
-                    </div>
-                    <div className="absolute -bottom-2 w-full text-center">
-                        <span className="bg-yellow-600 text-black text-[10px] font-bold px-2 py-1 rounded uppercase">{rank.tier}</span>
-                    </div>
-                </div>
-                <div className="flex-1 w-full">
-                    <div className="flex justify-between mb-2">
-                        <h2 className="text-xl font-bold text-white uppercase">{rank.title}</h2>
-                        <span className="text-slate-400 text-sm font-bold">{perfil.xp} / {nextXp} XP</span>
-                    </div>
-                    <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
-                        <div 
-                            className="h-full bg-gradient-to-r from-cyan-600 to-blue-600 transition-all duration-1000" 
-                            style={{ width: `${progress}%` }}
-                        ></div>
-                    </div>
-                    <p className="text-slate-500 text-xs mt-2">Complete missões para subir de rank e ganhar destaque.</p>
-                </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 relative custom-scrollbar bg-[#0c0c0c] min-h-screen text-[#F3F4F6] font-sans">
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
                 
-                {/* COLUNA 1: DIÁRIAS (AGORA COM AS NOVAS MISSÕES NO MESMO ESTILO) */}
-                <div className="space-y-4">
-                    <h3 className="text-orange-500 font-bold uppercase text-sm flex items-center gap-2">
-                        <Calendar size={18}/> Diárias (Reset 24h)
-                    </h3>
-                    <div className="space-y-3">
-                        {/* NOVAS MISSÕES DE UPLOAD (I.A.) */}
+                .font-display { font-family: 'Oswald', sans-serif; }
+                .font-body { font-family: 'Roboto', sans-serif; }
+                
+                .industrial-border {
+                    border: 1px solid;
+                    border-color: #333333;
+                }
+                
+                .progress-stripe {
+                    background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+                    background-size: 1rem 1rem;
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-tab-content {
+                    animation: fadeIn 0.3s ease-out forwards;
+                }
+
+                /* Custom Tabs Coloring Logic */
+                .peer\/daily:checked ~ div label[for="tab_daily"] span { color: #FF4500; } 
+                .peer\/daily:checked ~ div label[for="tab_daily"] div { transform: scaleX(1); }
+                
+                .peer\/weekly:checked ~ div label[for="tab_weekly"] span { color: #FFD700; } 
+                .peer\/weekly:checked ~ div label[for="tab_weekly"] div { transform: scaleX(1); }
+                
+                .peer\/unique:checked ~ div label[for="tab_unique"] span { color: white; } 
+                .peer\/unique:checked ~ div label[for="tab_unique"] div { transform: scaleX(1); }
+
+                /* Material Symbols Setup */
+                .material-symbols-outlined {
+                    font-family: 'Material Symbols Outlined';
+                    font-weight: normal;
+                    font-style: normal;
+                    font-size: 24px;
+                    line-height: 1;
+                    letter-spacing: normal;
+                    text-transform: none;
+                    display: inline-block;
+                    white-space: nowrap;
+                    word-wrap: normal;
+                    direction: ltr;
+                    -webkit-font-feature-settings: 'liga';
+                    -webkit-font-smoothing: antialiased;
+                }
+            `}</style>
+
+            <div className="max-w-7xl mx-auto space-y-8">
+
+                {/* RANK HEADER */}
+                <div className="bg-[#161616] industrial-border p-6 lg:p-10 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                        <span className="material-symbols-outlined text-9xl text-white">military_tech</span>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 relative z-10">
+                        <div className="flex flex-col items-center justify-center md:border-r md:border-gray-700 md:pr-12 min-w-[140px]">
+                            <span
+                                className="text-7xl lg:text-9xl font-display font-bold text-white leading-none drop-shadow-lg"
+                                style={{ WebkitTextStroke: '2px #FF4500' }}
+                            >
+                                {perfil.level}
+                            </span>
+                            <span className="text-xl lg:text-2xl font-display font-bold uppercase tracking-[0.2em] text-gray-400 mt-2">
+                                {rank.tier}
+                            </span>
+                        </div>
+                        <div className="flex-1 w-full">
+                            <div className="flex flex-col sm:flex-row justify-between items-end mb-3 gap-2">
+                                <h2 className="text-3xl lg:text-4xl font-display font-bold uppercase text-white tracking-wide">
+                                    {rank.title}
+                                </h2>
+                                <span className="font-mono text-[#FF4500] font-bold text-lg">{perfil.xp} / {nextXp} XP</span>
+                            </div>
+                            <div className="h-6 w-full bg-gray-900 border border-gray-700 relative shadow-inner">
+                                <div
+                                    className="absolute left-0 top-0 h-full bg-gradient-to-r from-[#FF4500] to-[#FFD700] progress-stripe flex items-center justify-end px-2 transition-all duration-1000"
+                                    style={{ width: `${progress}%` }}
+                                >
+                                    <div className="h-full w-1 bg-white opacity-50 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
+                                </div>
+                                <div className="absolute inset-0 flex justify-between px-[25%] pointer-events-none">
+                                    <div className="h-full w-px bg-gray-800"></div>
+                                    <div className="h-full w-px bg-gray-800"></div>
+                                    <div className="h-full w-px bg-gray-800"></div>
+                                </div>
+                            </div>
+                            <div className="mt-3 flex justify-between text-xs font-bold uppercase text-gray-500 tracking-wider">
+                                <span>Current Tier: {rank.tier}</span>
+                                <span>Next Tier: Next Level</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="w-full">
+                    <input className="peer/daily hidden" type="radio" name="mission_tabs" id="tab_daily" defaultChecked />
+                    <input className="peer/weekly hidden" type="radio" name="mission_tabs" id="tab_weekly" />
+                    <input className="peer/unique hidden" type="radio" name="mission_tabs" id="tab_unique" />
+
+                    <div className="flex flex-wrap border-b border-gray-800 mb-8 sticky top-0 bg-[#0c0c0c] z-20 pt-2">
+                        <label htmlFor="tab_daily" className="cursor-pointer group relative px-6 py-4 flex items-center gap-3 transition-colors">
+                            <span className="material-symbols-outlined text-gray-500 group-hover:text-[#FF4500] transition-colors">restart_alt</span>
+                            <span className="font-display font-bold text-lg uppercase tracking-wider text-gray-500 group-hover:text-gray-300 transition-colors">Diárias</span>
+                            <div className="absolute bottom-0 left-0 w-full h-1 bg-[#FF4500] scale-x-0 group-hover:scale-x-50 transition-transform origin-left"></div>
+                        </label>
+                        <label htmlFor="tab_weekly" className="cursor-pointer group relative px-6 py-4 flex items-center gap-3 transition-colors">
+                            <span className="material-symbols-outlined text-gray-500 group-hover:text-[#FFD700] transition-colors">calendar_today</span>
+                            <span className="font-display font-bold text-lg uppercase tracking-wider text-gray-500 group-hover:text-gray-300 transition-colors">Semanais</span>
+                            <div className="absolute bottom-0 left-0 w-full h-1 bg-[#FFD700] scale-x-0 group-hover:scale-x-50 transition-transform origin-left"></div>
+                        </label>
+                        <label htmlFor="tab_unique" className="cursor-pointer group relative px-6 py-4 flex items-center gap-3 transition-colors">
+                            <span className="material-symbols-outlined text-gray-500 group-hover:text-white transition-colors">trophy</span>
+                            <span className="font-display font-bold text-lg uppercase tracking-wider text-gray-500 group-hover:text-gray-300 transition-colors">Conquistas Únicas</span>
+                            <div className="absolute bottom-0 left-0 w-full h-1 bg-white scale-x-0 group-hover:scale-x-50 transition-transform origin-left"></div>
+                        </label>
+                    </div>
+
+                    {/* CONTENT 1: DAILY */}
+                    <div className="hidden peer-checked/daily:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-tab-content">
+                        {/* IA MISSIONS */}
                         {AI_MISSIONS_DAILY.map((mission) => (
                             <ImageMissionCard key={mission.id} mission={mission} perfil={perfil} />
                         ))}
-
-                        {/* MISSÕES ANTIGAS */}
+                        {/* STANDARD DAILY */}
                         {DAILY_QUESTS.map((quest, i) => (
-                            <QuestCard key={i} quest={quest} isRecurring={true} />
+                            <QuestCard key={i} quest={quest} />
                         ))}
                     </div>
 
-                    <h3 className="text-purple-500 font-bold uppercase text-sm flex items-center gap-2 mt-8">
-                        <Clock size={18}/> Semanais (Reset 7 Dias)
-                    </h3>
-                    <div className="space-y-3">
+                    {/* CONTENT 2: WEEKLY */}
+                    <div className="hidden peer-checked/weekly:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-tab-content">
                         {WEEKLY_QUESTS.map((quest, i) => (
-                            <QuestCard key={i} quest={quest} isRecurring={true} />
+                            <QuestCard key={i} quest={quest} borderClass="hover:border-[#FFD700]" xpClass="text-[#FFD700]" />
                         ))}
                     </div>
-                </div>
 
-                {/* COLUNA 2: CONQUISTAS (INCLUINDO LINK NA BIO NO TOPO) */}
-                <div className="space-y-4">
-                    <h3 className="text-cyan-500 font-bold uppercase text-sm flex items-center gap-2">
-                        <Trophy size={18}/> Conquistas Únicas
-                    </h3>
-                    
-                    {/* LINK NA BIO (DESTAQUE NO TOPO) */}
-                    <ImageMissionCard mission={AI_MISSION_UNIQUE} perfil={perfil} />
+                    {/* CONTENT 3: UNIQUE */}
+                    <div className="hidden peer-checked/unique:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-tab-content">
+                        {/* LINK IN BIO (Featured) */}
+                        <ImageMissionCard mission={AI_MISSION_UNIQUE} perfil={perfil} featured={true} />
 
-                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 mt-3">
-                        {UNIQUE_QUESTS.map((quest) => {
-                            const isDone = tasks.includes(quest.id);
-                            return (
-                                <div key={quest.id} className={`p-3 rounded border flex items-center justify-between transition-all ${isDone ? 'bg-cyan-900/10 border-cyan-500/30' : 'bg-slate-900 border-slate-800'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-full ${isDone ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-600'}`}>
-                                            {isDone ? <CheckCircle size={16}/> : <Circle size={16}/>}
-                                        </div>
-                                        <div>
-                                            <h4 className={`text-sm font-bold ${isDone ? 'text-cyan-100' : 'text-slate-400'}`}>{quest.label}</h4>
-                                            <p className="text-[10px] text-slate-500">{quest.desc}</p>
-                                        </div>
-                                    </div>
-                                    <span className={`text-xs font-bold ${isDone ? 'text-cyan-400' : 'text-slate-600'}`}>+{quest.xp} XP</span>
-                                </div>
-                            );
-                        })}
+                        {/* STANDARD UNIQUE */}
+                        {UNIQUE_QUESTS.map((quest) => (
+                            <QuestCard
+                                key={quest.id}
+                                quest={{ ...quest, done: tasks.includes(quest.id) }}
+                                borderClass="hover:border-white"
+                                xpClass={tasks.includes(quest.id) ? "text-gray-500" : "text-blue-400"}
+                                isUnique={true}
+                            />
+                        ))}
                     </div>
+
                 </div>
             </div>
         </div>
     );
 }
 
-// --- SUBCOMPONENTE DE UPLOAD (VISUALMENTE IDÊNTICO AO QUESTCARD) ---
-function ImageMissionCard({ mission, perfil }) {
+// --- SUBCOMPONENTE DE UPLOAD (Updated Design) ---
+function ImageMissionCard({ mission, perfil, featured }) {
     const [loading, setLoading] = useState(false);
 
     const resizeImage = (file) => {
@@ -308,54 +384,65 @@ function ImageMissionCard({ mission, perfil }) {
         }
     };
 
-    // Design IDÊNTICO ao QuestCard original
     return (
-        <div className={`p-4 rounded-xl border flex flex-col gap-3 transition-colors ${mission.done ? 'bg-green-900/10 border-green-500/30' : 'bg-slate-900 border-slate-800'}`}>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${mission.done ? 'bg-green-500/20' : 'bg-slate-800'}`}>
-                        {/* Se feito, ícone verde. Se não, cor original do ícone da missão */}
-                        {React.cloneElement(mission.icon, { className: mission.done ? "text-green-400" : mission.icon.props.className })}
-                    </div>
-                    <div>
-                        <h4 className={`text-sm font-bold ${mission.done ? 'text-green-100' : 'text-white'}`}>{mission.label}</h4>
-                        <p className="text-[10px] text-slate-500">{mission.desc}</p>
-                    </div>
+        <div className={`bg-[#161616] industrial-border p-6 relative group transition-colors flex flex-col ${featured ? 'border-[#FFD700] shadow-[0_0_15px_rgba(255,215,0,0.05)]' : 'hover:border-[#FF4500]'}`}>
+            {featured && (
+                <div className="absolute -top-3 -right-3 bg-[#FFD700] text-black p-2 shadow-lg border border-white rotate-12">
+                    <span className="material-symbols-outlined text-xl">workspace_premium</span>
                 </div>
-                <div className="text-right">
-                    <span className={`block text-xs font-bold ${mission.done ? 'text-green-400' : 'text-yellow-500'}`}>+{mission.xp} XP</span>
-                    {mission.done && <span className="text-[10px] text-green-600 font-bold uppercase">Feito</span>}
-                </div>
-            </div>
-
-            {/* Área de Upload (Só aparece se não estiver feito) */}
-            {!mission.done && (
-                <label className={`w-full mt-1 flex items-center justify-center gap-2 py-2 rounded border border-dashed cursor-pointer transition-all ${loading ? 'bg-slate-800' : 'bg-slate-950 hover:bg-slate-800 border-slate-700'}`}>
-                    {loading ? <Loader2 size={14} className="animate-spin text-slate-400"/> : <Upload size={14} className="text-slate-400"/>}
-                    <span className="text-xs font-bold text-slate-400">{loading ? 'Analisando...' : 'Enviar Comprovante'}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={loading}/>
-                </label>
             )}
+            <div className="flex justify-between items-start mb-4">
+                <h4 className={`font-display font-bold text-xl uppercase tracking-wide ${featured ? 'text-[#FFD700]' : 'text-white'}`}>{mission.label}</h4>
+                <div className="bg-[#202020] border border-gray-700 px-3 py-1 text-xs font-bold text-[#FF4500] uppercase tracking-wider">+{mission.xp} XP</div>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">{mission.desc}</p>
+
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800">
+                <span className="text-xs font-bold text-gray-500 uppercase">{mission.done ? '0/1 DONE' : '0/1 READY'}</span>
+
+                {mission.done ? (
+                    <span className="material-symbols-outlined text-[#FF4500]">check_circle</span>
+                ) : (
+                    <label className={`font-display font-bold uppercase px-6 py-2 text-sm tracking-wide transition-colors cursor-pointer flex items-center gap-2 shadow-[0_0_15px_rgba(255,69,0,0.3)] ${loading ? 'bg-gray-600' : 'bg-[#FF4500] hover:bg-orange-600 text-white'}`}>
+                        {loading && <Loader2 size={14} className="animate-spin" />}
+                        {loading ? '...' : (featured ? 'UPLOAD' : 'START')}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={loading} />
+                    </label>
+                )}
+            </div>
         </div>
     );
 }
 
-// Subcomponente Antigo (Mantido igual)
-function QuestCard({ quest }) {
+// --- SUBCOMPONENTE PADRÃO (Updated Design) ---
+function QuestCard({ quest, borderClass = "hover:border-[#FF4500]", xpClass = "text-[#FF4500]", isUnique }) {
+
+    // Logic specifically for Unique cards where 'quest' might come pre-merged with 'done' status
+    const isDone = quest.done;
+
     return (
-        <div className={`p-4 rounded-xl border flex items-center justify-between ${quest.done ? 'bg-green-900/10 border-green-500/30' : 'bg-slate-900 border-slate-800'}`}>
-            <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${quest.done ? 'bg-green-500/20' : 'bg-slate-800'}`}>
-                    {quest.icon}
+        <div className={`bg-[#161616] industrial-border p-6 relative group transition-colors flex flex-col ${isDone ? 'opacity-50' : borderClass}`}>
+            {isDone && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10 pointer-events-none">
+                    <span className="bg-black text-white px-4 py-2 font-display font-bold uppercase text-sm border border-gray-600 shadow-xl">Completed</span>
                 </div>
-                <div>
-                    <h4 className={`text-sm font-bold ${quest.done ? 'text-green-100' : 'text-white'}`}>{quest.label}</h4>
-                    <p className="text-[10px] text-slate-500">{quest.desc}</p>
+            )}
+            <div className="flex justify-between items-start mb-4">
+                <h4 className="font-display font-bold text-xl text-white uppercase tracking-wide">{quest.label}</h4>
+                <div className={`bg-[#202020] border border-gray-700 px-3 py-1 text-xs font-bold ${xpClass} uppercase tracking-wider`}>
+                    {isDone ? 'Done' : `+${quest.xp} XP`}
                 </div>
             </div>
-            <div className="text-right">
-                <span className={`block text-xs font-bold ${quest.done ? 'text-green-400' : 'text-yellow-500'}`}>+{quest.xp} XP</span>
-                {quest.done && <span className="text-[10px] text-green-600 font-bold uppercase">Feito</span>}
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">{quest.desc}</p>
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800">
+                <span className="text-xs font-bold text-gray-500 uppercase">{isDone ? 'Completed' : 'Pending'}</span>
+                {isDone ? (
+                    <span className="material-symbols-outlined text-gray-600">lock</span>
+                ) : (
+                    <button className="bg-transparent border border-gray-500 hover:border-[#FF4500] hover:text-[#FF4500] text-gray-400 font-display font-bold uppercase px-6 py-2 text-sm tracking-wide transition-colors cursor-default">
+                        Active
+                    </button>
+                )}
             </div>
         </div>
     );

@@ -11,7 +11,7 @@ export default function ReferralCard({ perfil }) {
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const referralLink = typeof window !== 'undefined' 
+    const referralLink = typeof window !== 'undefined'
         ? `${window.location.origin}/cadastro?ref=${perfil.slug || perfil.id}` // Usei ID como fallback se não tiver slug
         : '';
 
@@ -46,50 +46,52 @@ export default function ReferralCard({ perfil }) {
     };
 
     return (
-        <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-6 border border-slate-700 relative overflow-hidden shadow-lg">
-            {/* Background Decorativo */}
-            <div className="absolute right-0 top-0 opacity-5 pointer-events-none">
-                <Users size={150} />
-            </div>
 
-            <div className="relative z-10">
-                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                    <Users className="text-blue-500" size={20}/> Programa de Indicação
-                </h3>
-                <p className="text-slate-400 text-sm mb-6">
-                    Convide amigos. Acompanhe quem entrou para o time através de você.
-                </p>
-
-                {/* Métricas */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-700 flex flex-col items-center justify-center">
-                        <span className="text-slate-400 text-[10px] md:text-xs uppercase font-bold">Cadastros</span>
-                        <div className="text-2xl md:text-3xl font-black text-white mt-1">
-                            {loading ? '-' : stats.total}
-                        </div>
+        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-5 rounded-sm">
+            <style jsx>{`
+                .industrial-border { border: 1px solid; border-color: #333333; }
+                .bg-action-green { background-color: #00E676; }
+                .text-action-green { color: #00E676; }
+                .bg-input-dark { background-color: #202020; }
+            `}</style>
+            <div className="flex flex-col xl:flex-row items-center gap-6">
+                <div className="flex flex-1 items-center gap-6 w-full">
+                    <div className="h-12 w-12 rounded-full bg-green-900/20 flex items-center justify-center border border-green-500/30 shrink-0">
+                        <Users className="text-[#00E676]" size={24} />
                     </div>
-                    <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-700 flex flex-col items-center justify-center">
-                        <span className="text-slate-400 text-[10px] md:text-xs uppercase font-bold flex items-center gap-1">
-                            Viraram Premium <Crown size={12} className="text-yellow-500"/>
-                        </span>
-                        <div className="text-2xl md:text-3xl font-black text-yellow-500 mt-1">
-                            {loading ? '-' : stats.premium}
-                        </div>
+                    <div className="flex-1 text-left">
+                        <h4 className="font-display font-bold uppercase text-lg text-gray-900 dark:text-white">Indique e Ganhe</h4>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Convide lutadores e ganhe 1 mês PRO.</p>
                     </div>
                 </div>
 
-                {/* Link de Cópia */}
-                <div className="flex gap-2">
-                    <div className="bg-slate-950 text-slate-400 px-4 py-3 rounded-lg text-xs font-mono truncate flex-1 border border-slate-800 flex items-center">
-                        {referralLink}
+                <div className="flex flex-col md:flex-row w-full xl:w-auto items-center gap-6 justify-between xl:justify-end border-t xl:border-t-0 border-gray-200 dark:border-gray-800 pt-4 xl:pt-0">
+                    <div className="flex items-center gap-8">
+                        <div className="flex flex-col items-center xl:items-end">
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Contas Criadas</span>
+                            <span className="font-display font-bold text-2xl text-gray-900 dark:text-white">{loading ? '-' : stats.total}</span>
+                        </div>
+                        <div className="w-px h-8 bg-gray-300 dark:bg-gray-700"></div>
+                        <div className="flex flex-col items-center xl:items-end">
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Contas Premium</span>
+                            <span className="font-display font-bold text-2xl text-[#FFD700]">{loading ? '-' : stats.premium}</span>
+                        </div>
                     </div>
-                    <button 
-                        onClick={copyToClipboard}
-                        className={`px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 ${copied ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                    >
-                        {copied ? <Check size={18}/> : <Copy size={18}/>}
-                        <span className="hidden md:inline">{copied ? 'Copiado' : 'Copiar'}</span>
-                    </button>
+
+                    <div className="flex w-full md:w-auto bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 rounded-sm p-1">
+                        <input
+                            className="bg-transparent border-none text-gray-600 dark:text-gray-300 font-mono text-sm px-3 focus:ring-0 w-full md:w-48 text-center md:text-left"
+                            readOnly
+                            value={referralLink}
+                        />
+                        <button
+                            onClick={copyToClipboard}
+                            className={`px-3 py-1 rounded-sm text-xs font-bold uppercase transition-colors flex items-center gap-1 ${copied ? 'bg-green-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'}`}
+                        >
+                            {copied ? <Check size={14} /> : <Copy size={14} />}
+                            <span>{copied ? 'Copiado' : 'Copiar'}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

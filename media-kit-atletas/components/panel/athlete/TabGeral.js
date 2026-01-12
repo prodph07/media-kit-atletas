@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { User, AlignLeft, Info, Lock, MessageSquareQuote } from 'lucide-react';
 import SmartImageUpload from '@/components/SmartImageUpload';
 
-export default function TabGeral({ 
-    perfil, 
-    setPerfil, 
-    handleChange, 
-    handleSlugChange, 
-    handleDeleteProfilePic, 
-    isPremium, 
+export default function TabGeral({
+    perfil,
+    setPerfil,
+    handleChange,
+    handleSlugChange,
+    handleDeleteProfilePic,
+    isPremium,
     userId,
-    onUpdateStatus 
+    onUpdateStatus
 }) {
     // Estado local para o input de status
     const [statusTemp, setStatusTemp] = useState(perfil.status_message || "");
@@ -22,154 +22,243 @@ export default function TabGeral({
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
-            
-            {/* COLUNA 1: FOTO E URL */}
-            <div className="md:col-span-1 space-y-6">
+        <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0c0c0c] font-sans text-gray-800 dark:text-gray-200 transition-colors duration-200 flex overflow-hidden">
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
                 
-                {/* CARTÃO DE FOTO DE PERFIL */}
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex flex-col items-center">
-                    <div className="relative w-40 h-40 mb-4 group">
-                        <div className="w-full h-full rounded-full overflow-hidden border-4 border-slate-700 bg-black">
-                            {perfil.foto_url ? (
-                                <img src={perfil.foto_url} alt="Perfil" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-600">
-                                    <User size={48}/>
+                .font-display { font-family: 'Oswald', sans-serif; }
+                .font-body { font-family: 'Roboto', sans-serif; }
+                
+                .industrial-border {
+                    border: 1px solid;
+                    border-color: #333333;
+                }
+                
+                /* Custom Scrollbar for this component */
+                .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: #1a1a1a; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #444; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #FF4500; }
+
+                .material-symbols-outlined {
+                    font-family: 'Material Symbols Outlined';
+                    font-weight: normal;
+                    font-style: normal;
+                    font-size: 24px;
+                    line-height: 1;
+                    letter-spacing: normal;
+                    text-transform: none;
+                    display: inline-block;
+                    white-space: nowrap;
+                    word-wrap: normal;
+                    direction: ltr;
+                    -webkit-font-feature-settings: 'liga';
+                    -webkit-font-smoothing: antialiased;
+                }
+            `}</style>
+
+            <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#0c0c0c]">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-8 relative custom-scrollbar">
+                    <div className="max-w-7xl mx-auto space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                            {/* LEFT COLUMN (4) */}
+                            <div className="lg:col-span-4 space-y-6">
+
+                                {/* PROFILE IMAGE CARD */}
+                                <div className="bg-[#161616] industrial-border p-6">
+                                    <div className="flex flex-col gap-6 items-center sm:items-start">
+                                        <div className="flex flex-row gap-6 w-full items-start">
+                                            <div className="relative flex-shrink-0">
+                                                <div className="h-24 w-24 bg-gray-800 border-2 border-gray-700 p-1 overflow-hidden">
+                                                    {perfil.foto_url ? (
+                                                        <img src={perfil.foto_url} alt="Fighter" className="h-full w-full object-cover grayscale contrast-125" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-900">
+                                                            <User size={40} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="absolute -bottom-2 -right-2 bg-[#FFD700] text-black text-[10px] font-bold uppercase px-2 py-1 border border-black shadow-md">
+                                                    Ready
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-display font-bold uppercase text-xl text-white mb-1">Profile Image</h3>
+                                                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Max 5MB (JPG/PNG)</p>
+                                                <div className="w-full sm:w-auto">
+                                                    <SmartImageUpload
+                                                        userId={userId}
+                                                        aspect={1}
+                                                        buttonLabel="UPLOAD"
+                                                        onUploadComplete={(newUrl) => {
+                                                            setPerfil(prev => ({ ...prev, foto_url: newUrl }));
+                                                        }}
+                                                        className="bg-transparent border border-gray-600 hover:border-[#FF4500] text-white hover:text-[#FF4500] font-display font-bold uppercase px-4 py-2 text-xs tracking-wide transition-colors w-full"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full">
+                                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Custom URL</label>
+                                            <div className="flex bg-[#202020] border border-gray-700 p-2 items-center">
+                                                <span className="text-gray-500 font-mono text-xs px-2 whitespace-nowrap">MUAY/</span>
+                                                <input
+                                                    className="bg-transparent border-none text-white font-bold font-display uppercase tracking-wide focus:ring-0 p-0 w-full text-sm"
+                                                    type="text"
+                                                    value={perfil.slug || ''}
+                                                    onChange={handleSlugChange}
+                                                    disabled={!isPremium}
+                                                    placeholder="THE-SILENCER"
+                                                />
+                                            </div>
+                                            {!isPremium && <p className="text-[9px] text-[#FFD700] mt-1">* Requires Premium</p>}
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
+
+                                {/* DAILY STATUS */}
+                                <div className="bg-[#161616] industrial-border p-6">
+                                    <div className="flex items-center gap-2 text-[#FF4500] mb-4">
+                                        <span className="material-symbols-outlined">edit_note</span>
+                                        <h3 className="font-display font-bold uppercase text-xl text-white">Daily Status</h3>
+                                    </div>
+                                    <div className="flex flex-col gap-3">
+                                        <textarea
+                                            className="w-full bg-[#202020] border border-gray-700 text-white px-4 py-3 text-sm focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] placeholder-gray-500 resize-none font-body"
+                                            placeholder="How's training feeling?"
+                                            rows="2"
+                                            value={statusTemp}
+                                            onChange={(e) => setStatusTemp(e.target.value)}
+                                        ></textarea>
+                                        <button
+                                            onClick={handleStatusSave}
+                                            className="bg-[#FF4500] hover:bg-orange-600 text-white font-display font-bold uppercase py-2 text-sm tracking-wide transition-colors w-full"
+                                        >
+                                            Update Status
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* SELECT ROLES */}
+                                <div className="bg-[#161616] industrial-border p-6">
+                                    <h3 className="font-display font-bold uppercase text-xl text-white mb-4">Select Role(s)</h3>
+                                    <div className="space-y-3">
+                                        <label className="checkbox-wrapper cursor-pointer group block relative">
+                                            <input
+                                                type="checkbox"
+                                                className="peer sr-only"
+                                                checked={perfil.is_athlete || false}
+                                                onChange={(e) => setPerfil({ ...perfil, is_athlete: e.target.checked })}
+                                            />
+                                            <div className="bg-[#202020] border border-gray-700 p-4 flex items-center gap-4 transition-all peer-checked:border-[#FF4500] peer-checked:bg-[#FF4500]/5">
+                                                <div className="h-6 w-6 border-2 border-gray-600 flex items-center justify-center peer-checked:bg-[#FF4500] peer-checked:border-[#FF4500] transition-colors">
+                                                    <span className="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block font-display font-bold uppercase text-white text-lg">Nak Muay</span>
+                                                    <span className="text-xs uppercase font-bold text-gray-400">Active Fighter</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                        <label className="checkbox-wrapper cursor-pointer group block relative">
+                                            <input
+                                                type="checkbox"
+                                                className="peer sr-only"
+                                                checked={perfil.is_coach || false}
+                                                onChange={(e) => setPerfil({ ...perfil, is_coach: e.target.checked })}
+                                            />
+                                            <div className="bg-[#202020] border border-gray-700 p-4 flex items-center gap-4 transition-all peer-checked:border-[#FF4500] peer-checked:bg-[#FF4500]/5">
+                                                <div className="h-6 w-6 border-2 border-gray-600 flex items-center justify-center peer-checked:bg-[#FF4500] peer-checked:border-[#FF4500] transition-colors">
+                                                    <span className="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block font-display font-bold uppercase text-white text-lg">Kru / Coach</span>
+                                                    <span className="text-xs uppercase font-bold text-gray-400">Trainer / Holder</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* RIGHT COLUMN (8) */}
+                            <div className="lg:col-span-8 space-y-6">
+                                <div className="bg-[#161616] industrial-border p-6 lg:p-8 h-full">
+                                    <div className="flex justify-between items-end mb-8 border-b border-gray-800 pb-4">
+                                        <h3 className="font-display font-bold uppercase text-3xl text-white">Fighter Data</h3>
+                                        <span className="text-[10px] font-bold text-[#FF4500] uppercase">* Required Fields</span>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Full Name</label>
+                                                <input
+                                                    className="w-full bg-[#202020] border border-gray-700 text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500]"
+                                                    type="text"
+                                                    name="nome"
+                                                    value={perfil.nome || ''}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Fight Name</label>
+                                                <input
+                                                    className="w-full bg-[#202020] border border-[#FF4500] text-[#FF4500] px-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500]"
+                                                    type="text"
+                                                    name="apelido"
+                                                    value={perfil.apelido || ''}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Weight Class</label>
+                                                <div className="relative">
+                                                    {/* 
+                                                        Keeping input to match data structure if 'categoria' is free text in DB, 
+                                                        but styled as user requested.
+                                                    */}
+                                                    <input
+                                                        className="w-full bg-[#202020] border border-gray-700 text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500]"
+                                                        type="text"
+                                                        name="categoria"
+                                                        value={perfil.categoria || ''}
+                                                        onChange={handleChange}
+                                                        placeholder="WELTERWEIGHT"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Style</label>
+                                                <input
+                                                    className="w-full bg-[#202020] border border-gray-700 text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500]"
+                                                    type="text"
+                                                    name="fightingStyle"
+                                                    value={perfil.fightingStyle || ''}
+                                                    onChange={handleChange}
+                                                    placeholder="MUAY MAT"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Bio</label>
+                                            <textarea
+                                                className="w-full bg-[#202020] border border-gray-700 text-white px-4 py-3 text-sm font-medium focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] resize-none h-40 font-body"
+                                                rows="4"
+                                                name="about"
+                                                value={perfil.about || ''}
+                                                onChange={handleChange}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        {perfil.foto_url && (
-                            <button 
-                                onClick={handleDeleteProfilePic}
-                                className="absolute top-0 right-0 bg-red-600 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                                title="Remover foto atual"
-                            >
-                                <User size={16} className="rotate-45" /> 
-                            </button>
-                        )}
                     </div>
-
-                    <div className="w-full">
-                        <SmartImageUpload
-                            userId={userId}
-                            aspect={1} 
-                            buttonLabel="Alterar Foto"
-                            onUploadComplete={(newUrl) => {
-                                setPerfil(prev => ({ ...prev, foto_url: newUrl }));
-                            }}
-                        />
-                        <p className="text-[10px] text-slate-500 mt-2 text-center">
-                            Recomendado: Imagem quadrada, rosto centralizado.
-                        </p>
-                    </div>
-                </div>
-
-                {/* NOVO: STATUS DO DIA */}
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                    <label className="text-green-400 text-xs font-bold uppercase mb-2 block flex items-center gap-2">
-                        <MessageSquareQuote size={14}/> Status do Dia (+15 XP)
-                    </label>
-                    <div className="flex gap-2">
-                        <input 
-                            type="text" 
-                            maxLength={50}
-                            value={statusTemp} 
-                            onChange={(e) => setStatusTemp(e.target.value)}
-                            placeholder="Ex: Focado no treino!"
-                            className="bg-slate-950 border border-slate-800 text-white text-sm w-full rounded-lg px-3 py-2 focus:border-green-500 outline-none transition"
-                        />
-                        <button 
-                            onClick={handleStatusSave}
-                            className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition"
-                            title="Atualizar Status"
-                        >
-                            <MessageSquareQuote size={18}/>
-                        </button>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-2">Uma frase curta que aparece no topo do seu perfil.</p>
-                </div>
-
-                {/* SLUG / URL */}
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                    <label className="text-slate-400 text-xs font-bold uppercase mb-2 block flex justify-between">
-                        Seu Link Personalizado
-                        {!isPremium && <span className="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 rounded border border-yellow-500/20 flex items-center gap-1"><Lock size={10}/> Fixo no Free</span>}
-                    </label>
-                    <div className={`flex items-center bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 ${!isPremium ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <span className="text-slate-500 text-sm mr-1">athlete.pro/</span>
-                        <input 
-                            type="text" 
-                            name="slug" 
-                            value={perfil.slug || ''} 
-                            onChange={handleSlugChange}
-                            disabled={!isPremium}
-                            placeholder="seu-nome"
-                            className="bg-transparent border-none text-white text-sm w-full focus:ring-0 p-0 disabled:cursor-not-allowed"
-                        />
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-2">Este é o link que você compartilhará no Instagram.</p>
-                </div>
-            </div>
-
-            {/* COLUNA 2: DADOS PESSOAIS (Mantido igual) */}
-            <div className="md:col-span-2 space-y-6">
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                    <h3 className="text-white font-bold mb-4 flex items-center gap-2"><AlignLeft size={18} className="text-cyan-500"/> Informações Básicas</h3>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Nome Completo</label>
-                            <input type="text" name="nome" value={perfil.nome} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
-                        </div>
-                        <div>
-                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Apelido (Fight Name)</label>
-                            <input type="text" name="apelido" value={perfil.apelido} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Categoria de Peso</label>
-                            <input type="text" name="categoria" value={perfil.categoria} onChange={handleChange} placeholder="Ex: Peso Leve, 70kg" className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
-                        </div>
-                        <div>
-                            <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Estilo Base</label>
-                            <input type="text" name="fightingStyle" value={perfil.fightingStyle || ''} onChange={handleChange} placeholder="Ex: Muay Thai, Jiu-Jitsu" className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="text-slate-400 text-xs font-bold uppercase mb-1 block">Sobre Você (Bio)</label>
-                        <textarea name="about" value={perfil.about || ''} onChange={handleChange} rows="4" placeholder="Conte um pouco da sua história, títulos e objetivos..." className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-cyan-500 outline-none transition"></textarea>
-                    </div>
-                </div>
-
-                {/* TIPOS DE PERFIL */}
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                    <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Info size={18} className="text-purple-500"/> Tipo de Perfil</h3>
-                    <div className="flex gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer bg-slate-950 p-3 rounded border border-slate-800 hover:border-cyan-500 transition">
-                            <input 
-                                type="checkbox" 
-                                checked={perfil.is_athlete} 
-                                onChange={(e) => setPerfil({...perfil, is_athlete: e.target.checked})}
-                                className="accent-cyan-500 w-4 h-4"
-                            />
-                            <span className="text-sm font-bold">Sou Atleta</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer bg-slate-950 p-3 rounded border border-slate-800 hover:border-orange-500 transition">
-                            <input 
-                                type="checkbox" 
-                                checked={perfil.is_coach} 
-                                onChange={(e) => setPerfil({...perfil, is_coach: e.target.checked})}
-                                className="accent-orange-500 w-4 h-4"
-                            />
-                            <span className="text-sm font-bold">Sou Treinador</span>
-                        </label>
-                    </div>
-                </div>
+                </main>
             </div>
         </div>
     );
