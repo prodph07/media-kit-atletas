@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { GraduationCap, Users, CheckCircle, BookOpen, Star, ExternalLink, Shield } from 'lucide-react';
+import { GraduationCap, Users, CheckCircle, BookOpen, Star, ExternalLink, Shield, School, Award, Clock } from 'lucide-react';
 
 const SERVICE_LABELS = {
     'personal': 'Personal Fight',
@@ -14,66 +14,165 @@ export default function CoachSection({ coachDetails, studentsList, theme = 'defa
     if (!coachDetails) return null;
 
     const { graduation, team, lineage, experience_years, services, specialties, methodology } = coachDetails;
-    const isCyber = theme === 'cyber';
-
-    const accentColor = isCyber ? 'text-lime-400' : 'text-orange-500';
-    const borderColor = isCyber ? 'border-lime-500/30' : 'border-orange-500/30';
-    const bgCard = isCyber ? 'bg-zinc-900/80' : 'bg-slate-900/80';
-    const studentBg = isCyber ? 'bg-zinc-900 border-lime-500/20' : 'bg-black/40 border-slate-800';
 
     return (
-        <div className="w-full max-w-4xl mx-auto mt-8 space-y-6 animate-fadeIn">
-            
-            {/* CABEÇALHO */}
-            <div className={`relative p-6 rounded-2xl border ${borderColor} ${bgCard} backdrop-blur-sm overflow-hidden`}>
-                <div className={`absolute top-0 right-0 p-3 opacity-10 ${accentColor}`}><GraduationCap size={120} /></div>
-                <h2 className={`text-2xl font-bold uppercase mb-6 flex items-center gap-2 ${accentColor}`}><GraduationCap /> Perfil do Treinador</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-                    <div className="flex flex-col"><span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Graduação</span><span className="text-xl text-white font-bold">{graduation || 'Não informada'}</span></div>
-                    <div className="flex flex-col"><span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Equipe / Bandeira</span><span className="text-xl text-white font-bold flex items-center gap-2"><Users size={18} className="text-slate-400"/> {team || 'Sem equipe'}</span></div>
-                    <div className="flex flex-col"><span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Experiência</span><span className="text-xl text-white font-bold">{experience_years ? `${experience_years} Anos` : '-'}</span></div>
-                </div>
-                {lineage && ( <div className="mt-6 pt-6 border-t border-slate-700/50"><span className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1 block">Linhagem</span><p className="text-sm text-slate-300 font-mono italic">"{lineage}"</p></div> )}
+        <section className="space-y-8 py-12 border-t border-[#333333] animate-fadeIn" id="coach">
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap');
+                .font-display { font-family: 'Oswald', sans-serif; }
+                .industrial-border { border: 1px solid #333333; }
+                .skew-tag { transform: skew(-12deg); }
+                .skew-tag-content { transform: skew(12deg); }
+            `}</style>
+
+            {/* HEADER */}
+            <div>
+                <h2 className="font-display font-bold text-5xl md:text-7xl text-white uppercase tracking-tighter leading-none">
+                    Head Coach <br className="md:hidden" />Profile
+                </h2>
+                <div className="h-2 w-24 md:w-40 bg-[#FF4500] mt-2 skew-tag"></div>
             </div>
 
-            {/* --- LISTA DE ALUNOS (AGORA VEM DO BANCO DE DADOS) --- */}
-            {studentsList && studentsList.length > 0 && (
-                <div className={`p-6 rounded-2xl border border-slate-800 ${bgCard}`}>
-                    <h3 className={`font-bold uppercase text-sm mb-4 flex items-center gap-2 ${accentColor}`}>
-                        <Users size={16}/> Time / Alunos
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {/* PROFILE CARD */}
+            <div className="relative bg-[#1E1E1E] industrial-border p-8 md:p-12 overflow-hidden group">
+                <div className="absolute -right-10 -bottom-10 opacity-[0.03] pointer-events-none select-none text-white">
+                    <School size={320} strokeWidth={0.5} />
+                </div>
+                <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+
+                    {/* Column 1: Graduation */}
+                    <div className="space-y-2 border-l-4 border-[#FF4500] pl-4">
+                        <div className="flex items-center gap-2 text-[#FF4500]">
+                            <Award size={24} />
+                            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Graduation</span>
+                        </div>
+                        <div className="font-display font-bold text-3xl md:text-4xl text-white uppercase">
+                            {graduation || 'Kru Patente'}
+                        </div>
+                        <div className="text-sm text-gray-400 font-mono italic">
+                            {lineage ? `"${lineage}"` : 'Certificado'}
+                        </div>
+                    </div>
+
+                    {/* Column 2: Team */}
+                    <div className="space-y-2 border-l-4 border-gray-700 pl-4 md:border-none md:pl-0">
+                        <div className="flex items-center gap-2 text-[#FF4500]">
+                            <Users size={24} />
+                            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Team</span>
+                        </div>
+                        <div className="font-display font-bold text-3xl md:text-4xl text-white uppercase">
+                            {team || 'No Team'}
+                        </div>
+                        <div className="text-sm text-gray-400 font-mono">Head Coach</div>
+                    </div>
+
+                    {/* Column 3: Experience */}
+                    <div className="space-y-2 border-l-4 border-gray-700 pl-4 md:border-none md:pl-0">
+                        <div className="flex items-center gap-2 text-[#FF4500]">
+                            <Clock size={24} />
+                            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Experience</span>
+                        </div>
+                        <div className="font-display font-bold text-3xl md:text-4xl text-white uppercase">
+                            {experience_years ? `${experience_years} Years` : 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-400 font-mono">Training Fighters</div>
+                    </div>
+
+                </div>
+            </div>
+
+            {/* STUDENTS GRID */}
+            <div className="space-y-6">
+                <h3 className="font-display font-bold text-2xl text-white uppercase flex items-center gap-3">
+                    <span className="w-2 h-2 bg-white rounded-full"></span>
+                    Time / Alunos
+                </h3>
+
+                {studentsList && studentsList.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {studentsList.map((student, idx) => (
-                            <Link key={idx} href={`/${student.slug || student.id}`} target="_blank" className={`flex items-center gap-3 p-3 rounded-lg border hover:border-slate-500 transition-all group ${studentBg}`}>
-                                <img src={student.foto_url || "https://placehold.co/100"} alt={student.nome} className="w-12 h-12 rounded-full object-cover border border-slate-700 group-hover:scale-105 transition-transform"/>
-                                <div className="overflow-hidden">
-                                    <p className="font-bold text-white text-sm truncate group-hover:text-cyan-400 transition-colors">{student.apelido || student.nome}</p>
-                                    <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                                        {student.cartel ? (
-                                            <span className="flex items-center gap-1"><Shield size={8}/> {student.cartel.wins}-{student.cartel.losses}</span>
-                                        ) : (
-                                            <span>Atleta</span>
-                                        )}
+                            <Link key={idx} href={`/${student.slug || student.id}`} className="block">
+                                <div className="bg-[#121212] border border-[#333333] p-4 flex flex-col items-center text-center group hover:border-cyan-500/50 transition-colors cursor-pointer relative overflow-hidden h-full">
+                                    {/* Record Badge */}
+                                    {student.cartel && (
+                                        <div className="absolute top-0 right-0 p-1">
+                                            <span className="text-[10px] font-bold bg-gray-800 text-white px-1.5 py-0.5 rounded border border-gray-700">
+                                                {student.cartel.wins}-{student.cartel.losses}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Avatar */}
+                                    <div className="w-20 h-20 rounded-full bg-gray-800 mb-3 overflow-hidden border-2 border-gray-700 group-hover:border-cyan-500 transition-colors">
+                                        <img
+                                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                                            src={student.foto_url || "https://placehold.co/100"}
+                                            alt={student.nome}
+                                        />
+                                    </div>
+
+                                    {/* Name & Info */}
+                                    <div className="font-display font-bold text-lg text-white uppercase group-hover:text-cyan-400 transition-colors truncate w-full">
+                                        {student.apelido || student.nome}
+                                    </div>
+                                    <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">
+                                        Atleta
                                     </div>
                                 </div>
                             </Link>
                         ))}
                     </div>
-                </div>
-            )}
-
-            {/* SERVIÇOS E METODOLOGIA */}
-            <div className="grid md:grid-cols-2 gap-4">
-                <div className={`p-6 rounded-2xl border border-slate-800 ${bgCard}`}>
-                    <h3 className={`font-bold uppercase text-sm mb-4 flex items-center gap-2 ${accentColor}`}><Star size={16}/> Serviços</h3>
-                    <ul className="space-y-3">{(services || []).map(svcId => ( <li key={svcId} className="flex items-center gap-3 text-sm text-slate-300"><CheckCircle size={16} className={isCyber ? "text-lime-500" : "text-green-500"} />{SERVICE_LABELS[svcId] || svcId}</li> ))}</ul>
-                </div>
-                <div className={`p-6 rounded-2xl border border-slate-800 ${bgCard}`}>
-                    <h3 className={`font-bold uppercase text-sm mb-4 flex items-center gap-2 ${accentColor}`}><BookOpen size={16}/> Metodologia</h3>
-                    {specialties && (<div className="flex flex-wrap gap-2 mb-4">{specialties.split(',').map((tag, i) => ( <span key={i} className={`text-[10px] px-2 py-1 rounded border ${isCyber ? 'bg-lime-900/20 border-lime-500/30 text-lime-300' : 'bg-orange-900/20 border-orange-500/30 text-orange-300'}`}>{tag.trim()}</span> ))}</div>)}
-                    <p className="text-sm text-slate-400 leading-relaxed">{methodology || "Entre em contato para saber mais sobre as aulas."}</p>
-                </div>
+                ) : (
+                    <div className="text-gray-500 text-sm italic">Nenhum aluno cadastrado.</div>
+                )}
             </div>
-        </div>
+
+            {/* SERVICES & METHODOLOGY */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+
+                {/* Services */}
+                <div className="bg-[#1E1E1E] industrial-border p-6 md:p-8 flex flex-col">
+                    <h3 className="font-display font-bold text-xl text-white uppercase mb-6 border-b border-[#333333] pb-4">
+                        Serviços
+                    </h3>
+                    <ul className="space-y-4 flex-1">
+                        {(services || []).map((svcId, idx) => (
+                            <li key={idx} className="flex items-start gap-3">
+                                <CheckCircle className="text-green-500 shrink-0" size={20} />
+                                <div>
+                                    <span className="block text-white font-bold uppercase tracking-wide">
+                                        {SERVICE_LABELS[svcId] || svcId}
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                {/* Methodology */}
+                <div className="bg-[#1E1E1E] industrial-border p-6 md:p-8 flex flex-col">
+                    <h3 className="font-display font-bold text-xl text-white uppercase mb-6 border-b border-[#333333] pb-4">
+                        Metodologia
+                    </h3>
+
+                    {/* Specialties Tags */}
+                    {specialties && (
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            {specialties.split(',').map((tag, i) => (
+                                <span key={i} className="px-3 py-1 border border-[#FF4500]/50 text-[#FF4500] text-xs font-bold uppercase rounded-full bg-[#FF4500]/5">
+                                    {tag.trim()}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    <p className="text-gray-400 text-sm leading-relaxed font-light">
+                        {methodology || "Entre em contato para saber mais sobre as aulas."}
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
     );
 }

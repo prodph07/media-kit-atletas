@@ -296,14 +296,38 @@ export default function TabMetricas({
                                                     <span>Men</span>
                                                     <span>{genderSplit.men}%</span>
                                                 </div>
-                                                <input className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#FF4500]" max="100" min="0" type="range" value={genderSplit.men} onChange={(e) => { setGenderSplit({ ...genderSplit, men: e.target.value }); handleInstaStats('audience', 'gender', `${e.target.value}% Homens, ${genderSplit.women}% Mulheres`); }} />
+                                                <input
+                                                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#FF4500]"
+                                                    max="100"
+                                                    min="0"
+                                                    type="range"
+                                                    value={genderSplit.men}
+                                                    onChange={(e) => {
+                                                        const menVal = parseInt(e.target.value);
+                                                        const womenVal = 100 - menVal;
+                                                        setGenderSplit({ men: menVal, women: womenVal });
+                                                        handleInstaStats('audience', 'gender', `${menVal}% Homens, ${womenVal}% Mulheres`);
+                                                    }}
+                                                />
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex justify-between text-[10px] uppercase font-bold text-gray-400 mb-1">
                                                     <span>Women</span>
                                                     <span>{genderSplit.women}%</span>
                                                 </div>
-                                                <input className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#FF007F]" max="100" min="0" type="range" value={genderSplit.women} onChange={(e) => { setGenderSplit({ ...genderSplit, women: e.target.value }); handleInstaStats('audience', 'gender', `${genderSplit.men}% Homens, ${e.target.value}% Mulheres`); }} />
+                                                <input
+                                                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#FF007F]"
+                                                    max="100"
+                                                    min="0"
+                                                    type="range"
+                                                    value={genderSplit.women}
+                                                    onChange={(e) => {
+                                                        const womenVal = parseInt(e.target.value);
+                                                        const menVal = 100 - womenVal;
+                                                        setGenderSplit({ men: menVal, women: womenVal });
+                                                        handleInstaStats('audience', 'gender', `${menVal}% Homens, ${womenVal}% Mulheres`);
+                                                    }}
+                                                />
                                             </div>
                                         </div>
                                     </div>
