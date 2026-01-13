@@ -2,53 +2,84 @@ export const runtime = 'edge';
 
 import { supabase } from '../../lib/supabase'
 import { TemplatePadrao } from '../../components/TemplatePadrao'
+import { TemplateEmpresa } from '../../components/TemplateEmpresa' // [NEW]
 // import TemplateCyber from '../../components/TemplateCyber' (Removido temporariamente)
-import Link from 'next/link' 
+import Link from 'next/link'
 import ViewTracker from '../../components/ViewTracker'
 
 async function getAtleta(slug) {
   // 1. Busca dados do Atleta pelo slug
-  let { data: atleta } = await supabase
+  let { data: perfil } = await supabase
     .from('atletas')
     .select('*')
     .eq('slug', slug)
     .maybeSingle()
 
   // Fallback: Se não achar por slug, tenta por ID
-  if (!atleta && !isNaN(slug)) {
-    const { data: atletaPorId } = await supabase.from('atletas').select('*').eq('id', slug).maybeSingle()
-    if (atletaPorId) atleta = atletaPorId
+  if (!perfil && !isNaN(slug)) {
+    const { data: perfilPorId } = await supabase.from('atletas').select('*').eq('id', slug).maybeSingle()
+    if (perfilPorId) perfil = perfilPorId
   }
 
-  if (!atleta) return null;
+  if (!perfil) return null;
 
-  const profileId = atleta.id;
+  const profileId = perfil.id;
 
-  // 2. BUSCA RELAÇÕES (Conexões Reais do Banco)
-  const { data: alunosData } = await supabase
-    .from('relacoes')
-    .select(`student:atletas!student_id(id, nome, apelido, foto_url, slug, cartel, categoria, coach_details)`)
-    .eq('coach_id', profileId)
-    .eq('status', 'accepted');
+  // 2. BUSCA DADOS ADICIONAIS
+  let myStudents = [];
+  let myCoaches = [];
+  let myTeam = []; // [NEW] Para Empresas
+  let opportunities = []; // [NEW] Para Empresas
 
-  const { data: coachesData } = await supabase
-    .from('relacoes')
-    .select(`coach:atletas!coach_id(id, nome, apelido, foto_url, slug, coach_details)`)
-    .eq('student_id', profileId)
-    .eq('status', 'accepted');
+  // --- SE FOR ATLETA/TREINADOR (Busca Relações) ---
+  if (perfil.tipo_conta !== 'empresa') {
+    const { data: alunosData } = await supabase
+      .from('relacoes')
+      .select(`student:atletas!student_id(id, nome, apelido, foto_url, slug, cartel, categoria, coach_details)`)
+      .eq('coach_id', profileId)
+      .eq('status', 'accepted');
 
-  const myStudents = alunosData ? alunosData.map(r => r.student) : [];
-  const myCoaches = coachesData ? coachesData.map(r => r.coach) : [];
+    const { data: coachesData } = await supabase
+      .from('relacoes')
+      .select(`coach:atletas!coach_id(id, nome, apelido, foto_url, slug, coach_details)`)
+      .eq('student_id', profileId)
+      .eq('status', 'accepted');
 
-  return { ...atleta, myStudents, myCoaches };
+    myStudents = alunosData ? alunosData.map(r => r.student) : [];
+    myCoaches = coachesData ? coachesData.map(r => r.coach) : [];
+  }
+
+  // --- SE FOR EMPRESA (Busca Time e Vagas) ---
+  if (perfil.tipo_conta === 'empresa') {
+    // Time (Parcerias Ativas)
+    const { data: teamData } = await supabase
+      .from('parcerias')
+      .select(`atleta:atletas!atleta_id(id, nome, apelido, foto_url, slug, level, categoria)`)
+      .eq('empresa_id', profileId)
+      .eq('status', 'ativo');
+
+    myTeam = teamData ? teamData.map(p => p.atleta) : [];
+
+    // Vagas (Oportunidades)
+    const { data: jobsData } = await supabase
+      .from('oportunidades')
+      .select('*')
+      .eq('empresa_id', profileId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    opportunities = jobsData || [];
+  }
+
+  return { ...perfil, myStudents, myCoaches, myTeam, opportunities };
 }
 
 export default async function Page({ params }) {
   const { slug } = await params
-  
-  const atleta = await getAtleta(slug)
 
-  if (!atleta) {
+  const perfil = await getAtleta(slug)
+
+  if (!perfil) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0c] text-white gap-4 p-4 text-center">
         <h1 className="text-3xl font-bold text-yellow-500">Perfil não encontrado 😕</h1>
@@ -58,52 +89,61 @@ export default async function Page({ params }) {
   }
 
   const dadosCompletos = {
-    ...atleta.dados, 
-    id: atleta.id, 
-    user_id: atleta.user_id,
-    
+    ...perfil.dados,
+    id: perfil.id,
+    user_id: perfil.user_id,
+
     // Dados Principais
-    name: atleta.nome,
-    nickname: atleta.apelido,
-    foto_url: atleta.foto_url,
-    about: atleta.sobre,
-    slug: atleta.slug,
-    status_message: atleta.status_message,
-    
+    name: perfil.nome,
+    nickname: perfil.apelido,
+    foto_url: perfil.foto_url,
+    about: perfil.sobre,
+    slug: perfil.slug,
+    status_message: perfil.status_message,
+    tipo_conta: perfil.tipo_conta || 'atleta', // [NEW]
+
     // Gamificação
-    level: atleta.level, 
-    xp: atleta.xp,
-    
+    level: perfil.level,
+    xp: perfil.xp,
+
     // Tipos de Perfil
-    is_athlete: atleta.is_athlete ?? true,
-    is_coach: atleta.is_coach,
-    coach_details: atleta.coach_details,
-    
+    is_athlete: perfil.is_athlete ?? true,
+    is_coach: perfil.is_coach,
+    coach_details: perfil.coach_details,
+
     // Mapeamento de Dados
-    stats: atleta.atributos || {},
-    premios: atleta.premios || [],
-    historico: atleta.historico || [],
-    socials: atleta.redes_sociais || {},
-    record: atleta.cartel || {},
-    video_lista: atleta.video_lista || [],
-    galeria: atleta.galeria || [],
-    contact: atleta.contato || {},
-    nextFight: atleta.prox_luta || {}, // Dados da próxima luta
+    stats: perfil.atributos || {},
+    premios: perfil.premios || [],
+    historico: perfil.historico || [],
+    socials: perfil.redes_sociais || {},
+    record: perfil.cartel || {},
+    video_lista: perfil.video_lista || [],
+    galeria: perfil.galeria || [],
+    contact: perfil.contato || {},
+    nextFight: perfil.prox_luta || {}, // Dados da próxima luta
 
-    fightingStyle: atleta.estilodeluta,
-    category: atleta.categoria,
-    template_style: atleta.template_style,
-    plano: atleta.plano,
+    fightingStyle: perfil.estilodeluta,
+    category: perfil.categoria,
+    template_style: perfil.template_style,
+    plano: perfil.plano,
 
-    connected_students: atleta.myStudents,
-    connected_coaches: atleta.myCoaches,
+    connected_students: perfil.myStudents,
+    connected_coaches: perfil.myCoaches,
+
+    // [NEW] Dados Empresa
+    myTeam: perfil.myTeam,
+    opportunities: perfil.opportunities
   }
 
   return (
     <div className="relative w-full min-h-screen">
-        <ViewTracker profileId={dadosCompletos.id} profileUserId={dadosCompletos.user_id} />
-        {/* Renderiza apenas o Padrão por enquanto */}
+      <ViewTracker profileId={dadosCompletos.id} profileUserId={dadosCompletos.user_id} />
+      {/* CONDICIONAL DE TEMPLATE */}
+      {dadosCompletos.tipo_conta === 'empresa' ? (
+        <TemplateEmpresa data={dadosCompletos} />
+      ) : (
         <TemplatePadrao data={dadosCompletos} />
+      )}
     </div>
   )
 }

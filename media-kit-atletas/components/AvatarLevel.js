@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { getRankInfo, getLevelProgress, getXpToNextLevel } from '../lib/gamification';
 

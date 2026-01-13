@@ -162,19 +162,19 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                 }
             `}</style>
 
-            <main className="max-w-7xl mx-auto space-y-6 p-4 lg:p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <main className="max-w-7xl mx-auto space-y-4 sm:space-y-6 p-3 sm:p-4 lg:p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
 
                     {/* COLUNA ESQUERDA (4 COL) */}
-                    <div className="lg:col-span-4 space-y-6">
+                    <div className="lg:col-span-4 space-y-4 sm:space-y-6">
                         {/* CREDENCIAIS */}
-                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6">
-                            <h3 className="font-display font-bold uppercase text-xl text-gray-900 dark:text-white mb-6 border-l-4 border-[#FF4500] pl-3">Credenciais</h3>
-                            <div className="space-y-4">
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-4 sm:p-6">
+                            <h3 className="font-display font-bold uppercase text-lg sm:text-xl text-gray-900 dark:text-white mb-4 sm:mb-6 border-l-4 border-[#FF4500] pl-3">Credenciais</h3>
+                            <div className="space-y-3 sm:space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Graduação</label>
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1 sm:mb-2">Graduação</label>
                                     <input
-                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 sm:px-4 sm:py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-xs sm:text-sm"
                                         placeholder="Ex: Mestre / Kru"
                                         type="text"
                                         value={details.graduation || ''}
@@ -182,19 +182,22 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tempo (Anos)</label>
-                                    <input
-                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
-                                        placeholder="EX: 12"
-                                        type="number"
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1 sm:mb-2">Tempo (Anos)</label>
+                                    <select
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 sm:px-4 sm:py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-xs sm:text-sm appearance-none"
                                         value={details.experience_years || ''}
                                         onChange={(e) => updateCoachDetail('experience_years', e.target.value)}
-                                    />
+                                    >
+                                        <option value="">SELECIONE</option>
+                                        {[...Array(51)].map((_, i) => (
+                                            <option key={i} value={i}>{i} {i === 1 ? 'ANO' : 'ANOS'}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Equipe</label>
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1 sm:mb-2">Equipe</label>
                                     <input
-                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 sm:px-4 sm:py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-xs sm:text-sm"
                                         placeholder="NOME DA EQUIPE"
                                         type="text"
                                         value={details.team || ''}
@@ -202,9 +205,9 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Linhagem</label>
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1 sm:mb-2">Linhagem</label>
                                     <input
-                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm"
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 sm:px-4 sm:py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-xs sm:text-sm"
                                         placeholder="MESTRE ANTERIOR"
                                         type="text"
                                         value={details.lineage || ''}
@@ -215,9 +218,9 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                         </div>
 
                         {/* SERVIÇOS */}
-                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6">
-                            <h3 className="font-display font-bold uppercase text-xl text-gray-900 dark:text-white mb-6 border-l-4 border-[#FF4500] pl-3">Serviços</h3>
-                            <div className="grid grid-cols-1 gap-3">
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-4 sm:p-6">
+                            <h3 className="font-display font-bold uppercase text-lg sm:text-xl text-gray-900 dark:text-white mb-4 sm:mb-6 border-l-4 border-[#FF4500] pl-3">Serviços</h3>
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                 {SERVICOS_COMUNS.map(servico => (
                                     <label key={servico.id} className="checkbox-wrapper cursor-pointer group block relative">
                                         <input
@@ -226,10 +229,9 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                                             checked={(details.services || []).includes(servico.id)}
                                             onChange={() => toggleService(servico.id)}
                                         />
-                                        <div className="bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 p-3 flex items-center justify-between transition-all">
-                                            <span className="font-display font-bold uppercase text-gray-900 dark:text-white text-sm text-check-white">{servico.label}</span>
-                                            {/* Usando Check do Lucide ou Material Symbol */}
-                                            <span className="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+                                        <div className="bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 p-2 sm:p-2.5 flex items-center justify-between transition-all h-full">
+                                            <span className="font-display font-bold uppercase text-gray-900 dark:text-white text-[10px] sm:text-xs text-check-white leading-tight">{servico.label}</span>
+                                            <span className="material-symbols-outlined text-white text-xs opacity-0 peer-checked:opacity-100 flex-shrink-0 ml-1">check</span>
                                         </div>
                                     </label>
                                 ))}
@@ -238,27 +240,27 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                     </div>
 
                     {/* COLUNA DIREITA (8 COL) */}
-                    <div className="lg:col-span-8 space-y-6">
+                    <div className="lg:col-span-8 space-y-4 sm:space-y-6">
 
                         {/* GERENCIAR ALUNOS */}
-                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6 lg:p-8">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                <h3 className="font-display font-bold uppercase text-3xl text-gray-900 dark:text-white border-l-4 border-[#FF4500] pl-3">Gerenciar Alunos</h3>
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-4 sm:p-6 lg:p-8">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-4">
+                                <h3 className="font-display font-bold uppercase text-xl sm:text-2xl lg:text-3xl text-gray-900 dark:text-white border-l-4 border-[#FF4500] pl-3">Gerenciar Alunos</h3>
                                 {!isPremium && (
-                                    <div className="flex items-center gap-2 text-xs font-bold uppercase text-gray-500 dark:text-gray-400 bg-black/20 px-3 py-1 rounded border border-white/10">
-                                        <Lock size={14} />
+                                    <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase text-gray-500 dark:text-gray-400 bg-black/20 px-2 py-1 sm:px-3 sm:py-1 rounded border border-white/10">
+                                        <Lock size={12} className="sm:w-3.5 sm:h-3.5" />
                                         <span>Limite Grátis: {meusAlunos.length}/2</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* SEARCH BAR */}
-                            <div className="relative mb-6">
+                            <div className="relative mb-4 sm:mb-6">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="text-gray-500" size={20} />
+                                    <Search className="text-gray-500" size={18} />
                                 </div>
                                 <input
-                                    className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white pl-10 pr-4 py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-sm transition-colors"
+                                    className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white pl-10 pr-4 py-2 sm:py-3 font-display font-bold tracking-wide uppercase focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] text-xs sm:text-sm transition-colors"
                                     placeholder="BUSCAR NOVO ATLETA..."
                                     type="text"
                                     value={searchTerm}
@@ -288,14 +290,14 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                             </div>
 
                             {/* STUDENT LIST */}
-                            <div className="space-y-3 min-h-[100px]">
+                            <div className="space-y-2 sm:space-y-3 min-h-[100px]">
                                 {meusAlunos.length === 0 ? (
-                                    <p className="text-gray-500 text-sm italic text-center py-8">Nenhum aluno vinculado.</p>
+                                    <p className="text-gray-500 text-xs sm:text-sm italic text-center py-6 sm:py-8">Nenhum aluno vinculado.</p>
                                 ) : (
                                     meusAlunos.map(rel => (
-                                        <div key={rel.id} className="bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 p-3 flex flex-col sm:flex-row items-center gap-4 hover:border-[#FF4500] transition-colors cursor-pointer group relative">
+                                        <div key={rel.id} className="bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 p-2 sm:p-3 flex flex-row items-center gap-3 sm:gap-4 hover:border-[#FF4500] transition-colors cursor-pointer group relative">
                                             {/* Avatar Box */}
-                                            <div className="h-12 w-12 bg-gray-300 dark:bg-gray-800 flex-shrink-0 overflow-hidden border border-gray-600">
+                                            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gray-300 dark:bg-gray-800 flex-shrink-0 overflow-hidden border border-gray-600">
                                                 {rel.student?.foto_url ? (
                                                     <img src={rel.student.foto_url} className="h-full w-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                                                 ) : (
@@ -304,35 +306,35 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                                             </div>
 
                                             {/* Info */}
-                                            <div className="flex-1 text-center sm:text-left">
-                                                <h4 className="font-display font-bold uppercase text-gray-900 dark:text-white text-lg leading-tight">
+                                            <div className="flex-1 text-left">
+                                                <h4 className="font-display font-bold uppercase text-gray-900 dark:text-white text-sm sm:text-lg leading-tight">
                                                     {rel.student?.apelido || rel.student?.nome}
                                                 </h4>
-                                                <p className="text-xs text-gray-500 uppercase">Aluno</p>
+                                                <p className="text-[10px] sm:text-xs text-gray-500 uppercase">Aluno</p>
                                             </div>
 
                                             {/* Status Badge */}
                                             <div className="flex items-center">
                                                 {rel.status === 'pending' ? (
-                                                    <span className="bg-[#FFD700] text-black text-[10px] font-bold uppercase px-3 py-1 border border-yellow-600 shadow-sm whitespace-nowrap">
-                                                        Aguardando Aceite
+                                                    <span className="bg-[#FFD700] text-black text-[9px] sm:text-[10px] font-bold uppercase px-2 py-0.5 sm:px-3 sm:py-1 border border-yellow-600 shadow-sm whitespace-nowrap">
+                                                        Pendente
                                                     </span>
                                                 ) : (
-                                                    <span className="bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30 text-[10px] font-bold uppercase px-3 py-1 shadow-sm whitespace-nowrap">
+                                                    <span className="bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30 text-[9px] sm:text-[10px] font-bold uppercase px-2 py-0.5 sm:px-3 sm:py-1 shadow-sm whitespace-nowrap">
                                                         Ativo
                                                     </span>
                                                 )}
                                             </div>
 
                                             {/* Actions */}
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-1 sm:gap-2">
                                                 {rel.status !== 'pending' && (
-                                                    <a href={`/${rel.student?.slug}`} target="_blank" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white" title="Ver Perfil">
-                                                        <ExternalLink size={16} />
+                                                    <a href={`/${rel.student?.slug}`} target="_blank" className="p-1.5 sm:p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white" title="Ver Perfil">
+                                                        <ExternalLink size={14} className="sm:w-4 sm:h-4" />
                                                     </a>
                                                 )}
-                                                <button onClick={() => removeRelation(rel.id)} className="p-2 hover:bg-red-900/20 rounded-full transition-colors text-gray-400 hover:text-red-500" title="Remover">
-                                                    <MoreVertical size={16} />
+                                                <button onClick={() => removeRelation(rel.id)} className="p-1.5 sm:p-2 hover:bg-red-900/20 rounded-full transition-colors text-gray-400 hover:text-red-500" title="Remover">
+                                                    <MoreVertical size={14} className="sm:w-4 sm:h-4" />
                                                     {/* Using MoreVertical as a placeholder for 'Actions' menu, but triggering delete directly for now or could implement dropdown if complex */}
                                                 </button>
                                             </div>
@@ -343,13 +345,13 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                         </div>
 
                         {/* METODOLOGIA */}
-                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6 lg:p-8">
-                            <h3 className="font-display font-bold uppercase text-3xl text-gray-900 dark:text-white mb-6 border-l-4 border-[#FF4500] pl-3">Metodologia</h3>
-                            <div className="space-y-6">
+                        <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-4 sm:p-6 lg:p-8">
+                            <h3 className="font-display font-bold uppercase text-xl sm:text-2xl lg:text-3xl text-gray-900 dark:text-white mb-4 sm:mb-6 border-l-4 border-[#FF4500] pl-3">Metodologia</h3>
+                            <div className="space-y-4 sm:space-y-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Especialidades</label>
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1 sm:mb-2">Especialidades</label>
                                     <textarea
-                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] resize-none"
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 sm:px-4 sm:py-3 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] resize-none"
                                         placeholder="EX: CLINCH, COTOVELADAS, PREPARAÇÃO FÍSICA..."
                                         rows="2"
                                         value={details.specialties || ''}
@@ -357,9 +359,9 @@ export default function TabTreinador({ perfil, setPerfil, isPremium }) {
                                     ></textarea>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Sobre</label>
+                                    <label className="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1 sm:mb-2">Sobre</label>
                                     <textarea
-                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] resize-none h-40"
+                                        className="w-full bg-gray-100 dark:bg-[#202020] border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-3 py-2 sm:px-4 sm:py-3 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500] resize-none h-32 sm:h-40"
                                         placeholder="Descreva sua filosofia de ensino, experiência..."
                                         rows="6"
                                         value={details.methodology || ''}

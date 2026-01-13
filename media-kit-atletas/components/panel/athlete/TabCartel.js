@@ -85,20 +85,20 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                 <div className="space-y-6">
 
                     {/* SECTION 1: ATTRIBUTES */}
-                    <section className="bg-[#161616] border border-[#2a2a2a] rounded-xl p-6 shadow-lg relative overflow-hidden group">
+                    <section className="bg-[#161616] border border-[#2a2a2a] rounded-xl p-4 shadow-lg relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#FFA500] to-transparent opacity-50"></div>
-                        <div className="mb-6 flex items-center gap-2">
-                            <h2 className="text-2xl font-display font-bold uppercase tracking-wider text-[#FFA500]">
+                        <div className="mb-4 flex items-center gap-2">
+                            <h2 className="text-xl font-display font-bold uppercase tracking-wider text-[#FFA500]">
                                 Atributos Físicos
                             </h2>
                             <div className="h-px bg-[#2a2a2a] flex-grow ml-4"></div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Altura</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Altura</label>
                                 <div className="relative">
                                     <input
-                                        className="w-full industrial-input rounded p-3 pl-4"
+                                        className="w-full industrial-input rounded p-1.5 pl-3 text-lg"
                                         placeholder="0,00m"
                                         type="text"
                                         name="height"
@@ -107,11 +107,11 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                                     />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Peso</label>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Peso</label>
                                 <div className="relative">
                                     <input
-                                        className="w-full industrial-input rounded p-3 pl-4"
+                                        className="w-full industrial-input rounded p-1.5 pl-3 text-lg"
                                         placeholder="00kg"
                                         type="text"
                                         name="weight"
@@ -120,11 +120,11 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                                     />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Envergadura</label>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Envergadura</label>
                                 <div className="relative">
                                     <input
-                                        className="w-full industrial-input rounded p-3 pl-4"
+                                        className="w-full industrial-input rounded p-1.5 pl-3 text-lg"
                                         placeholder="0,00m"
                                         type="text"
                                         name="reach"
@@ -133,12 +133,12 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                                     />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Idade</label>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Idade</label>
                                 <div className="relative">
                                     <input
-                                        className="w-full industrial-input rounded p-3 pl-4"
-                                        placeholder="Idade (Anos)"
+                                        className="w-full industrial-input rounded p-1.5 pl-3 text-lg"
+                                        placeholder="Anos"
                                         type="text"
                                         name="age"
                                         value={perfil.stats.age}
@@ -150,59 +150,59 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                     </section>
 
                     {/* SECTION 2: RECORD */}
-                    <section className="bg-[#161616] border border-[#2a2a2a] rounded-xl p-6 shadow-lg relative overflow-hidden group">
+                    <section className="bg-[#161616] border border-[#2a2a2a] rounded-xl p-4 shadow-lg relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#00E5FF] to-transparent opacity-50"></div>
-                        <div className="mb-6 flex items-center gap-2">
-                            <h2 className="text-2xl font-display font-bold uppercase tracking-wider text-[#00E5FF]">
+                        <div className="mb-4 flex items-center gap-2">
+                            <h2 className="text-xl font-display font-bold uppercase tracking-wider text-[#00E5FF]">
                                 Cartel Profissional
                             </h2>
                             <div className="h-px bg-[#2a2a2a] flex-grow ml-4"></div>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#00C853] pl-1">Vitórias</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#00C853] pl-1">Vitórias</label>
                                 <input
-                                    className="w-full industrial-input rounded p-3 pl-4 border-l-4 !border-l-[#00C853]"
+                                    className="w-full industrial-input rounded p-1.5 pl-3 border-l-4 !border-l-[#00C853] text-lg"
                                     type="number"
                                     name="wins"
                                     value={perfil.record.wins}
                                     onChange={handleRecordChange}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#D32F2F] pl-1">Derrotas</label>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#D32F2F] pl-1">Derrotas</label>
                                 <input
-                                    className="w-full industrial-input rounded p-3 pl-4 border-l-4 !border-l-[#D32F2F]"
+                                    className="w-full industrial-input rounded p-1.5 pl-3 border-l-4 !border-l-[#D32F2F] text-lg"
                                     type="number"
                                     name="losses"
                                     value={perfil.record.losses}
                                     onChange={handleRecordChange}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#FFD600] pl-1">Empates</label>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#FFD600] pl-1">Empates</label>
                                 <input
-                                    className="w-full industrial-input rounded p-3 pl-4 border-l-4 !border-l-[#FFD600]"
+                                    className="w-full industrial-input rounded p-1.5 pl-3 border-l-4 !border-l-[#FFD600] text-lg"
                                     type="number"
                                     name="draws"
                                     value={perfil.record.draws}
                                     onChange={handleRecordChange}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#9ca3af] pl-1">K.O.s</label>
+                            <div className="space-y-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">K.O.s</label>
                                 <input
-                                    className="w-full industrial-input rounded p-3 pl-4"
+                                    className="w-full industrial-input rounded p-1.5 pl-3 text-lg"
                                     type="number"
                                     name="knockouts"
                                     value={perfil.record.knockouts}
                                     onChange={handleRecordChange}
                                 />
                             </div>
-                            <div className="space-y-2 col-span-2 md:col-span-1">
-                                <label className="block text-xs uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Subs</label>
+                            <div className="space-y-1 col-span-2 md:col-span-1">
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Subs</label>
                                 <input
-                                    className="w-full industrial-input rounded p-3 pl-4"
+                                    className="w-full industrial-input rounded p-1.5 pl-3 text-lg"
                                     type="number"
                                     name="submissions"
                                     value={perfil.record.submissions}

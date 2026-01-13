@@ -2,100 +2,123 @@ import React from 'react';
 import { Play, Image as ImageIcon, Video } from 'lucide-react';
 
 export default function MediaSection({ athleteData, onOpenMedia }) {
-    // Garante que pega as listas, mesmo que venham nulas
-    const videos = athleteData.video_lista || [];
-    const gallery = athleteData.galeria || [];
+    // 1. Prepare Data
+    const videos = (athleteData.video_lista || []).map(v => ({ ...normalizeVideo(v), type: 'video' })).filter(v => v.src);
+    const gallery = (athleteData.galeria || []).map(i => ({ ...normalizeImage(i), type: 'image' })).filter(i => i.src);
 
-    // Se não tiver nada, não renderiza a seção
-    if (videos.length === 0 && gallery.length === 0) return null;
+    // Combine items: Videos first, then images
+    const items = [...videos, ...gallery];
+
+    if (items.length === 0) return null;
 
     return (
-        <div id="media-section" className="w-full max-w-7xl mx-auto mb-20 animate-fadeIn relative z-10">
-            
-            <div className="flex items-center gap-3 mb-8 px-4 sm:px-0">
-                <div className="p-2 bg-slate-800 rounded-lg text-slate-300 border border-slate-700">
-                    <Video size={24} />
-                </div>
-                <h3 className="text-2xl font-bold text-white uppercase tracking-tight italic">Galeria & Mídia</h3>
-            </div>
+        <section className="bg-[#1E1E1E] industrial-border p-6 md:p-8 animate-fadeIn mb-16" id="gallery">
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap');
+                .font-display { font-family: 'Oswald', sans-serif; }
+                .industrial-border { border: 1px solid #333333; }
+                .gallery-overlay {
+                    position: absolute;
+                    inset: 0;
+                    background-color: rgba(0,0,0,0.4);
+                    opacity: 0;
+                    transition: all 0.3s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(2px);
+                }
+                .group:hover .gallery-overlay {
+                    opacity: 1;
+                }
+            `}</style>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 sm:px-0">
-                
-                {/* --- RENDERIZAÇÃO DOS VÍDEOS --- */}
-                {videos.map((video, idx) => {
-                    // Lógica Híbrida: Aceita tanto String (Link) quanto Objeto
-                    const isString = typeof video === 'string';
-                    const embedUrl = isString ? video : (video.embedUrl || video.url);
-                    const title = isString ? "Vídeo" : (video.title || "Highlight");
-                    const thumb = isString ? null : video.thumb;
+            <h3 className="font-display font-bold uppercase text-2xl text-white mb-8 flex items-center gap-3">
+                Media Gallery
+                <span className="h-1 flex-1 bg-gradient-to-r from-[#FF4500] to-transparent opacity-50"></span>
+            </h3>
 
-                    if (!embedUrl) return null;
-
-                    return (
-                        <div 
-                            key={`vid-${idx}`} 
-                            onClick={() => onOpenMedia('video', embedUrl)}
-                            className="group relative aspect-video bg-black rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-cyan-500/50 transition-all shadow-lg"
-                        >
-                            {/* Thumbnail (Se existir, ou fallback escuro) */}
-                            {thumb ? (
-                                <img 
-                                    src={thumb} 
-                                    alt={title} 
-                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" 
-                                />
-                            ) : (
-                                <div className="w-full h-full bg-slate-900 flex items-center justify-center group-hover:bg-slate-800 transition-colors">
-                                    <Play className="text-slate-700 w-12 h-12" />
-                                </div>
-                            )}
-
-                            {/* Ícone de Play Central */}
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center group-hover:scale-110 group-hover:bg-cyan-500 group-hover:border-cyan-400 transition-all duration-300">
-                                    <Play className="w-6 h-6 text-white ml-1 fill-white" />
-                                </div>
-                            </div>
-
-                            {/* Título no Rodapé */}
-                            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black via-black/80 to-transparent">
-                                <p className="text-white font-bold text-sm truncate">{title}</p>
-                                <p className="text-xs text-slate-400 uppercase tracking-wider">Assistir</p>
-                            </div>
-                        </div>
-                    );
-                })}
-
-                {/* --- RENDERIZAÇÃO DA GALERIA (SUPABASE + LEGADO) --- */}
-                {gallery.map((img, idx) => {
-                    // Lógica Híbrida: Aceita String (Supabase) ou Objeto (Legado)
-                    const src = typeof img === 'string' ? img : (img.thumb || img.full || img.url);
-                    const full = typeof img === 'string' ? img : (img.full || img.url || img.thumb);
-
-                    if (!src) return null;
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[250px]">
+                {items.map((item, idx) => {
+                    const isFeatured = idx === 0;
+                    const colSpan = isFeatured ? 'md:col-span-2' : '';
+                    const rowSpan = isFeatured ? 'md:row-span-2' : '';
 
                     return (
-                        <div 
-                            key={`img-${idx}`} 
-                            onClick={() => onOpenMedia('image', full)}
-                            className="group relative aspect-[4/5] bg-slate-900 rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-slate-600 transition-all shadow-lg"
+                        <div
+                            key={`${item.type}-${idx}`}
+                            onClick={() => onOpenMedia(item.type, item.full || item.src)}
+                            className={`relative group cursor-pointer overflow-hidden border border-[#333] bg-gray-900 shadow-2xl ${colSpan} ${rowSpan} h-[250px] md:h-auto`}
                         >
-                            <img 
-                                src={src} 
-                                alt="Galeria" 
-                                className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" 
-                                loading="lazy"
+                            <img
+                                src={item.thumb || item.src}
+                                alt={item.title}
+                                className={`w-full h-full object-cover ${isFeatured ? 'grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100' : 'opacity-80 group-hover:opacity-100'} transition-all duration-700 transform group-hover:scale-110`}
+                                onError={(e) => { e.target.src = 'https://placehold.co/600x400/111/333?text=No+Image'; }} // Fallback
                             />
-                            
-                            {/* Overlay ao passar o mouse */}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                                <ImageIcon className="text-white w-8 h-8 drop-shadow-md" />
-                            </div>
+
+                            {/* ITEM TYPE SPECIFIC OVERLAYS */}
+                            {item.type === 'video' ? (
+                                <>
+                                    <div className={`absolute inset-0 ${isFeatured ? 'bg-gradient-to-t from-black via-transparent to-transparent opacity-90' : 'bg-gradient-to-t from-black/90 to-transparent'}`}></div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className={`w-14 h-14 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm flex items-center justify-center transition-all duration-300 shadow-[0_0_30px_rgba(0,0,0,0.5)] ${isFeatured ? 'group-hover:scale-110 group-hover:bg-[#FF4500] group-hover:border-[#FF4500]' : 'opacity-0 group-hover:opacity-100 group-hover:scale-110'}`}>
+                                            <Play className="text-white w-6 h-6 fill-white ml-0.5" />
+                                        </div>
+                                    </div>
+                                    <div className={`absolute ${isFeatured ? 'bottom-6 left-6 right-6' : 'bottom-4 left-4 z-10'}`}>
+                                        {isFeatured && (
+                                            <div className="inline-flex items-center gap-2 mb-2">
+                                                <span className="w-2 h-2 rounded-full bg-[#FF4500] animate-pulse"></span>
+                                                <span className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest">Featured</span>
+                                            </div>
+                                        )}
+                                        <h4 className={`font-display font-bold text-white uppercase leading-none drop-shadow-lg ${isFeatured ? 'text-2xl md:text-3xl' : 'text-lg leading-tight'}`}>
+                                            {item.title || "Highlighted Video"}
+                                        </h4>
+                                        {isFeatured && <p className="text-gray-400 text-xs md:text-sm mt-2 line-clamp-1 truncate">{item.desc || "Click to watch full content."}</p>}
+                                        {!isFeatured && <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">Video</p>}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="gallery-overlay">
+                                        <ImageIcon className="text-white w-8 h-8 drop-shadow-md" />
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">{item.title || "Gallery Image"}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     );
                 })}
-
             </div>
-        </div>
+        </section>
     );
+}
+
+// --- HELPER FUNCTIONS ---
+
+function normalizeVideo(video) {
+    if (typeof video === 'string') {
+        return { src: video, title: "Video Content", thumb: null };
+    }
+    return {
+        src: video.embedUrl || video.url,
+        title: video.title || "Video Content",
+        thumb: video.thumb,
+        desc: video.description
+    };
+}
+
+function normalizeImage(img) {
+    if (typeof img === 'string') {
+        return { src: img, full: img, title: "Gallery" };
+    }
+    return {
+        src: img.thumb || img.url || img.full,
+        full: img.full || img.url || img.thumb,
+        title: img.caption || "Gallery",
+    };
 }

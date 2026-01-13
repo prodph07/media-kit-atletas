@@ -27,11 +27,21 @@ import TabNotificacoes from '../../components/panel/athlete/TabNotificacoes';
 import TabHistoricoDuelos from '../../components/panel/athlete/TabHistoricoDuelos';
 import TabGeralEmpresa from '../../components/panel/company/TabGeralEmpresa';
 import TabTreinador from '../../components/panel/coach/TabTreinador';
+import TabPatrocinios from '../../components/panel/athlete/TabPatrocinios';
 import TabMissoes from '../../components/panel/athlete/TabMissoes';
 import ReferralCard from '../../components/panel/athlete/ReferralCard';
 import BannerPremium from '../../components/panel/BannerPremium'; // <--- IMPORTADO AQUI
+import TabOportunidades from '../../components/panel/company/TabOportunidades';
+import TabScout from '../../components/panel/company/TabScout';
+import TabMeuTime from '../../components/panel/company/TabMeuTime';
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    global: {
+        headers: {
+            'Accept': 'application/json',
+        },
+    },
+});
 const safeVal = (val) => val === null || val === undefined ? '' : val;
 
 export default function Painel() {
@@ -49,6 +59,7 @@ export default function Painel() {
     const [totalViews, setTotalViews] = useState(0);
     const [notificacoes, setNotificacoes] = useState([]);
     const [convitesEquipe, setConvitesEquipe] = useState([]);
+    const [convitesParceria, setConvitesParceria] = useState([]); // NEW: State for Company Invites
     const [meusDuelos, setMeusDuelos] = useState([]);
     const [meusAlunos, setMeusAlunos] = useState([]);
 
@@ -81,10 +92,30 @@ export default function Painel() {
             if (!user) { router.push('/login'); return; }
             setUserId(user.id);
 
-            const { data } = await supabase.from('atletas').select('*').eq('user_id', user.id).single();
+            // FETCH COM HEADERS EXPLICITOS PARA EVITAR 406
+            const { data, error } = await supabase
+                .from('atletas')
+                .select('*, tipo_conta, is_athlete') // Forçando seleção explicita
+                .eq('user_id', user.id)
+                .single();
+
+            if (error) {
+                console.error("ERRO AO BUSCAR DADOS:", error);
+                // Tenta buscar sem single se der erro
+            }
+
+            if (!data) {
+                console.error("PERFIL NÃO ENCONTRADO PARA ESTE USUÁRIO (user_id):", user.id);
+                // alert("ATENÇÃO: Não encontramos seu perfil vinculado a este login. Verifique se você está na conta correta.");
+            }
 
             if (data) {
                 const ATLETA_ID_NUMERICO = data.id;
+                console.log("--- DEBUG PAINEL ---");
+                console.log("DB tipo_conta:", data.tipo_conta);
+                console.log("DB is_athlete:", data.is_athlete);
+                console.log("FULL DATA:", data);
+                console.log("--------------------");
 
                 // --- GAMIFICAÇÃO AUTOMÁTICA ---
                 const currentStats = data.weekly_stats || {};
@@ -136,7 +167,11 @@ export default function Painel() {
                 setPerfil({
                     ...data,
                     nome: safeVal(data.nome), apelido: safeVal(data.apelido), categoria: safeVal(data.categoria), foto_url: safeVal(data.foto_url),
-                    about: safeVal(data.sobre), plano: data.plano || 'free', tipo_conta: data.tipo_conta || 'atleta', template_style: data.template_style || 'padrao', slug: safeVal(data.slug),
+                    about: safeVal(data.sobre), plano: data.plano || 'free', template_style: data.template_style || 'padrao', slug: safeVal(data.slug),
+
+                    // IMPORTANTE: Priorizar o valor do banco, fallback seguro
+                    tipo_conta: data.tipo_conta && data.tipo_conta !== '' ? data.tipo_conta : 'atleta',
+
                     status_message: safeVal(data.status_message),
                     is_athlete: data.is_athlete ?? true, is_coach: data.is_coach ?? false, coach_details: data.coach_details || {},
                     xp: finalXp, level: finalLevel, weekly_stats: finalWeeklyStats, completed_tasks: data.completed_tasks || [],
@@ -156,6 +191,15 @@ export default function Painel() {
                 setNotificacoes(duelosPendentes || []);
                 const { data: convitesCoach } = await supabase.from('relacoes').select(`id, created_at, coach_id, coach:atletas!coach_id(nome, apelido, foto_url, coach_details)`).eq('student_id', ATLETA_ID_NUMERICO).eq('status', 'pending');
                 setConvitesEquipe(convitesCoach || []);
+
+                // FETCH CONVITES DE PARCERIA (EMPRESAS)
+                const { data: convitesEmpresa } = await supabase
+                    .from('parcerias')
+                    .select(`id, created_at, empresa_id, empresa:atletas!empresa_id(nome, apelido, foto_url, slug)`)
+                    .eq('atleta_id', ATLETA_ID_NUMERICO)
+                    .eq('status', 'pendente');
+                setConvitesParceria(convitesEmpresa || []);
+
                 const { data: historico } = await supabase.from('duelos').select(`id, created_at, status, expires_at, votos_1, votos_2, p1:atletas!atleta_1_id(id, nome, apelido, foto_url), p2:atletas!atleta_2_id(id, nome, apelido, foto_url)`).or(`atleta_1_id.eq.${ATLETA_ID_NUMERICO},atleta_2_id.eq.${ATLETA_ID_NUMERICO}`).order('created_at', { ascending: false });
                 setMeusDuelos(historico || []);
 
@@ -167,7 +211,7 @@ export default function Painel() {
                 setTotalViews(totalV);
                 const { data: viewsData } = await supabase.from('profile_views').select('created_at, visitante_tipo, visitante_id').eq('perfil_visitado_id', ATLETA_ID_NUMERICO).neq('visitante_tipo', 'anonimo').order('created_at', { ascending: false }).limit(data.plano === 'premium' ? 100 : 20);
                 let viewsCompletas = [];
-                if (data.plano === 'premium' && viewsData && viewsData.length > 0) {
+                if (viewsData && viewsData.length > 0) {
                     const idsVisitantes = viewsData.map(v => v.visitante_id).filter(Boolean);
                     if (idsVisitantes.length > 0) {
                         const { data: perfisVisitantes } = await supabase.from('atletas').select('user_id, nome, apelido, foto_url, slug').in('user_id', idsVisitantes);
@@ -253,6 +297,22 @@ export default function Painel() {
     const handleNextFightChange = (e) => setPerfil({ ...perfil, nextFight: { ...perfil.nextFight, [e.target.name]: e.target.value } });
     const handleInstaStats = (c, f, v) => setPerfil(prev => ({ ...prev, socials: { ...prev.socials, instagram: { ...prev.socials.instagram, [c]: { ...prev.socials.instagram[c], [f]: v } } } }));
     const handleSocialChange = (network, field, value) => { setPerfil(prev => ({ ...prev, socials: { ...prev.socials, [network]: { ...prev.socials[network], [field]: value, active: !!value || prev.socials[network].active } } })); };
+
+    // ---------- ACTIONS ------------
+
+    const handleParceriaAction = async (inviteId, action) => {
+        const newStatus = action === 'accept' ? 'ativo' : 'recusado';
+
+        const { error } = await supabase.from('parcerias').update({ status: newStatus }).eq('id', inviteId);
+
+        if (error) {
+            alert("Erro ao processar: " + error.message);
+        } else {
+            alert(action === 'accept' ? "Parceria aceita! Agora vocês fazem parte do mesmo time." : "Convite recusado.");
+            setConvitesParceria(prev => prev.filter(c => c.id !== inviteId));
+        }
+    };
+
 
     const handleEquipeAction = async (inviteId, action) => {
         const isPremium = perfil.plano === 'premium';
@@ -390,13 +450,15 @@ export default function Painel() {
         const payload = {
             nome: dadosParaSalvar.nome, apelido: dadosParaSalvar.apelido, categoria: dadosParaSalvar.categoria, foto_url: dadosParaSalvar.foto_url, slug: dadosParaSalvar.slug,
             sobre: dadosParaSalvar.about, estilodeluta: dadosParaSalvar.fightingStyle, atributos: dadosParaSalvar.stats, cartel: dadosParaSalvar.record,
-            contato: dadosParaSalvar.contato, prox_luta: dadosParaSalvar.nextFight, redes_sociais: dadosParaSalvar.socials,
+            contato: dadosParaSalvar.contact, prox_luta: dadosParaSalvar.nextFight, redes_sociais: dadosParaSalvar.socials,
             historico: dadosParaSalvar.historico, video_lista: dadosParaSalvar.video_lista, galeria: dadosParaSalvar.galeria, premios: dadosParaSalvar.premios,
             tipo_conta: dadosParaSalvar.tipo_conta, template_style: dadosParaSalvar.template_style,
             status_message: dadosParaSalvar.status_message,
             is_athlete: dadosParaSalvar.is_athlete, is_coach: dadosParaSalvar.is_coach, coach_details: dadosParaSalvar.coach_details,
             xp: finalXp, level: finalLevel, completed_tasks: newTasks, weekly_stats: currentWeeklyStats
         };
+
+        console.log("SALVANDO PERFIL...", payload); // DEBUG SAVE
 
         const { error } = await supabase.from('atletas').update(payload).eq('user_id', userId);
 
@@ -470,9 +532,9 @@ export default function Painel() {
                     <button onClick={() => setActiveTab('geral')} className={`${activeTab === 'geral' ? 'bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
                         Geral
                     </button>
-                    <button onClick={() => setActiveTab('missoes')} className={`${activeTab === 'missoes' ? 'bg-[#FFD700] text-black shadow-lg shadow-[#FFD700]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all flex items-center gap-2`}>
+                    {!isCompany && <button onClick={() => setActiveTab('missoes')} className={`${activeTab === 'missoes' ? 'bg-[#FFD700] text-black shadow-lg shadow-[#FFD700]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all flex items-center gap-2`}>
                         Missões
-                    </button>
+                    </button>}
                     <div className="relative">
                         <button onClick={() => setActiveTab('notificacoes')} className={`${activeTab === 'notificacoes' ? 'bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
                             Solicitações
@@ -496,6 +558,9 @@ export default function Painel() {
                             <button onClick={() => setActiveTab('lutas')} className={`${activeTab === 'lutas' ? 'bg-[#00E5FF] text-black shadow-lg shadow-[#00E5FF]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
                                 Lutas
                             </button>
+                            <button onClick={() => setActiveTab('patrocinios')} className={`${activeTab === 'patrocinios' ? 'bg-[#FFA500] text-black shadow-lg shadow-[#FFA500]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all flex items-center gap-2`}>
+                                Patrocínios
+                            </button>
                         </>
                     )}
 
@@ -505,12 +570,29 @@ export default function Painel() {
                         </button>
                     )}
 
+                    {/* MENUS DE EMPRESA */}
+                    {isCompany && (
+                        <>
+                            <button onClick={() => setActiveTab('oportunidades')} className={`${activeTab === 'oportunidades' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all flex items-center gap-2`}>
+                                Oportunidades
+                            </button>
+                            <button onClick={() => setActiveTab('scout')} className={`${activeTab === 'scout' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
+                                Scout
+                            </button>
+                            <button onClick={() => setActiveTab('meu_time')} className={`${activeTab === 'meu_time' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
+                                Time
+                            </button>
+                        </>
+                    )}
+
                     <button onClick={() => setActiveTab('midia')} className={`${activeTab === 'midia' ? 'bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
                         Mídia
                     </button>
-                    <button onClick={() => setActiveTab('metricas')} className={`${activeTab === 'metricas' ? 'bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
-                        Métricas
-                    </button>
+                    {!isCompany && (
+                        <button onClick={() => setActiveTab('metricas')} className={`${activeTab === 'metricas' ? 'bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
+                            Métricas
+                        </button>
+                    )}
                     <button onClick={() => setActiveTab('contato')} className={`${activeTab === 'contato' ? 'bg-[#FF4500] text-white shadow-lg shadow-[#FF4500]/20 hover:scale-105' : 'bg-[#222] text-gray-400 hover:text-white hover:bg-[#333]'} font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-all`}>
                         Contato
                     </button>
@@ -526,7 +608,7 @@ export default function Painel() {
                             <div className="mb-6"><BannerPremium atleta={perfil} /></div>
                             {!isCompany && <div className="mb-6"><ReferralCard perfil={perfil} /></div>}
                             {isCompany
-                                ? <TabGeralEmpresa perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} />
+                                ? <TabGeralEmpresa perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} openWidget={() => alert('Recurso em desenvolvimento. Use a aba Mídia para enviar fotos.')} />
                                 : <TabGeral perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={isPremium} userId={userId} onUpdateStatus={handleUpdateStatus} />
                             }
                         </>
@@ -535,10 +617,16 @@ export default function Painel() {
                     {activeTab === 'lutas' && !isCompany && perfil.is_athlete && <TabLutas perfil={perfil} setPerfil={setPerfil} handleNextFightChange={handleNextFightChange} isPremium={isPremium} />}
                     {activeTab === 'historico_duelos' && !isCompany && <TabHistoricoDuelos meusDuelos={meusDuelos} perfilId={perfil.id} handleDueloAction={handleDueloAction} perfil={perfil} />}
                     {activeTab === 'treinador' && !isCompany && perfil.is_coach && <TabTreinador perfil={perfil} setPerfil={setPerfil} meusAlunos={meusAlunos} isPremium={isPremium} />}
-                    {activeTab === 'notificacoes' && <TabNotificacoes notificacoes={notificacoes} convitesEquipe={convitesEquipe} handleDueloAction={handleDueloAction} handleEquipeAction={handleEquipeAction} perfil={perfil} />}
+                    {activeTab === 'patrocinios' && !isCompany && <TabPatrocinios perfil={perfil} />}
+                    {activeTab === 'notificacoes' && <TabNotificacoes notificacoes={notificacoes} convitesEquipe={convitesEquipe} convitesParceria={convitesParceria} handleDueloAction={handleDueloAction} handleEquipeAction={handleEquipeAction} handleParceriaAction={handleParceriaAction} perfil={perfil} />}
                     {activeTab === 'midia' && <TabMidia perfil={perfil} setPerfil={setPerfil} handleSocialChange={handleSocialChange} handleDeleteImage={handleDeleteImage} userId={userId} />}
                     {activeTab === 'metricas' && <TabMetricas perfil={perfil} setPerfil={setPerfil} handleInstaStats={handleInstaStats} handleSocialChange={handleSocialChange} totalViews={totalViews} profileViews={profileViews} isPremium={isPremium} formatNumber={formatNumber} ageRange={ageRange} setAgeRange={setAgeRange} genderSplit={genderSplit} setGenderSplit={setGenderSplit} />}
                     {activeTab === 'contato' && <TabContato perfil={perfil} handleContactChange={handleContactChange} />}
+
+                    {/* ABAS EMPRESA */}
+                    {activeTab === 'oportunidades' && isCompany && <TabOportunidades perfil={perfil} setPerfil={setPerfil} />}
+                    {activeTab === 'scout' && isCompany && <TabScout perfil={perfil} setPerfil={setPerfil} />}
+                    {activeTab === 'meu_time' && isCompany && <TabMeuTime perfil={perfil} navigateToScout={() => setActiveTab('scout')} />}
 
                     {/* STATIC SAVE BUTTON */}
                     {activeTab !== 'treinador' && (

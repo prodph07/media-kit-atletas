@@ -90,37 +90,49 @@ export default function TabMetricas({
     ];
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 animate-fadeIn">
+        <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-8 p-3 sm:p-4 lg:p-0 animate-fadeIn">
             <style jsx global>{`
                 .section-header {
                     font-family: 'Oswald', sans-serif;
                     font-weight: 700;
                     text-transform: uppercase;
-                    font-size: 1.5rem;
+                    font-size: 1.25rem;
                     color: white;
-                    margin-bottom: 1.5rem;
+                    margin-bottom: 1rem;
                     letter-spacing: 0.05em;
+                }
+                @media (min-width: 640px) {
+                    .section-header { font-size: 1.5rem; margin-bottom: 1.5rem; }
                 }
                 .card-bg {
                     background-color: #1E1E1E;
                     border: 1px solid #333333;
-                    padding: 1rem;
+                    padding: 0.75rem;
+                }
+                @media (min-width: 640px) {
+                    .card-bg { padding: 1rem; }
                 }
                 .stat-value {
                     font-family: 'Oswald', sans-serif;
                     font-weight: 700;
-                    font-size: 2.25rem;
-                    margin-top: 0.5rem;
+                    font-size: 1.5rem;
+                    margin-top: 0.25rem;
                     letter-spacing: -0.025em;
+                }
+                @media (min-width: 640px) {
+                    .stat-value { font-size: 2.25rem; margin-top: 0.5rem; }
                 }
                 .input-field {
                     width: 100%;
                     background-color: #111111;
                     border: 1px solid #333333;
                     color: white;
-                    padding: 0.5rem 0.75rem;
-                    font-size: 0.875rem;
+                    padding: 0.4rem 0.5rem;
+                    font-size: 0.75rem;
                     outline: none;
+                }
+                @media (min-width: 640px) {
+                    .input-field { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
                 }
                 .input-field:focus {
                     border-color: #FF4500;
@@ -129,7 +141,7 @@ export default function TabMetricas({
 
             {/* 1. OVERVIEW CARDS */}
             <section>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div className="card-bg relative overflow-hidden group rounded-sm">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <span className="material-symbols-outlined text-6xl text-white">visibility</span>
@@ -257,8 +269,8 @@ export default function TabMetricas({
                             <span className="hidden sm:block text-xs text-gray-500 font-mono">UPDATES IN REAL-TIME</span>
                         </div>
 
-                        <div className={`card-bg p-6 rounded-sm ${!isPremium ? 'opacity-30 pointer-events-none' : ''}`}>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div className={`card-bg p-4 sm:p-6 rounded-sm ${!isPremium ? 'opacity-30 pointer-events-none' : ''}`}>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-6">
                                 <div>
                                     <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Reach (Alcance)</label>
                                     <input className="input-field text-lg font-display font-bold text-[#00E5FF] rounded-sm" type="text" placeholder="Ex: 15k" value={instaStats.reach || ''} onChange={(e) => handleInstaStats('stats', 'reach', e.target.value)} />
@@ -364,9 +376,9 @@ export default function TabMetricas({
                             </div>
 
                             {/* ADD CITY FORM */}
-                            <div className="grid grid-cols-[80px_1fr_80px_auto] gap-2 mb-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-[80px_1fr_80px_auto] gap-2 mb-6">
                                 <select
-                                    className="bg-[#111] border border-[#333] p-2 rounded-sm text-white text-sm outline-none focus:border-[#FF4500]"
+                                    className="bg-[#111] border border-[#333] p-2 rounded-sm text-white text-sm outline-none focus:border-[#FF4500] w-full"
                                     value={newCity.uf}
                                     onChange={(e) => setNewCity({ ...newCity, uf: e.target.value })}
                                 >

@@ -47,14 +47,21 @@ export default function TabLutas({ perfil, setPerfil, handleNextFightChange, isP
                     background-color: #000;
                     border: 1px solid #333;
                     color: white;
-                    padding: 0.75rem 1rem;
+                    padding: 0.5rem 0.75rem;
                     font-family: 'Oswald', sans-serif;
                     font-weight: 700;
                     letter-spacing: 0.025em;
-                    font-size: 1.125rem;
+                    font-size: 1rem;
                     width: 100%;
                     transition: all 0.2s;
                 }
+                @media (min-width: 640px) {
+                    .dashboard-input {
+                        padding: 0.75rem 1rem;
+                        font-size: 1.125rem;
+                    }
+                }
+
                 .dashboard-input:focus {
                     border-color: #FFD700;
                     outline: none;
@@ -63,14 +70,14 @@ export default function TabLutas({ perfil, setPerfil, handleNextFightChange, isP
 
                 .dashboard-label {
                     display: block;
-                    font-size: 0.75rem;
+                    font-size: 0.7rem;
                     font-weight: 700;
                     text-transform: uppercase;
                     color: #9ca3af;
-                    margin-bottom: 0.5rem;
+                    margin-bottom: 0.25rem;
                     letter-spacing: 0.05em;
                 }
-
+                
                 .material-symbols-outlined {
                     font-family: 'Material Symbols Outlined';
                     font-weight: normal;
@@ -88,18 +95,18 @@ export default function TabLutas({ perfil, setPerfil, handleNextFightChange, isP
                 }
             `}</style>
 
-            <div className="max-w-6xl mx-auto space-y-8 p-4 lg:p-8">
+            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-8 p-3 sm:p-4 lg:p-8">
 
                 {/* NEXT FIGHT SECTION */}
-                <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-6 lg:p-8 shadow-2xl relative overflow-hidden group">
+                <div className="bg-[#FFFFFF] dark:bg-[#161616] industrial-border p-4 sm:p-6 lg:p-8 shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-1 h-full bg-[#DC2626] opacity-80"></div>
-                    <div className="flex items-center gap-3 mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-                        <span className="material-symbols-outlined text-[#FFD700] text-3xl">swords</span>
-                        <h2 className="font-display font-bold uppercase text-2xl lg:text-3xl text-gray-900 dark:text-white tracking-wide">Próxima Luta</h2>
+                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-8 border-b border-gray-200 dark:border-gray-800 pb-2 sm:pb-4">
+                        <span className="material-symbols-outlined text-[#FFD700] text-2xl sm:text-3xl">swords</span>
+                        <h2 className="font-display font-bold uppercase text-xl sm:text-2xl lg:text-3xl text-gray-900 dark:text-white tracking-wide">Próxima Luta</h2>
                     </div>
 
                     {isPremium ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8">
                             <div>
                                 <label className="dashboard-label">Data</label>
                                 <input
@@ -146,10 +153,10 @@ export default function TabLutas({ perfil, setPerfil, handleNextFightChange, isP
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-[#0c0c0c] p-8 border border-dashed border-gray-700 text-center opacity-70">
-                            <Lock size={32} className="mx-auto mb-3 text-[#FFD700]" />
-                            <p className="font-display uppercase tracking-widest text-[#FFD700]">Recurso Premium</p>
-                            <p className="text-xs text-gray-400 mt-2">Atualize seu plano para destacar sua próxima luta.</p>
+                        <div className="bg-[#0c0c0c] p-6 sm:p-8 border border-dashed border-gray-700 text-center opacity-70">
+                            <Lock size={24} className="mx-auto mb-2 text-[#FFD700] sm:w-8 sm:h-8" />
+                            <p className="font-display uppercase tracking-widest text-[#FFD700] text-sm sm:text-base">Recurso Premium</p>
+                            <p className="text-[10px] sm:text-xs text-gray-400 mt-1">Atualize seu plano para destacar sua próxima luta.</p>
                         </div>
                     )}
                 </div>
