@@ -29,7 +29,9 @@ async function getAtleta(slug) {
   let myStudents = [];
   let myCoaches = [];
   let myTeam = []; // [NEW] Para Empresas
+
   let opportunities = []; // [NEW] Para Empresas
+  let myEvents = []; // [NEW] Para Eventos
 
   // --- SE FOR ATLETA/TREINADOR (Busca Relações) ---
   if (perfil.tipo_conta !== 'empresa') {
@@ -69,9 +71,19 @@ async function getAtleta(slug) {
       .order('created_at', { ascending: false });
 
     opportunities = jobsData || [];
+
+    // Eventos Publicados
+    const { data: eventsData } = await supabase
+      .from('eventos')
+      .select('*')
+      .eq('organizador_id', perfil.user_id)
+      .eq('status', 'publicado')
+      .order('data_evento', { ascending: true }); // Próximos eventos primeiro
+
+    myEvents = eventsData || [];
   }
 
-  return { ...perfil, myStudents, myCoaches, myTeam, opportunities };
+  return { ...perfil, myStudents, myCoaches, myTeam, opportunities, myEvents };
 }
 
 export default async function Page({ params }) {
@@ -132,7 +144,9 @@ export default async function Page({ params }) {
 
     // [NEW] Dados Empresa
     myTeam: perfil.myTeam,
-    opportunities: perfil.opportunities
+
+    opportunities: perfil.opportunities,
+    myEvents: perfil.myEvents
   }
 
   return (

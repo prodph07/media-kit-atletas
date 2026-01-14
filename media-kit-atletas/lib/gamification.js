@@ -5,37 +5,37 @@ const BASE_XP = 100;
 const GROWTH_FACTOR = 1.5;
 
 export const REWARDS = {
-  // Setup & Cadastro
-  SETUP_BUNDLE_BASIC: 100,
-  COMPLETE_PHYSICAL_STATS: 25,
-  COMPLETE_FIGHT_RECORD: 50,
-  ADD_AWARDS: 25,
-  ADD_FIGHT_HISTORY: 25,
-  JOIN_TEAM: 200,
-  
-  // Midia
-  GALLERY_TIER_1: 15,
-  GALLERY_TIER_2: 50,
-  VIDEO_TIER_1: 15,
-  VIDEO_TIER_2: 50,
-  SOCIAL_PRO: 50,
-  STORYTELLER: 30,
-  FIGHT_VETERAN: 40,
-  
-  // Recorrência
-  daily_login: 10,       // Chave minúscula para bater com a função interna
-  daily_scout: 20,
-  daily_respect: 10,
-  daily_status: 15,
-  daily_story: 100,      // I.A.
-  daily_gear: 30,        // I.A.
-  
-  // Semanais / Únicas
-  connection_bonus: 150,
-  weight_checkin: 50,
-  share_bonus: 30,
-  vote_bonus: 15,
-  link_in_bio: 200       // I.A.
+    // Setup & Cadastro
+    SETUP_BUNDLE_BASIC: 100,
+    COMPLETE_PHYSICAL_STATS: 25,
+    COMPLETE_FIGHT_RECORD: 50,
+    ADD_AWARDS: 25,
+    ADD_FIGHT_HISTORY: 25,
+    JOIN_TEAM: 200,
+
+    // Midia
+    GALLERY_TIER_1: 15,
+    GALLERY_TIER_2: 50,
+    VIDEO_TIER_1: 15,
+    VIDEO_TIER_2: 50,
+    SOCIAL_PRO: 50,
+    STORYTELLER: 30,
+    FIGHT_VETERAN: 40,
+
+    // Recorrência
+    daily_login: 10,       // Chave minúscula para bater com a função interna
+    daily_scout: 20,
+    daily_respect: 10,
+    daily_status: 15,
+    daily_story: 100,      // I.A.
+    daily_gear: 30,        // I.A.
+
+    // Semanais / Únicas
+    connection_bonus: 150,
+    weight_checkin: 50,
+    share_bonus: 30,
+    vote_bonus: 15,
+    link_in_bio: 200       // I.A.
 };
 
 // Normaliza chaves para garantir compatibilidade (Ex: REWARDS.DAILY_LOGIN funciona igual REWARDS.daily_login)
@@ -52,10 +52,10 @@ const getDateString = (iso) => iso ? new Date(iso).toISOString().split('T')[0] :
 // Helper Genérico para verificar Cooldown (Diário ou Semanal)
 function checkCooldown(lastDateIso, cooldownDays = 1) {
     if (!lastDateIso) return true; // Nunca fez
-    
+
     const last = new Date(lastDateIso);
     const now = new Date();
-    
+
     if (cooldownDays === 1) {
         // Lógica Diária: Verifica se a data (dia/mês/ano) é diferente
         return getDateString(lastDateIso) !== getTodayString();
@@ -69,19 +69,19 @@ function checkCooldown(lastDateIso, cooldownDays = 1) {
 
 // --- 3. CÁLCULOS DE NÍVEL ---
 export function getXpToNextLevel(currentLevel) {
-  const level = Number(currentLevel) || 1;
-  return Math.floor(BASE_XP * (Math.pow(level, GROWTH_FACTOR)));
+    const level = Number(currentLevel) || 1;
+    return Math.floor(BASE_XP * (Math.pow(level, GROWTH_FACTOR)));
 }
 
 export function getLevelProgress(currentXp, currentLevel) {
-  const xp = Number(currentXp);
-  const level = Number(currentLevel) || 1;
-  if (isNaN(xp) || xp < 0) return 0;
-  
-  const target = getXpToNextLevel(level);
-  if (!target || target <= 0) return 0;
-  
-  return Math.min(100, Math.max(0, (xp / target) * 100));
+    const xp = Number(currentXp);
+    const level = Number(currentLevel) || 1;
+    if (isNaN(xp) || xp < 0) return 0;
+
+    const target = getXpToNextLevel(level);
+    if (!target || target <= 0) return 0;
+
+    return Math.min(100, Math.max(0, (xp / target) * 100));
 }
 
 export function calculateNewLevelState(currentXp, currentLevel, xpGained) {
@@ -125,62 +125,62 @@ const RANK_TIERS = [
 ];
 
 export function getRankInfo(levelInput) {
-  const level = Number(levelInput) || 1;
-  const basePath = "/frames"; 
-  
-  const rank = RANK_TIERS.find(r => level <= r.max);
-  
-  if (rank) {
-      return { 
-          title: rank.title, 
-          tier: rank.tier, 
-          frameUrl: `${basePath}/${rank.img}`, 
-          textColor: rank.color, 
-          frameScale: rank.scale 
-      };
-  }
-  
-  return { title: "G.O.A.T.", tier: "goat", frameUrl: `${basePath}/goat.png`, textColor: "text-pink-500", frameScale: 1.50 };
+    const level = Number(levelInput) || 1;
+    const basePath = "/frames";
+
+    const rank = RANK_TIERS.find(r => level <= r.max);
+
+    if (rank) {
+        return {
+            title: rank.title,
+            tier: rank.tier,
+            frameUrl: `${basePath}/${rank.img}`,
+            textColor: rank.color,
+            frameScale: rank.scale
+        };
+    }
+
+    return { title: "G.O.A.T.", tier: "goat", frameUrl: `${basePath}/goat.png`, textColor: "text-pink-500", frameScale: 1.50 };
 }
 
 // --- 5. PROCESSADOR DE MISSÕES (Gamification Profile) ---
 export function processGamification(perfil, currentTasks = []) {
-  let xpGained = 0;
-  let newTasks = [...currentTasks];
-  let notifications = [];
+    let xpGained = 0;
+    let newTasks = [...currentTasks];
+    let notifications = [];
 
-  const checkTask = (taskKey, condition, label) => {
-    if (condition && !newTasks.includes(taskKey)) {
-      xpGained += REWARDS[taskKey] || 0;
-      newTasks.push(taskKey);
-      notifications.push(`+${REWARDS[taskKey]} XP: ${label}`);
-    }
-  };
+    const checkTask = (taskKey, condition, label) => {
+        if (condition && !newTasks.includes(taskKey)) {
+            xpGained += REWARDS[taskKey] || 0;
+            newTasks.push(taskKey);
+            notifications.push(`+${REWARDS[taskKey]} XP: ${label}`);
+        }
+    };
 
-  // Verificações
-  checkTask('SETUP_BUNDLE_BASIC', (perfil.foto_url && perfil.about && perfil.socials?.instagram?.active), 'Perfil Básico');
-  checkTask('COMPLETE_PHYSICAL_STATS', (perfil.stats?.height && perfil.stats?.weight), 'Atributos Físicos');
-  checkTask('COMPLETE_FIGHT_RECORD', (perfil.record?.wins !== null && perfil.record?.wins !== ''), 'Cartel');
-  checkTask('ADD_AWARDS', (perfil.premios?.length > 0), 'Primeira Conquista');
-  checkTask('ADD_FIGHT_HISTORY', (perfil.historico?.length > 0), 'Luta no Histórico');
-  
-  const galleryCount = perfil.galeria ? perfil.galeria.length : 0;
-  checkTask('GALLERY_TIER_1', (galleryCount >= 1), 'Primeira Foto');
-  checkTask('GALLERY_TIER_2', (galleryCount >= 5), 'Galeria Top');
-  
-  const videoCount = perfil.video_lista ? perfil.video_lista.length : 0;
-  checkTask('VIDEO_TIER_1', (videoCount >= 1), 'Primeiro Vídeo');
-  checkTask('VIDEO_TIER_2', (videoCount >= 5), 'Videoteca');
-  
-  checkTask('JOIN_TEAM', (perfil.connected_coaches?.length > 0), 'Entrou para Equipe');
-  
-  const socialCount = Object.values(perfil.socials || {}).filter(s => s.active && s.user).length;
-  checkTask('SOCIAL_PRO', (socialCount >= 3), 'Influenciador');
-  
-  checkTask('STORYTELLER', (perfil.about?.length >= 100), 'Biografia Detalhada');
-  checkTask('FIGHT_VETERAN', (perfil.historico?.length >= 5), 'Veterano');
+    // Verificações
+    checkTask('SETUP_BUNDLE_BASIC', (perfil.foto_url && perfil.about && perfil.socials?.instagram?.active), 'Perfil Básico');
+    checkTask('COMPLETE_PHYSICAL_STATS', (perfil.stats?.height && perfil.stats?.weight), 'Atributos Físicos');
+    checkTask('COMPLETE_FIGHT_RECORD', (perfil.record?.wins !== null && perfil.record?.wins !== ''), 'Cartel');
+    checkTask('ADD_AWARDS', (perfil.premios?.length > 0), 'Primeira Conquista');
+    checkTask('ADD_FIGHT_HISTORY', (perfil.historico?.length > 0), 'Luta no Histórico');
 
-  return { xpGained, newTasks, notifications };
+    const galleryCount = perfil.galeria ? perfil.galeria.length : 0;
+    checkTask('GALLERY_TIER_1', (galleryCount >= 1), 'Primeira Foto');
+    checkTask('GALLERY_TIER_2', (galleryCount >= 5), 'Galeria Top');
+
+    const videoCount = perfil.video_lista ? perfil.video_lista.length : 0;
+    checkTask('VIDEO_TIER_1', (videoCount >= 1), 'Primeiro Vídeo');
+    checkTask('VIDEO_TIER_2', (videoCount >= 5), 'Videoteca');
+
+    checkTask('JOIN_TEAM', (perfil.connected_coaches?.length > 0), 'Entrou para Equipe');
+
+    const socialCount = Object.values(perfil.socials || {}).filter(s => s.active && s.user).length;
+    checkTask('SOCIAL_PRO', (socialCount >= 3), 'Influenciador');
+
+    checkTask('STORYTELLER', (perfil.about?.length >= 100), 'Biografia Detalhada');
+    checkTask('FIGHT_VETERAN', (perfil.historico?.length >= 5), 'Veterano');
+
+    return { xpGained, newTasks, notifications };
 }
 
 // --- 6. FUNÇÕES RECORRENTES (HELPER CENTRALIZADO) ---
@@ -189,7 +189,7 @@ export function processGamification(perfil, currentTasks = []) {
 function processTimeBasedAction(stats, dbKey, cooldownDays, rewardKey, successMsg) {
     const currentStats = stats || {};
     const lastDate = currentStats[dbKey];
-    
+
     if (checkCooldown(lastDate, cooldownDays)) {
         return {
             success: true,
@@ -218,7 +218,7 @@ export function processWeeklyShare(stats) {
 }
 
 export function processDuelParticipation(stats) {
-    return processTimeBasedAction(stats, 'last_duel_participation_date', 7, 'GLADIADOR', `Duelo: Combate realizado (+75 XP)`); 
+    return processTimeBasedAction(stats, 'last_duel_participation_date', 7, 'GLADIADOR', `Duelo: Combate realizado (+75 XP)`);
     // Obs: Adicionei GLADIADOR no REWARDS se não tiver, ou use valor fixo
 }
 
@@ -237,7 +237,7 @@ export function processAIMission(currentStats, currentTasks, missionType) {
     if (missionType === 'STORY_INSTAGRAM') {
         return processTimeBasedAction(currentStats, 'last_daily_story_date', 1, 'DAILY_STORY', "Story Validado! (+100 XP)");
     }
-    
+
     // 2. EQUIPAMENTO (Diário)
     if (missionType === 'GEAR_CHECK') {
         return processTimeBasedAction(currentStats, 'last_daily_gear_date', 1, 'DAILY_GEAR', "Equipamento Pronto! (+30 XP)");
@@ -248,12 +248,12 @@ export function processAIMission(currentStats, currentTasks, missionType) {
         const tasks = [...currentTasks];
         if (!tasks.includes('LINK_IN_BIO')) {
             tasks.push('LINK_IN_BIO');
-            return { 
-                success: true, 
-                xpGained: REWARDS.LINK_IN_BIO, 
-                updatedStats: currentStats, 
-                updatedTasks: tasks, 
-                message: "Parceiro Oficial! Link verificado. (+200 XP)" 
+            return {
+                success: true,
+                xpGained: REWARDS.LINK_IN_BIO,
+                updatedStats: currentStats,
+                updatedTasks: tasks,
+                message: "Parceiro Oficial! Link verificado. (+200 XP)"
             };
         }
         return { success: false, message: "Recompensa já resgatada." };
@@ -299,7 +299,7 @@ export function processDailyLogin(currentStats) {
 export function processScouting(currentStats) {
     const stats = currentStats || {};
     const today = getTodayString();
-    
+
     // Reset se mudou o dia
     let count = (getDateString(stats.last_scout_date) === today) ? (stats.daily_scout_count || 0) : 0;
 
@@ -316,19 +316,19 @@ export function processScouting(currentStats) {
             updatedStats: newStats
         };
     }
-    
+
     return { success: true, xpGained: 0, updatedStats: newStats, message: `Perfil visitado (${count}/3)` };
 }
 
 export function processVisitMilestone(currentViews, currentWeeklyStats) {
     // Lógica complexa de snapshots, mantida original mas limpa
-    const stats = { 
-        visits_snapshot: 0, 
-        visits_xp_earned: 0, 
-        last_weekly_reset: new Date().toISOString(), 
-        ...(currentWeeklyStats || {}) 
+    const stats = {
+        visits_snapshot: 0,
+        visits_xp_earned: 0,
+        last_weekly_reset: new Date().toISOString(),
+        ...(currentWeeklyStats || {})
     };
-    
+
     // Reset semanal
     const now = new Date();
     const lastReset = new Date(stats.last_weekly_reset);
@@ -343,7 +343,7 @@ export function processVisitMilestone(currentViews, currentWeeklyStats) {
     if (diff >= 300) {
         const milestones = Math.floor(diff / 300);
         let xp = milestones * 50;
-        
+
         // Cap semanal de 500 XP
         if ((stats.visits_xp_earned + xp) > 500) xp = 500 - stats.visits_xp_earned;
 
@@ -351,14 +351,65 @@ export function processVisitMilestone(currentViews, currentWeeklyStats) {
             return {
                 success: true,
                 xpGained: xp,
-                message: `Viralizou! +${milestones*300} visitas (+${xp} XP)`,
-                updatedStats: { 
-                    ...stats, 
-                    visits_snapshot: stats.visits_snapshot + (milestones * 300), 
-                    visits_xp_earned: stats.visits_xp_earned + xp 
+                message: `Viralizou! +${milestones * 300} visitas (+${xp} XP)`,
+                updatedStats: {
+                    ...stats,
+                    visits_snapshot: stats.visits_snapshot + (milestones * 300),
+                    visits_xp_earned: stats.visits_xp_earned + xp
                 }
             };
         }
     }
     return { success: false, updatedStats: stats };
+}
+
+// --- 9. RESET TEMPORAL DE XP (SNAPSHOTS) ---
+export function processTemporalXPResets(perfil) {
+    const stats = perfil.weekly_stats || {};
+    const currentXp = perfil.xp || 0;
+    const now = new Date();
+
+    let updatedStats = { ...stats };
+    let hasUpdates = false;
+
+    // --- 1. Weekly Reset (Domingo às 21:00) ---
+    // Encontrar o "Alvo" (Último Domingo às 21h que já passou)
+    const targetWeeklyReset = new Date(now);
+    const day = targetWeeklyReset.getDay(); // 0 = Domingo
+    const hour = targetWeeklyReset.getHours();
+
+    // Se é Domingo depois das 21h, o alvo é Hoje às 21h.
+    // Se não, volta para o último Domingo.
+    if (day === 0 && hour >= 21) {
+        targetWeeklyReset.setHours(21, 0, 0, 0);
+    } else {
+        // Voltar dias até chegar no domingo
+        // Se for segunda (1), volta 1 dia -> Domingo.
+        // Se for domingo (0) mas antes das 21h, volta 7 dias para o domingo anterior.
+        const daysToGoBack = (day === 0) ? 7 : day;
+        targetWeeklyReset.setDate(targetWeeklyReset.getDate() - daysToGoBack);
+        targetWeeklyReset.setHours(21, 0, 0, 0);
+    }
+
+    const lastWeekly = stats.last_weekly_xp_reset ? new Date(stats.last_weekly_xp_reset) : null;
+
+    // Se nunca teve reset, OU o último reset foi ANTES do alvo
+    if (!lastWeekly || lastWeekly < targetWeeklyReset) {
+        updatedStats.xp_weekly_snapshot = currentXp; // Snapshot é o XP atual na hora do reset
+        updatedStats.last_weekly_xp_reset = now.toISOString(); // Marca que resetou agora
+        hasUpdates = true;
+    }
+
+    // --- 2. Monthly Reset (Dia 1 de cada mês) ---
+    // Checa se o mês/ano atual é diferente do mês/ano do último reset
+    const lastMonthly = stats.last_monthly_xp_reset ? new Date(stats.last_monthly_xp_reset) : null;
+    const isNewMonth = !lastMonthly || lastMonthly.getMonth() !== now.getMonth() || lastMonthly.getFullYear() !== now.getFullYear();
+
+    if (isNewMonth) {
+        updatedStats.xp_monthly_snapshot = currentXp;
+        updatedStats.last_monthly_xp_reset = now.toISOString();
+        hasUpdates = true;
+    }
+
+    return { hasUpdates, updatedStats };
 }

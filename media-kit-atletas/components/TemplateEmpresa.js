@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Trophy, Users, Briefcase, ExternalLink, Mail, ArrowRight, Instagram } from 'lucide-react';
+import { MapPin, Trophy, Users, Briefcase, ExternalLink, Mail, ArrowRight, Instagram, Calendar } from 'lucide-react';
 import { AvatarLevel } from './AvatarLevel';
 import { ApplyJobButton } from './ApplyJobButton';
 
@@ -84,6 +84,52 @@ export function TemplateEmpresa({ data }) {
 
                 {/* LEFT COL: OPPORTUNITIES (2/3) */}
                 <div className="lg:col-span-2 space-y-12">
+                    {/* SECTION: EVENTS */}
+                    <section>
+                        <h2 className="text-3xl font-display font-bold text-white flex items-center gap-3 mb-8">
+                            <Trophy className="text-purple-500" /> Eventos & Competições
+                        </h2>
+
+                        {(!data.myEvents || data.myEvents.length === 0) ? (
+                            <div className="bg-slate-900/50 border border-slate-800 border-dashed rounded-xl p-10 text-center mb-12">
+                                <p className="text-slate-500">Nenhum evento ativo no momento.</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4 mb-12">
+                                {data.myEvents.map(event => (
+                                    <div key={event.id} className="relative bg-slate-900 border border-slate-800 p-6 rounded-xl overflow-hidden hover:border-purple-500/30 transition group flex flex-col md:flex-row gap-6">
+                                        {/* BANNER BG OPACITY */}
+                                        {event.banner_url && (
+                                            <div className="absolute inset-0 z-0 opacity-10">
+                                                <img src={event.banner_url} className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+
+                                        <div className="relative z-10 flex-1">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-2xl font-bold text-white group-hover:text-purple-400 transition">{event.nome}</h3>
+                                                <span className="bg-purple-500/10 text-purple-500 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">{event.modalidade}</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-4 text-sm font-bold text-slate-400 mt-4">
+                                                <span className="flex items-center gap-2 bg-black/30 px-3 py-1 rounded"><Calendar size={14} className="text-purple-400" /> {new Date(event.data_evento).toLocaleDateString()}</span>
+                                                <span className="flex items-center gap-2 bg-black/30 px-3 py-1 rounded"><MapPin size={14} className="text-purple-400" /> {event.localizacao}</span>
+                                            </div>
+                                        </div>
+                                        <div className="relative z-10 flex items-center">
+                                            <a
+                                                href={`/eventos/${event.slug}`}
+                                                target="_blank"
+                                                className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-bold uppercase text-sm transition shadow-lg shadow-purple-900/20 flex items-center gap-2"
+                                            >
+                                                Ver Evento <ExternalLink size={16} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
                     {/* SECTION: OPPORTUNITIES */}
                     <section>
                         <h2 className="text-3xl font-display font-bold text-white flex items-center gap-3 mb-8">

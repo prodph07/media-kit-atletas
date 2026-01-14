@@ -108,11 +108,11 @@ export default function TabCartel({ perfil, setPerfil, handleStatsChange, handle
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Peso</label>
+                                <label className="block text-[10px] uppercase font-bold tracking-wider text-[#9ca3af] pl-1">Peso (kg)</label>
                                 <div className="relative">
                                     <input
                                         className="w-full industrial-input rounded p-1.5 pl-3 text-lg"
-                                        placeholder="00kg"
+                                        placeholder="Ex: 70.5"
                                         type="text"
                                         name="weight"
                                         value={perfil.stats.weight}

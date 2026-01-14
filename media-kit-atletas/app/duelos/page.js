@@ -19,33 +19,33 @@ export default async function ListaDuelos() {
             p2:atletas!atleta_2_id(nome, apelido, foto_url, categoria)
         `)
         .eq('status', 'active')
-        .gt('expires_at', new Date().toISOString()) 
+        .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
     return (
-        <div className="min-h-screen bg-[#0a0a0c] text-white p-4">
-            <div className="max-w-6xl mx-auto">
-                
+        <div className="min-h-screen bg-[#0c0c0c] text-white p-4 md:p-8 font-sans">
+            <div className="max-w-7xl mx-auto">
+
                 {/* HEADER RESPONSIVO */}
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8 mt-6 gap-6">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-12 mt-4 gap-6 border-b border-[#222] pb-8">
                     <div className="text-center md:text-left">
-                        <h1 className="text-3xl md:text-4xl font-black text-white uppercase flex justify-center md:justify-start items-center gap-2">
-                            <span className="text-red-600">ARENA</span> DE DUELOS
+                        <div className="flex items-center gap-2 text-red-600 font-bold uppercase tracking-widest text-xs mb-2 justify-center md:justify-start">
+                            <Swords className="w-4 h-4" /> FightNexus Arena
+                        </div>
+                        <h1 className="text-4xl md:text-6xl font-black text-white uppercase italic tracking-tighter leading-none mb-4">
+                            Arena de <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-800">Duelos</span>
                         </h1>
-                        <p className="text-slate-400 text-sm md:text-base">Vote nos combates ativos da semana.</p>
+                        <p className="text-gray-400 text-sm md:text-lg max-w-xl font-light">
+                            Participe da comunidade votando nos combates mais aguardados da semana ou crie seu próprio desafio.
+                        </p>
                     </div>
-                    
-                    {/* BOTÃO ATUALIZADO:
-                        - !bg-yellow-600 (Dourado mais escuro para contraste)
-                        - !text-white (Texto Branco)
-                        - Ícone Branco
-                    */}
-                    <Link 
-                        href="/duelos/criar" 
-                        className="relative z-10 w-full md:w-auto !bg-yellow-600 hover:!bg-yellow-500 !text-white font-black uppercase tracking-wide px-8 py-3 rounded-full flex items-center justify-center gap-2 transition transform hover:scale-105 shadow-[0_0_20px_rgba(202,138,4,0.4)] border border-yellow-500"
+
+                    <Link
+                        href="/duelos/criar"
+                        className="group relative z-10 w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-wide px-8 py-4 rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-red-900/20 hover:shadow-red-900/40 hover:-translate-y-1"
                     >
-                        <Swords size={20} className="text-white"/> 
-                        <span className="text-white">CRIAR NOVO</span>
+                        <Swords size={20} className="text-white group-hover:rotate-12 transition-transform" />
+                        <span>DESAFIAR ALGUÉM</span>
                     </Link>
                 </div>
 
@@ -54,10 +54,11 @@ export default async function ListaDuelos() {
 
                 {/* EMPTY STATE (Caso não tenha nada no banco) */}
                 {(!duelos || duelos.length === 0) && (
-                    <div className="text-center py-20 text-slate-500">
-                        <Swords size={48} className="mx-auto mb-4 opacity-50"/>
-                        <p>Nenhum duelo ativo no momento.</p>
-                        <Link href="/duelos/criar" className="text-yellow-500 underline mt-2 inline-block">Crie o primeiro agora</Link>
+                    <div className="text-center py-20 text-gray-500">
+                        <Swords size={48} className="mx-auto mb-4 opacity-20" />
+                        <p className="text-lg font-bold mb-2">A Arena está vazia.</p>
+                        <p className="text-sm">Seja o primeiro a inaugurar o octógono esta semana.</p>
+                        <Link href="/duelos/criar" className="text-red-500 font-bold hover:underline mt-4 inline-block">Criar Duelo Agora &rarr;</Link>
                     </div>
                 )}
             </div>

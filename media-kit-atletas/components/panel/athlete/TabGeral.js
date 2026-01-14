@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, AlignLeft, Info, Lock, MessageSquareQuote } from 'lucide-react';
+import { User, AlignLeft, Info, Lock, MessageSquareQuote, Shield } from 'lucide-react';
 import SmartImageUpload from '@/components/SmartImageUpload';
 
 export default function TabGeral({
@@ -22,7 +22,7 @@ export default function TabGeral({
     };
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] dark:bg-[#0c0c0c] font-sans text-gray-800 dark:text-gray-200 transition-colors duration-200 flex overflow-hidden">
+        <div className="min-h-screen bg-[#0c0c0c] font-sans text-gray-200 transition-colors duration-200 flex overflow-hidden">
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
                 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
@@ -243,6 +243,24 @@ export default function TabGeral({
                                                 />
                                             </div>
                                         </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Team / Gym</label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <Shield size={16} className="text-gray-500" />
+                                                </div>
+                                                <input
+                                                    className="w-full bg-[#202020] border border-gray-700 text-white pl-10 pr-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-[#FF4500] focus:border-[#FF4500]"
+                                                    type="text"
+                                                    name="team"
+                                                    value={perfil.team || ''}
+                                                    onChange={handleChange}
+                                                    placeholder="TIGER MUAY THAI"
+                                                />
+                                            </div>
+                                        </div>
+
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Bio</label>
                                             <textarea
