@@ -43,7 +43,10 @@ const getRankFromLevel = (level) => {
     return 'Lenda';
 };
 
-export default function TabOportunidades({ perfil, setPerfil }) {
+export default function TabOportunidades({ perfil, empresaId }) {
+    // Fallback ID if passed via perfil object or direct prop
+    const effectiveCompanyId = empresaId || perfil?.id;
+
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -73,7 +76,10 @@ export default function TabOportunidades({ perfil, setPerfil }) {
     // 1. Fetch Jobs
     useEffect(() => {
         async function fetchJobs() {
-            if (!perfil?.id) return;
+            if (!effectiveCompanyId) {
+                setLoading(false);
+                return;
+            }
             const { data, error } = await supabase
                 .from('oportunidades')
                 .select(`
@@ -83,7 +89,7 @@ export default function TabOportunidades({ perfil, setPerfil }) {
                         atleta:atletas ( id, nome, apelido, foto_url, level, categoria, slug, redes_sociais, contato, atributos, plano )
                     )
                 `)
-                .eq('empresa_id', perfil.id)
+                .eq('empresa_id', effectiveCompanyId)
                 .order('created_at', { ascending: false });
 
             if (error) console.error("Erro ao buscar vagas:", error);
@@ -91,7 +97,7 @@ export default function TabOportunidades({ perfil, setPerfil }) {
             setLoading(false);
         }
         fetchJobs();
-    }, [perfil?.id]);
+    }, [effectiveCompanyId]);
 
     const handleCreateJob = async (e) => {
         e.preventDefault();
@@ -100,7 +106,7 @@ export default function TabOportunidades({ perfil, setPerfil }) {
         const { data, error } = await supabase
             .from('oportunidades')
             .insert([{
-                empresa_id: perfil.id,
+                empresa_id: effectiveCompanyId,
                 titulo: newJob.title,
                 orcamento: newJob.budget,
                 localizacao: newJob.location,
@@ -113,8 +119,6 @@ export default function TabOportunidades({ perfil, setPerfil }) {
         if (error) {
             alert('Erro ao criar vaga');
         } else {
-            setJobs([data[0], ...jobs]);
-            setShowForm(false);
             setJobs([data[0], ...jobs]);
             setShowForm(false);
             setNewJob({

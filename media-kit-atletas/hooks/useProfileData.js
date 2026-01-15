@@ -24,6 +24,8 @@ export function useProfileData() {
     const [profileViews, setProfileViews] = useState([]);
     const [totalViews, setTotalViews] = useState(0);
 
+    const [pendingRegistrations, setPendingRegistrations] = useState([]); // NEW
+
     // Form Stats (derived from profile)
     const [ageRange, setAgeRange] = useState({ min: '', max: '' });
     const [genderSplit, setGenderSplit] = useState({ men: '', women: '' });
@@ -129,9 +131,52 @@ export function useProfileData() {
                 setConvitesParceria(parceriasRes.data || []);
                 setMeusDuelos(histRes.data || []);
 
-                if (data.is_coach) {
-                    const { data: studentsData } = await supabase.from('relacoes').select('id, created_at, status, student:atletas!student_id(nome, apelido, foto_url, xp, level, categoria)').eq('coach_id', ATLETA_ID).eq('status', 'accepted');
+                if (data.is_coach || data.tipo_conta === 'treinador') {
+                    // Fetch Students
+                    const { data: studentsData } = await supabase
+                        .from('relacoes')
+                        .select('student_id, student:atletas!student_id(id, nome, apelido, foto_url, xp, level, categoria)')
+                        .eq('coach_id', ATLETA_ID)
+                        .eq('status', 'accepted');
+
                     setMeusAlunos(studentsData || []);
+
+                    // Fetch Pending Event Registrations for these students
+                    console.log("DEBUG: Meus Alunos IDs", studentsData?.map(s => s.student_id));
+                    const studentIds = studentsData?.map(s => s.student_id).filter(Boolean) || [];
+
+                    if (studentIds.length > 0) {
+                        // 1. Fetch RAW inscriptions first to avoid Join 400 Error
+                        const { data: rawRegs, error: fetchErr } = await supabase
+                            .from('eventos_inscricoes')
+                            .select('*')
+                            .in('atleta_id', studentIds)
+                            .eq('status', 'aguardando_aprovacao');
+
+                        if (rawRegs && rawRegs.length > 0) {
+                            // 2. Manual Fetch for details
+                            const eventIds = [...new Set(rawRegs.map(r => r.evento_id))];
+                            const athleteIds = [...new Set(rawRegs.map(r => r.atleta_id))];
+                            const catIds = [...new Set(rawRegs.map(r => r.categoria_id))];
+
+                            const { data: events } = await supabase.from('eventos').select('id, nome, data_evento').in('id', eventIds);
+                            const { data: athletes } = await supabase.from('atletas').select('id, nome, apelido, foto_url').in('id', athleteIds);
+                            const { data: cats } = await supabase.from('eventos_categorias').select('id, nome').in('id', catIds);
+
+                            // 3. Merge
+                            const enrichedRegs = rawRegs.map(r => ({
+                                ...r,
+                                evento: events?.find(e => e.id === r.evento_id),
+                                atleta: athletes?.find(a => a.id === r.atleta_id),
+                                categoria: cats?.find(c => c.id === r.categoria_id)
+                            }));
+
+                            setPendingRegistrations(enrichedRegs);
+                        } else {
+                            if (fetchErr) console.error("DEBUG FETCH ERROR:", fetchErr);
+                            setPendingRegistrations([]);
+                        }
+                    }
                 }
 
                 // Fetch Views
@@ -158,6 +203,7 @@ export function useProfileData() {
         convitesParceria, setConvitesParceria,
         meusDuelos, setMeusDuelos,
         meusAlunos, setMeusAlunos,
+        pendingRegistrations, setPendingRegistrations, // EXPORTED
         profileViews, totalViews,
         ageRange, setAgeRange,
         genderSplit, setGenderSplit,

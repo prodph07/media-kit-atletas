@@ -2,6 +2,7 @@ export const runtime = 'edge'; // <--- ADICIONE ISSO NA LINHA 1
 
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+import { Swords } from 'lucide-react';
 import VotacaoWrapper from '@/components/VotacaoWrapper';
 import CopyButton from '@/components/CopyButton';
 

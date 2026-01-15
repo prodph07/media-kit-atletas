@@ -37,7 +37,10 @@ const getRankFromLevel = (level) => {
     return 'Lenda';
 };
 
-export default function TabEventos({ perfil, setPerfil, userId }) {
+export default function TabEventos({ perfil, setPerfil, userId, empresaId }) {
+    // ID hierarchy: userId (direct prop) > empresaId (prop) > perfil.user_id
+    const effectiveUserId = userId || empresaId || perfil?.user_id;
+
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState('list'); // 'list', 'create', 'manage'
@@ -67,7 +70,7 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
 
     useEffect(() => {
         fetchEvents();
-    }, [userId]);
+    }, [effectiveUserId]);
 
     useEffect(() => {
         if (selectedEvent && view === 'manage') {
@@ -75,84 +78,105 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
             fetchMatches();
         }
     }, [selectedEvent, view]);
+    async function fetchInscricoes() {
+        if (!selectedEvent) return;
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('eventos_inscricoes')
+            .select(`
+                *,
+                atletas:atleta_id ( id, nome, apelido, foto_url, team, level, historico ),
+                eventos_categorias:categoria_id ( nome )
+            `)
+            .eq('evento_id', selectedEvent.id);
+
+        if (error) console.error("Erro ao buscar inscritos:", error);
+        else setInscritos(data || []);
+        setLoading(false);
+    }
 
     async function fetchMatches() {
         if (!selectedEvent) return;
-        try {
-            const { data: matchesData, error } = await supabase
-                .from('eventos_lutas')
-                .select('*')
-                .eq('evento_id', selectedEvent.id);
+        const { data, error } = await supabase
+            .from('eventos_lutas')
+            .select(`
+                *,
+                atleta_a:atleta_a_id ( id, nome, apelido, foto_url, team ),
+                atleta_b:atleta_b_id ( id, nome, apelido, foto_url, team )
+            `)
+            .eq('evento_id', selectedEvent.id);
 
-            if (error) throw error;
-            if (!matchesData || matchesData.length === 0) {
-                setMatches([]);
-                return;
-            }
-
-            const athleteIds = [...matchesData.map(m => m.atleta_a_id), ...matchesData.map(m => m.atleta_b_id)].filter(Boolean);
-            const { data: athletes } = await supabase.from('atletas').select('*').in('id', athleteIds);
-
-            setMatches(matchesData.map(m => ({
-                ...m,
-                atleta_a: athletes?.find(a => a.id == m.atleta_a_id) || {},
-                atleta_b: athletes?.find(a => a.id == m.atleta_b_id) || {}
-            })));
-
-        } catch (err) {
-            console.error("Erro ao buscar lutas (Detalhes):", err, err.message, err.hint);
-            alert("Erro ao carregar lutas: " + (err.message || "Erro desconhecido"));
+        if (error) {
+            console.error("Erro ao buscar lutas:", error);
+            alert("Erro ao carregar lista de lutas: " + error.message);
+        } else {
+            console.log("Lutas carregadas:", data);
+            setMatches(data || []);
         }
     }
 
+    const handleUpdateStatus = async (id, status) => {
+        const { error } = await supabase.from('eventos_inscricoes').update({ status }).eq('id', id);
+        if (error) alert("Erro ao atualizar status");
+        else fetchInscricoes();
+    };
+
+    const handleDeleteInscription = async (id) => {
+        if (!confirm("Tem certeza que deseja excluir esta inscrição?")) return;
+        const { error } = await supabase.from('eventos_inscricoes').delete().eq('id', id);
+        if (!error) fetchInscricoes();
+    };
+
     const handleCreateMatch = async () => {
-        if (!newMatch.atleta_a_id || !newMatch.atleta_b_id) return;
+        if (!newMatch.atleta_a_id || !newMatch.atleta_b_id) return alert("Selecione os dois atletas");
 
-        let error;
+        const payload = {
+            evento_id: selectedEvent.id,
+            atleta_a_id: newMatch.atleta_a_id,
+            atleta_b_id: newMatch.atleta_b_id,
+            penalidade_a: Number(newMatch.penalidade_a) || 0,
+            penalidade_b: Number(newMatch.penalidade_b) || 0,
+            status: 'agendada'
+        };
 
-        if (editingMatchId) {
-            // Update existing
-            const { error: err } = await supabase.from('eventos_lutas').update({
-                atleta_a_id: newMatch.atleta_a_id,
-                atleta_b_id: newMatch.atleta_b_id,
-                penalidade_a: newMatch.penalidade_a || 0,
-                penalidade_b: newMatch.penalidade_b || 0
-            }).eq('id', editingMatchId);
-            error = err;
-        } else {
-            // Create new
-            const { error: err } = await supabase.from('eventos_lutas').insert([{
-                evento_id: selectedEvent.id,
-                atleta_a_id: newMatch.atleta_a_id,
-                atleta_b_id: newMatch.atleta_b_id,
-                status: 'agendada'
-            }]);
-            error = err;
-        }
+        try {
+            if (editingMatchId) {
+                const { error } = await supabase.from('eventos_lutas').update(payload).eq('id', editingMatchId);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from('eventos_lutas').insert([payload]);
+                if (error) throw error;
+            }
 
-        if (!error) {
-            setNewMatch({ atleta_a_id: '', atleta_b_id: '' });
             setEditingMatchId(null);
+            setNewMatch({ atleta_a_id: '', atleta_b_id: '' });
             fetchMatches();
-        } else {
-            console.error(error);
+            alert("Luta salva com sucesso!");
+        } catch (error) {
+            console.error("Erro ao salvar luta:", error);
             alert("Erro ao salvar luta: " + error.message);
         }
     };
 
     const handleEditMatch = (match) => {
+        setEditingMatchId(match.id);
         setNewMatch({
             atleta_a_id: match.atleta_a_id,
             atleta_b_id: match.atleta_b_id,
-            penalidade_a: match.penalidade_a || 0,
-            penalidade_b: match.penalidade_b || 0
+            penalidade_a: match.penalidade_a,
+            penalidade_b: match.penalidade_b
         });
-        setEditingMatchId(match.id);
     };
 
     const handleCancelEdit = () => {
-        setNewMatch({ atleta_a_id: '', atleta_b_id: '', penalidade_a: 0, penalidade_b: 0 });
         setEditingMatchId(null);
+        setNewMatch({ atleta_a_id: '', atleta_b_id: '' });
+    };
+
+    const handleDeleteMatch = async (id) => {
+        if (!confirm("Excluir esta luta?")) return;
+        await supabase.from('eventos_lutas').delete().eq('id', id);
+        fetchMatches();
     };
 
     const handleSetWinner = async (match, winnerId) => {
@@ -165,7 +189,6 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
     };
 
     const handleUndoResult = async (match) => {
-        if (!confirm('Deseja desfazer o resultado desta luta?')) return;
         const { error } = await supabase.from('eventos_lutas').update({
             vencedor_id: null,
             status: 'agendada'
@@ -174,95 +197,16 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
         if (!error) fetchMatches();
     };
 
-    const handleDeleteMatch = async (id) => {
-        const { error } = await supabase.from('eventos_lutas').delete().eq('id', id);
-        if (!error) fetchMatches();
-    };
-
-    async function fetchInscricoes() {
-        if (!selectedEvent) return;
-        setLoading(true);
-
-        try {
-            // 1. Fetch Inscriptions (Raw)
-            const { data: inscricoesData, error: inscError } = await supabase
-                .from('eventos_inscricoes')
-                .select('*')
-                .eq('evento_id', selectedEvent.id);
-
-            if (inscError) throw inscError;
-
-            if (!inscricoesData || inscricoesData.length === 0) {
-                setInscritos([]);
-                setLoading(false);
-                return;
-            }
-
-            // 2. Fetch Athletes Manual Join
-            const atletaIds = inscricoesData.map(i => i.atleta_id).filter(Boolean);
-            console.log("DEBUG IDs:", atletaIds);
-
-            const { data: atletasData, error: atletasError } = await supabase
-                .from('atletas')
-                .select('*')
-                .in('id', atletaIds);
-
-            if (atletasError) console.error("DEBUG Error:", atletasError);
-            console.log("DEBUG Atletas Data:", atletasData);
-
-            // 3. Fetch Categories Manual Join
-            const catIds = inscricoesData.map(i => i.categoria_id).filter(Boolean);
-            const { data: catsData } = await supabase
-                .from('eventos_categorias')
-                .select('id, nome')
-                .in('id', catIds);
-
-            // 4. Merge Data
-            const enrichedInscricoes = inscricoesData.map(insc => ({
-                ...insc,
-                atletas: atletasData?.find(a => a.id == insc.atleta_id) || {},
-                eventos_categorias: catsData?.find(c => c.id == insc.categoria_id) || {}
-            }));
-
-            setInscritos(enrichedInscricoes);
-        } catch (err) {
-            console.error("Erro ao buscar inscrições:", err);
-            alert("Erro ao carregar lista. Verifique o console.");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-
-
-    const handleUpdateStatus = async (inscricaoId, newStatus) => {
-        const { error } = await supabase
-            .from('eventos_inscricoes')
-            .update({ status: newStatus })
-            .eq('id', inscricaoId);
-
-        if (!error) {
-            setInscritos(prev => prev.map(i => i.id === inscricaoId ? { ...i, status: newStatus } : i));
-        }
-    };
-
-    const handleDeleteInscription = async (id) => {
-        if (!confirm('Tem certeza que deseja remover este atleta da inscrição?')) return;
-        const { error } = await supabase.from('eventos_inscricoes').delete().eq('id', id);
-        if (!error) {
-            setInscritos(prev => prev.filter(i => i.id !== id));
-        } else {
-            alert('Erro ao excluir: ' + error.message);
-        }
-    };
-
     async function fetchEvents() {
-        if (!userId) return;
+        if (!effectiveUserId) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         const { data, error } = await supabase
             .from('eventos')
             .select('*')
-            .eq('organizador_id', userId)
+            .eq('organizador_id', effectiveUserId)
             .order('created_at', { ascending: false });
 
         if (data) setEvents(data);
@@ -292,6 +236,16 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
 
     const handleCreateEvent = async () => {
         if (!newEvent.nome || !newEvent.slug) return alert('Preencha os campos obrigatórios');
+
+        // Construct Location String: "City - State • Address"
+        let fullLocation = newEvent.localizacao; // Fallback
+        if (newEvent.cidade && newEvent.estado) {
+            fullLocation = `${newEvent.cidade} - ${newEvent.estado}`;
+            if (newEvent.endereco) {
+                fullLocation += ` • ${newEvent.endereco}`;
+            }
+        }
+
         setSubmitting(true);
 
         // 1. Criar Evento
@@ -302,7 +256,7 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
                 nome: newEvent.nome,
                 slug: newEvent.slug,
                 data_evento: newEvent.data_evento || null,
-                localizacao: newEvent.localizacao,
+                localizacao: fullLocation,
                 modalidade: newEvent.modalidade,
                 link_pagamento: newEvent.link_pagamento,
                 banner_url: newEvent.banner_url,
@@ -322,7 +276,8 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
             const catsToInsert = newEvent.categorias.map(c => ({
                 evento_id: eventData.id,
                 nome: c.nome,
-                tipo: c.tipo
+                tipo: c.tipo,
+                preco: c.preco
             }));
 
             await supabase.from('eventos_categorias').insert(catsToInsert);
@@ -334,9 +289,65 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
         fetchEvents();
     };
 
+    // --- MATCHMAKING LOGIC ---
+    const getAthleteFightCount = (atleta) => {
+        if (!atleta.historico) return 0;
+        return Array.isArray(atleta.historico) ? atleta.historico.length : 0;
+    };
+
+    const handleDragStart = (e, atletaId) => {
+        e.dataTransfer.setData("atletaId", atletaId);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+    };
+
+    const handleDrop = (e, slot) => {
+        e.preventDefault();
+        const atletaId = e.dataTransfer.getData("atletaId");
+        if (!atletaId) return;
+
+        // Validation: Cannot be same athlete in both slots
+        if (slot === 'A' && newMatch.atleta_b_id === atletaId) return alert("O mesmo atleta não pode estar nos dois corners!");
+        if (slot === 'B' && newMatch.atleta_a_id === atletaId) return alert("O mesmo atleta não pode estar nos dois corners!");
+
+        setNewMatch(prev => ({
+            ...prev,
+            [slot === 'A' ? 'atleta_a_id' : 'atleta_b_id']: atletaId
+        }));
+    };
+
     const bookedIds = matches
         .filter(m => m.id !== editingMatchId)
         .flatMap(m => [m.atleta_a_id, m.atleta_b_id]);
+
+    // Grouping Athletes Logic
+    const groupedAthletes = React.useMemo(() => {
+        const available = inscritos.filter(i =>
+            // Only show approved/paid athletes? Or all? Usually confirmed ones.
+            (i.status === 'aprovado' || i.status === 'pago') &&
+            !bookedIds.includes(i.atletas.id) &&
+            i.atletas.id != newMatch.atleta_a_id &&
+            i.atletas.id != newMatch.atleta_b_id
+        );
+
+        const groups = {};
+        available.forEach(insc => {
+            const catName = insc.eventos_categorias?.nome || 'Sem Categoria';
+            if (!groups[catName]) groups[catName] = [];
+            groups[catName].push(insc);
+        });
+
+        // Sort by experience within groups
+        Object.keys(groups).forEach(key => {
+            groups[key].sort((a, b) => getAthleteFightCount(b.atletas) - getAthleteFightCount(a.atletas));
+        });
+
+        return groups;
+    }, [inscritos, bookedIds, newMatch]);
+
+
 
     return (
         <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -479,14 +490,40 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Local</label>
-                                    <input
-                                        type="text"
-                                        value={newEvent.localizacao}
-                                        onChange={e => setNewEvent({ ...newEvent, localizacao: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
-                                        placeholder="Ex: Ginásio do Ibirapuera, SP"
-                                    />
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Localização</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                                        <div className="md:col-span-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Cidade (ex: São Paulo)"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                                value={newEvent.cidade || ''}
+                                                onChange={(e) => setNewEvent({ ...newEvent, cidade: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <select
+                                                className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                                value={newEvent.estado || ''}
+                                                onChange={(e) => setNewEvent({ ...newEvent, estado: e.target.value })}
+                                            >
+                                                <option value="">Estado</option>
+                                                {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
+                                                    <option key={uf} value={uf}>{uf}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="md:col-span-4 mt-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Endereço Completo (ex: Rua Augusta, 1500 - Cerqueira César)"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                                value={newEvent.endereco || ''}
+                                                onChange={(e) => setNewEvent({ ...newEvent, endereco: e.target.value })}
+                                            />
+                                            <p className="text-[10px] text-slate-500 mt-1">Este endereço será usado para gerar o botão "Ver no Mapa".</p>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="flex justify-end pt-4">
                                     <button
@@ -508,14 +545,26 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
                                 </div>
 
                                 <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={tempCategory.nome}
-                                        onChange={e => setTempCategory({ ...tempCategory, nome: e.target.value })}
-                                        className="flex-1 bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
-                                        placeholder="Nome da Categoria (Ex: Peso Leve - Faixa Branca)"
-                                        onKeyDown={e => e.key === 'Enter' && addCategory()}
-                                    />
+                                    <div className="flex-1">
+                                        <input
+                                            type="text"
+                                            value={tempCategory.nome}
+                                            onChange={e => setTempCategory({ ...tempCategory, nome: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                            placeholder="Nome da Categoria (Ex: Peso Leve)"
+                                            onKeyDown={e => e.key === 'Enter' && addCategory()}
+                                        />
+                                    </div>
+                                    <div className="w-32">
+                                        <input
+                                            type="number"
+                                            value={tempCategory.preco || ''}
+                                            onChange={e => setTempCategory({ ...tempCategory, preco: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                            placeholder="R$ 0,00"
+                                            onKeyDown={e => e.key === 'Enter' && addCategory()}
+                                        />
+                                    </div>
                                     <button
                                         onClick={addCategory}
                                         className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded border border-slate-700"
@@ -527,7 +576,10 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
                                 <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
                                     {newEvent.categorias.map(cat => (
                                         <div key={cat.id} className="flex justify-between items-center bg-slate-950 p-3 rounded border border-slate-800">
-                                            <span className="text-white font-bold text-sm">{cat.nome}</span>
+                                            <span className="text-white font-bold text-sm">
+                                                {cat.nome}
+                                                {cat.preco > 0 && <span className="text-green-500 ml-2">R$ {cat.preco}</span>}
+                                            </span>
                                             <button onClick={() => removeCategory(cat.id)} className="text-red-500 hover:bg-red-500/10 p-1 rounded">
                                                 <Trash2 size={16} />
                                             </button>
@@ -760,176 +812,316 @@ export default function TabEventos({ perfil, setPerfil, userId }) {
 
                     {/* TAB: CHAVES (MATCHMAKING) */}
                     {tabManager === 'chaves' && (
-                        <div className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[800px]">
 
-                            {/* CREATE/EDIT MATCH AREA */}
-                            <div className={`p-6 border rounded-lg transition-colors ${editingMatchId ? 'bg-purple-900/10 border-purple-500/50' : 'bg-slate-900 border-slate-800'}`}>
-                                <h3 className={`font-bold uppercase mb-4 flex items-center gap-2 ${editingMatchId ? 'text-purple-400' : 'text-white'}`}>
-                                    <Swords size={20} className={editingMatchId ? "text-purple-400" : "text-purple-500"} />
-                                    {editingMatchId ? 'Editar Luta' : 'Matchmaker'}
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                    <div>
-                                        <label className="text-xs font-bold text-red-500 uppercase block mb-1">Red Corner</label>
-                                        <select
-                                            className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-sm"
-                                            onChange={e => setNewMatch({ ...newMatch, atleta_a_id: e.target.value })}
-                                            value={newMatch.atleta_a_id || ''}
-                                        >
-                                            <option value="">Selecione Atleta A</option>
-                                            {inscritos.filter(i => !bookedIds.includes(i.atletas.id)).map(i => <option key={i.atletas.id} value={i.atletas.id}>{i.atletas.nome} ({i.eventos_categorias?.nome})</option>)}
-                                        </select>
-                                        {editingMatchId && (
-                                            <div className="mt-2">
-                                                <label className="text-[10px] uppercase font-bold text-slate-500">Penalidade (Pontos)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newMatch.penalidade_a || 0}
-                                                    onChange={e => setNewMatch({ ...newMatch, penalidade_a: e.target.value })}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded p-1 text-white text-xs"
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="text-center font-display font-bold text-2xl text-slate-600 hidden md:block">VS</div>
-                                    <div>
-                                        <label className="text-xs font-bold text-blue-500 uppercase block mb-1">Blue Corner</label>
-                                        <select
-                                            className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-sm"
-                                            onChange={e => setNewMatch({ ...newMatch, atleta_b_id: e.target.value })}
-                                            value={newMatch.atleta_b_id || ''}
-                                        >
-                                            <option value="">Selecione Atleta B</option>
-                                            {inscritos.filter(i => i.atletas.id != newMatch.atleta_a_id && !bookedIds.includes(i.atletas.id)).map(i => <option key={i.atletas.id} value={i.atletas.id}>{i.atletas.nome} ({i.eventos_categorias?.nome})</option>)}
-                                        </select>
-                                        {editingMatchId && (
-                                            <div className="mt-2">
-                                                <label className="text-[10px] uppercase font-bold text-slate-500">Penalidade (Pontos)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newMatch.penalidade_b || 0}
-                                                    onChange={e => setNewMatch({ ...newMatch, penalidade_b: e.target.value })}
-                                                    className="w-full bg-slate-950 border border-slate-800 rounded p-1 text-white text-xs"
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
+                            {/* LEFT: ATHLETE POOL (4 COLS) */}
+                            <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-lg flex flex-col overflow-hidden">
+                                <div className="p-4 bg-slate-950 border-b border-slate-800">
+                                    <h3 className="font-bold text-white text-sm uppercase flex items-center gap-2">
+                                        <Users size={16} className="text-purple-500" /> Atletas Confirmados
+                                    </h3>
+                                    <p className="text-[10px] text-slate-500 mt-1">Arraste os atletas para montar as lutas</p>
                                 </div>
-                                <div className="mt-4 flex justify-end gap-2">
-                                    {editingMatchId && (
-                                        <button
-                                            onClick={handleCancelEdit}
-                                            className="text-slate-400 hover:text-white px-4 py-2 rounded font-bold uppercase text-sm"
-                                        >
-                                            Cancelar
-                                        </button>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar">
+                                    {Object.keys(groupedAthletes).length === 0 && (
+                                        <div className="text-center py-10 text-slate-500 text-xs">
+                                            Nenhum atleta disponível.
+                                        </div>
                                     )}
-                                    <button
-                                        onClick={handleCreateMatch}
-                                        disabled={!newMatch.atleta_a_id || !newMatch.atleta_b_id}
-                                        className={`${editingMatchId ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-purple-600 hover:bg-purple-500'} disabled:opacity-50 text-white px-6 py-2 rounded font-bold uppercase text-sm transition`}
-                                    >
-                                        {editingMatchId ? 'Salvar Alteração' : 'Criar Luta'}
-                                    </button>
+
+                                    {Object.entries(groupedAthletes).map(([category, athletes]) => (
+                                        <div key={category} className="mb-4">
+                                            <h4 className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800/50 p-2 rounded mb-2 flex justify-between">
+                                                {category} <span className="text-white">{athletes.length}</span>
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {athletes.map(insc => (
+                                                    <div
+                                                        key={insc.atletas.id}
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(e, insc.atletas.id)}
+                                                        className="bg-black border border-slate-800 p-2 rounded flex items-center gap-3 cursor-grab active:cursor-grabbing hover:border-purple-500 transition group"
+                                                    >
+                                                        <img src={insc.atletas.foto_url || "https://placehold.co/100"} className="w-8 h-8 rounded-full bg-slate-800 object-cover" draggable={false} />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-white text-xs font-bold truncate">{insc.atletas.nome}</div>
+                                                            <div className="text-[10px] text-slate-500 flex justify-between">
+                                                                <span className="text-purple-400 font-bold">{getRankFromLevel(insc.atletas.level)}</span>
+                                                                <span className="text-slate-600 font-mono">{getAthleteFightCount(insc.atletas)} Lutas</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-slate-600 group-hover:text-purple-500">
+                                                            <Users size={14} />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
-                            {/* FIGHT LIST */}
-                            <div className="space-y-3">
-                                {matches.map((fight, idx) => {
-                                    // Helper to get inscription data for current fight athletes
-                                    const inscA = inscritos.find(i => i.atleta_id == fight.atleta_a_id);
-                                    const inscB = inscritos.find(i => i.atleta_id == fight.atleta_b_id);
+                            {/* RIGHT: MATCH BUILDER (8 COLS) */}
+                            <div className="lg:col-span-8 flex flex-col gap-6 h-full overflow-y-auto custom-scrollbar pr-2">
 
-                                    return (
-                                        <div key={fight.id} className="relative bg-black border border-slate-800 rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden group">
-                                            <div className="absolute top-2 left-3 text-[10px] font-bold text-slate-600 uppercase">Luta {idx + 1} • {inscA?.eventos_categorias?.nome || 'Peso Combinado'}</div>
+                                {/* ACTIVE BUILDER CARD */}
+                                <div className={`shrink-0 p-6 rounded-xl border-2 transition-colors ${editingMatchId ? 'bg-purple-900/10 border-purple-500' : 'bg-slate-900 border-slate-800 border-dashed'}`}>
+                                    <h3 className={`font-bold uppercase mb-6 flex items-center justify-center gap-2 ${editingMatchId ? 'text-purple-400' : 'text-slate-400'}`}>
+                                        <Swords size={20} />
+                                        {editingMatchId ? 'Editando Luta' : 'Novo Confronto'}
+                                    </h3>
 
-                                            {/* EDIT/DELETE ACTIONS - Always visible or on hover, kept visible for clarity */}
-                                            <div className="absolute top-2 right-2 flex gap-1 z-20">
-                                                <button
-                                                    onClick={() => handleEditMatch(fight)}
-                                                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-yellow-500 rounded transition"
-                                                    title="Editar"
-                                                >
-                                                    <Pencil size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteMatch(fight.id)}
-                                                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-red-500 rounded transition"
-                                                    title="Deletar"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
+                                    <div className="flex flex-col md:flex-row items-center gap-4 justify-center">
 
-                                            {/* RED CORNER */}
-                                            <div className={`flex items-center gap-3 w-full md:w-5/12 justify-start md:justify-end ${fight.vencedor_id === fight.atleta_a_id ? 'opacity-100' : fight.vencedor_id ? 'opacity-30 grayscale' : ''}`}>
-                                                <div className="text-right">
-                                                    <div className="text-white font-bold text-lg leading-none">{fight.atleta_a?.nome || 'Atleta A'}</div>
-                                                    {fight.atleta_a?.apelido && <div className="text-slate-400 text-sm font-medium">"{fight.atleta_a.apelido}"</div>}
-                                                    <div className="text-xs text-slate-500 mb-1">{fight.atleta_a?.team || inscA?.dados_inscricao?.equipe || 'Sem Equipe'}</div>
+                                        {/* RED CORNER SLOT */}
+                                        <div
+                                            onDragOver={handleDragOver}
+                                            onDrop={(e) => handleDrop(e, 'A')}
+                                            className={`flex-1 w-full relative min-h-[160px] rounded-xl border-2 flex flex-col items-center justify-center p-4 transition-all
+                                                ${newMatch.atleta_a_id ? 'bg-red-900/20 border-red-600' : 'bg-slate-950 border-slate-800 border-dashed hover:border-red-500/50 hover:bg-red-900/5'}`}
+                                        >
+                                            <span className="absolute top-2 left-3 text-[10px] font-bold uppercase text-red-500 tracking-widest">Red Corner</span>
 
-                                                    <div className="flex justify-end gap-2 items-center">
-                                                        {fight.penalidade_a > 0 && <span className="text-[10px] bg-red-900/50 text-red-500 px-1 rounded border border-red-900 mx-1">-{fight.penalidade_a} pts</span>}
-                                                        <div className="text-[10px] text-red-500 font-bold uppercase tracking-wider bg-red-950/30 px-2 rounded">Red Corner</div>
+                                            {newMatch.atleta_a_id ? (() => {
+                                                // Find athlete details (can be in inscritos or matches if editing)
+                                                // If editing, matches already has full athlete object. If new, in inscritos.
+                                                // We need a stable lookup.
+                                                const atleta = inscritos.find(i => i.atletas.id == newMatch.atleta_a_id)?.atletas
+                                                    // Fallback for when editing and athlete might not be in the 'filtered' list? No, should be in inscritos always.
+                                                    || (editingMatchId && matches.find(m => m.id === editingMatchId)?.atleta_a);
+
+                                                return atleta ? (
+                                                    <div className="text-center animate-zoomIn">
+                                                        <div className="relative inline-block">
+                                                            <img src={atleta.foto_url} className="w-16 h-16 rounded-full border-2 border-red-500 object-cover mb-2" />
+                                                            <button onClick={() => setNewMatch(prev => ({ ...prev, atleta_a_id: '' }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:scale-110 transition"><X size={10} /></button>
+                                                        </div>
+                                                        <div className="font-bold text-white text-lg leading-none">{atleta.nome}</div>
+                                                        <div className="text-xs text-red-400 font-bold uppercase mt-1">{atleta.team || 'Sem Equipe'}</div>
                                                     </div>
+                                                ) : <Loader2 className="animate-spin text-red-500" />
+                                            })() : (
+                                                <div className="text-center text-slate-600 pointer-events-none">
+                                                    <Users size={32} className="mx-auto mb-2 opacity-50" />
+                                                    <p className="text-xs font-bold uppercase">Arraste o Atleta A</p>
                                                 </div>
-                                                <img src={fight.atleta_a?.foto_url || "https://placehold.co/100"} className="w-12 h-12 rounded-full border-2 border-red-500 object-cover bg-slate-800" />
-                                            </div>
+                                            )}
 
-                                            {/* CENTER VS */}
-                                            <div className="text-center w-full md:w-2/12 relative z-10 pt-4 md:pt-0">
-                                                {fight.status === 'finalizada' ? (
-                                                    <span className="bg-green-600 text-white text-[10px] uppercase font-bold px-2 py-1 rounded">Finalizada</span>
-                                                ) : (
-                                                    <div className="flex flex-col items-center">
-                                                        <span className="font-display font-bold text-xl text-slate-700">VS</span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* BLUE CORNER */}
-                                            <div className={`flex items-center gap-3 w-full md:w-5/12 justify-start ${fight.vencedor_id === fight.atleta_b_id ? 'opacity-100' : fight.vencedor_id ? 'opacity-30 grayscale' : ''}`}>
-                                                <img src={fight.atleta_b?.foto_url || "https://placehold.co/100"} className="w-12 h-12 rounded-full border-2 border-blue-500 object-cover bg-slate-800" />
-                                                <div>
-                                                    <div className="text-white font-bold text-lg leading-none">{fight.atleta_b?.nome || 'Atleta B'}</div>
-                                                    {fight.atleta_b?.apelido && <div className="text-slate-400 text-sm font-medium">"{fight.atleta_b.apelido}"</div>}
-                                                    <div className="text-xs text-slate-500 mb-1">{fight.atleta_b?.team || inscB?.dados_inscricao?.equipe || 'Sem Equipe'}</div>
-
-                                                    <div className="flex justify-start gap-2 items-center">
-                                                        <div className="text-[10px] text-blue-500 font-bold uppercase tracking-wider bg-blue-950/30 px-2 rounded">Blue Corner</div>
-                                                        {fight.penalidade_b > 0 && <span className="text-[10px] bg-red-900/50 text-red-500 px-1 rounded border border-red-900 mx-1">-{fight.penalidade_b} pts</span>}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* WINNER ACTIONS OVERLAY */}
-                                            {/* WINNER ACTIONS OVERLAY */}
-                                            {fight.status !== 'finalizada' ? (
-                                                <div className="absolute inset-0 top-8 bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition backdrop-blur-sm gap-2 z-10">
-                                                    <button onClick={() => handleSetWinner(fight, fight.atleta_a_id)} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-2 rounded uppercase">Red Win</button>
-                                                    <div className="text-white text-[10px] font-bold">DEFINIR VENCEDOR</div>
-                                                    <button onClick={() => handleSetWinner(fight, fight.atleta_b_id)} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded uppercase">Blue Win</button>
-                                                </div>
-                                            ) : (
-                                                <div className="absolute inset-0 top-8 bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition backdrop-blur-sm gap-2 z-10">
-                                                    <button onClick={() => handleUndoResult(fight)} className="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-4 py-2 rounded uppercase flex items-center gap-2">
-                                                        <RotateCcw size={14} /> Desfazer Resultado
-                                                    </button>
+                                            {editingMatchId && (
+                                                <div className="absolute bottom-2 right-2">
+                                                    <input type="number" placeholder="Penalidade" value={newMatch.penalidade_a || 0} onChange={e => setNewMatch({ ...newMatch, penalidade_a: e.target.value })} className="w-16 bg-black/50 border border-red-900/50 rounded text-center text-xs text-red-200 p-1" />
                                                 </div>
                                             )}
                                         </div>
-                                    );
-                                })}
-                                {matches.length === 0 && <p className="text-slate-500 text-center text-sm py-8">Nenhuma luta casada.</p>}
-                            </div>
 
+                                        <div className="text-3xl font-black text-slate-700 italic">VS</div>
+
+                                        {/* BLUE CORNER SLOT */}
+                                        <div
+                                            onDragOver={handleDragOver}
+                                            onDrop={(e) => handleDrop(e, 'B')}
+                                            className={`flex-1 w-full relative min-h-[160px] rounded-xl border-2 flex flex-col items-center justify-center p-4 transition-all
+                                                ${newMatch.atleta_b_id ? 'bg-blue-900/20 border-blue-600' : 'bg-slate-950 border-slate-800 border-dashed hover:border-blue-500/50 hover:bg-blue-900/5'}`}
+                                        >
+                                            <span className="absolute top-2 right-3 text-[10px] font-bold uppercase text-blue-500 tracking-widest">Blue Corner</span>
+
+                                            {newMatch.atleta_b_id ? (() => {
+                                                const atleta = inscritos.find(i => i.atletas.id == newMatch.atleta_b_id)?.atletas
+                                                    || (editingMatchId && matches.find(m => m.id === editingMatchId)?.atleta_b);
+
+                                                return atleta ? (
+                                                    <div className="text-center animate-zoomIn">
+                                                        <div className="relative inline-block">
+                                                            <img src={atleta.foto_url} className="w-16 h-16 rounded-full border-2 border-blue-500 object-cover mb-2" />
+                                                            <button onClick={() => setNewMatch(prev => ({ ...prev, atleta_b_id: '' }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:scale-110 transition"><X size={10} /></button>
+                                                        </div>
+                                                        <div className="font-bold text-white text-lg leading-none">{atleta.nome}</div>
+                                                        <div className="text-xs text-blue-400 font-bold uppercase mt-1">{atleta.team || 'Sem Equipe'}</div>
+                                                    </div>
+                                                ) : <Loader2 className="animate-spin text-blue-500" />
+                                            })() : (
+                                                <div className="text-center text-slate-600 pointer-events-none">
+                                                    <Users size={32} className="mx-auto mb-2 opacity-50" />
+                                                    <p className="text-xs font-bold uppercase">Arraste o Atleta B</p>
+                                                </div>
+                                            )}
+
+                                            {editingMatchId && (
+                                                <div className="absolute bottom-2 left-2">
+                                                    <input type="number" placeholder="Penalidade" value={newMatch.penalidade_b || 0} onChange={e => setNewMatch({ ...newMatch, penalidade_b: e.target.value })} className="w-16 bg-black/50 border border-blue-900/50 rounded text-center text-xs text-blue-200 p-1" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-center gap-4 mt-6">
+                                        {editingMatchId && <button onClick={handleCancelEdit} className="text-slate-500 hover:text-white text-xs font-bold uppercase tracking-widest px-4 py-2">Cancelar</button>}
+                                        <button
+                                            onClick={handleCreateMatch}
+                                            disabled={!newMatch.atleta_a_id || !newMatch.atleta_b_id}
+                                            className={`${editingMatchId ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-purple-600 hover:bg-purple-500'} text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest shadow-lg shadow-purple-900/20 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all`}
+                                        >
+                                            {editingMatchId ? 'Salvar Edição' : 'Confirmar Luta'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* MATCHES LIST */}
+                                <h3 className="text-white font-bold uppercase text-sm border-b border-slate-800 pb-2">Card de Lutas ({matches.length})</h3>
+                                <div className="space-y-3 pb-20">
+                                    {matches.map((fight, idx) => {
+                                        const inscA = inscritos.find(i => i.atleta_id == fight.atleta_a_id) || { atletas: fight.atleta_a, eventos_categorias: { nome: '?' } };
+                                        const inscB = inscritos.find(i => i.atleta_id == fight.atleta_b_id) || { atletas: fight.atleta_b, eventos_categorias: { nome: '?' } };
+
+                                        return (
+                                            <div key={fight.id} className="relative bg-black border border-slate-800 rounded-xl p-4 flex flex-col items-center gap-4 group hover:border-slate-600 transition">
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase bg-slate-900 px-3 py-1 rounded-full border border-slate-800 flex items-center gap-2">
+                                                    Luta {idx + 1} <span className="w-1 h-1 bg-slate-600 rounded-full"></span> {inscA.eventos_categorias?.nome || 'Peso Combinado'}
+                                                </div>
+
+                                                <div className="flex items-center justify-between w-full px-4 md:px-10">
+                                                    <div className="text-center w-1/3">
+                                                        <div className="text-white font-bold truncate">{fight.atleta_a?.nome}</div>
+                                                        <div className="text-red-500 text-[10px] font-bold uppercase">Red Corner</div>
+                                                    </div>
+                                                    <div className="text-slate-700 font-black text-xl italic">VS</div>
+                                                    <div className="text-center w-1/3">
+                                                        <div className="text-white font-bold truncate">{fight.atleta_b?.nome}</div>
+                                                        <div className="text-blue-500 text-[10px] font-bold uppercase">Blue Corner</div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="absolute top-2 right-2 flex opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                                                    <button onClick={() => handleEditMatch(fight)} className="p-2 bg-slate-800 text-slate-300 hover:text-white rounded hover:bg-slate-700"><Pencil size={14} /></button>
+                                                    <button onClick={() => handleDeleteMatch(fight.id)} className="p-2 bg-slate-800 text-red-500 hover:text-red-400 rounded hover:bg-slate-700"><Trash2 size={14} /></button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                            </div>
                         </div>
                     )}
 
-                </div>
-            )}
-        </div>
+                    {/* TAB: CONFIGURAÇÕES */}
+                    {tabManager === 'config' && (
+                        <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-2xl mx-auto animate-fadeIn">
+                            <h3 className="font-bold text-white text-lg uppercase mb-6 flex items-center gap-2">
+                                <Pencil size={20} className="text-purple-500" /> Editar Evento
+                            </h3>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Nome do Evento</label>
+                                    <input
+                                        type="text"
+                                        value={selectedEvent.nome}
+                                        onChange={(e) => setSelectedEvent({ ...selectedEvent, nome: e.target.value })}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Data</label>
+                                        <input
+                                            type="date"
+                                            value={selectedEvent.data_evento || ''}
+                                            onChange={(e) => setSelectedEvent({ ...selectedEvent, data_evento: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Modalidade</label>
+                                        <select
+                                            value={selectedEvent.modalidade}
+                                            onChange={(e) => setSelectedEvent({ ...selectedEvent, modalidade: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                        >
+                                            {MODALITIES.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Localização</label>
+                                    <input
+                                        type="text"
+                                        value={selectedEvent.localizacao || ''}
+                                        onChange={(e) => setSelectedEvent({ ...selectedEvent, localizacao: e.target.value })}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Link de Pagamento</label>
+                                    <div className="flex bg-slate-950 border border-slate-800 rounded p-3 items-center gap-2">
+                                        <DollarSign size={16} className="text-green-500" />
+                                        <input
+                                            type="text"
+                                            value={selectedEvent.link_pagamento || ''}
+                                            onChange={(e) => setSelectedEvent({ ...selectedEvent, link_pagamento: e.target.value })}
+                                            className="w-full bg-transparent border-none text-white focus:ring-0 p-0 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Banner URL</label>
+                                    <input
+                                        type="text"
+                                        value={selectedEvent.banner_url || ''}
+                                        onChange={(e) => setSelectedEvent({ ...selectedEvent, banner_url: e.target.value })}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded p-3 text-white focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-800">
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm("Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.")) return;
+                                        const { error } = await supabase.from('eventos').delete().eq('id', selectedEvent.id);
+                                        if (error) {
+                                            alert("Erro ao excluir: " + error.message);
+                                        } else {
+                                            alert("Evento excluído com sucesso.");
+                                            setSelectedEvent(null);
+                                            setView('list');
+                                            fetchEvents();
+                                        }
+                                    }}
+                                    className="text-red-500 hover:bg-red-900/20 px-4 py-2 rounded text-xs font-bold uppercase transition flex items-center gap-2"
+                                >
+                                    <Trash2 size={16} /> Excluir Evento
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        setSubmitting(true);
+                                        const { error } = await supabase.from('eventos').update({
+                                            nome: selectedEvent.nome,
+                                            data_evento: selectedEvent.data_evento,
+                                            localizacao: selectedEvent.localizacao,
+                                            modalidade: selectedEvent.modalidade,
+                                            link_pagamento: selectedEvent.link_pagamento,
+                                            banner_url: selectedEvent.banner_url
+                                        }).eq('id', selectedEvent.id);
+
+                                        setSubmitting(false);
+                                        if (error) alert("Erro ao salvar: " + error.message);
+                                        else {
+                                            alert("Evento atualizado!");
+                                            fetchEvents(); // Refresh list in background
+                                        }
+                                    }}
+                                    disabled={submitting}
+                                    className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded font-bold uppercase text-sm tracking-wide transition flex items-center gap-2"
+                                >
+                                    {/* {submitting ? <Loader2 className="animate-spin" /> : <Save size={18} />} Salvar Alterações */}
+                                    {submitting ? <Loader2 className="animate-spin" /> : <Save size={18} />} Salvar Alterações
+                                </button>
+                            </div>
+                        </div>
+                    )}      </div >
+            )
+            }
+        </div >
     );
 }

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import {
     Home, Search, Swords, LayoutDashboard, Trophy,
-    Bell, LogIn, User, LogOut, ShieldCheck, ChevronDown, UserCircle
+    Bell, LogIn, User, LogOut, ShieldCheck, ChevronDown, UserCircle, Calendar, Building2
 } from 'lucide-react';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -84,7 +84,9 @@ export default function Navbar() {
 
     const navItems = [
         { href: '/', label: 'Início', icon: <Home size={24} /> },
+        { href: '/eventos', label: 'Eventos', icon: <Calendar size={24} /> },
         { href: '/busca', label: 'Buscar', icon: <Search size={24} /> },
+        { href: '/empresas', label: 'Empresas', icon: <Building2 size={24} /> },
         { href: '/duelos', label: 'Arena', icon: <Swords size={24} /> },
         { href: '/ranking', label: 'Rank', icon: <Trophy size={24} /> },
         {
@@ -127,7 +129,9 @@ export default function Navbar() {
                         {/* 2. MENU CENTRAL (Desktop) */}
                         <nav className="hidden md:flex items-center gap-8">
                             <Link href="/" className="font-display font-bold text-sm text-gray-400 hover:text-white uppercase tracking-wide transition-colors">Início</Link>
+                            <Link href="/eventos" className="font-display font-bold text-sm text-gray-400 hover:text-white uppercase tracking-wide transition-colors">Eventos</Link>
                             <Link href="/busca" className="font-display font-bold text-sm text-gray-400 hover:text-white uppercase tracking-wide transition-colors">Buscar</Link>
+                            <Link href="/empresas" className="font-display font-bold text-sm text-gray-400 hover:text-white uppercase tracking-wide transition-colors">Empresas</Link>
                             <Link href="/duelos" className="flex items-center gap-1.5 font-display font-bold text-sm text-[#FFD700] uppercase tracking-wide transition-colors">
                                 <span className="material-symbols-outlined text-[18px]">swords</span>
                                 Arena
@@ -251,8 +255,10 @@ export default function Navbar() {
                             >
                                 <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${isActive ? 'filled' : ''}`}>
                                     {item.label === 'Início' && 'home'}
+                                    {item.label === 'Eventos' && 'calendar_month'}
                                     {item.label === 'Buscar' && 'search'}
                                     {item.label === 'Rank' && 'emoji_events'}
+                                    {item.label === 'Empresas' && 'domain'}
                                     {item.label === 'Painel' && 'dashboard'}
                                     {item.label === 'Entrar' && 'login'}
                                 </span>

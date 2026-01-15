@@ -2,7 +2,7 @@
 export const runtime = 'edge';
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Calendar, MapPin, Trophy, Users, Shield, CheckCircle, AlertTriangle, ArrowRight, Swords } from 'lucide-react';
+import { Calendar, MapPin, Trophy, Users, Shield, CheckCircle, AlertTriangle, ArrowRight, Swords, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -20,6 +20,8 @@ export default function EventPage() {
     const [confirmedAthletes, setConfirmedAthletes] = useState([]);
     const [matches, setMatches] = useState([]);
     const [debugError, setDebugError] = useState(null);
+    const [showApprovalModal, setShowApprovalModal] = useState(false);
+    const [approvalToken, setApprovalToken] = useState('');
 
     useEffect(() => {
         if (params?.slug) {
@@ -153,23 +155,30 @@ export default function EventPage() {
 
         setRegistering(true);
 
+        // Generate Token
+        // Using Date.now + random for simple uniqueness without uuid lib dependency in client
+        const token = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        setApprovalToken(token);
+
         const { error } = await supabase
             .from('eventos_inscricoes')
             .insert([{
                 evento_id: event.id,
                 atleta_id: athleteProfile.id,
                 categoria_id: selectedCategory,
-                status: 'pendente',
+                status: 'aguardando_aprovacao', // NEW STATUS
                 dados_inscricao: {
                     equipe: athleteProfile.team,
-                    level_no_momento: athleteProfile.level
+                    level_no_momento: athleteProfile.level,
+                    approval_token: token // SAVE TOKEN
                 }
             }]);
 
         if (error) {
             alert('Erro ao inscrever: ' + error.message);
         } else {
-            alert('Inscrição realizada com sucesso! Aguarde a confirmação do organizador.');
+            // Success! Show Modal
+            setShowApprovalModal(true);
             checkRegistration(event.id, athleteProfile.id);
         }
         setRegistering(false);
@@ -198,8 +207,28 @@ export default function EventPage() {
                         </span>
                         <h1 className="text-4xl md:text-6xl font-display font-bold uppercase tracking-tight mb-4 text-white drop-shadow-xl">{event.nome}</h1>
                         <div className="flex flex-wrap gap-6 text-sm md:text-base font-bold text-slate-300">
-                            <span className="flex items-center gap-2"><Calendar className="text-purple-500" size={18} /> {new Date(event.data_evento).toLocaleDateString()}</span>
-                            <span className="flex items-center gap-2"><MapPin className="text-purple-500" size={18} /> {event.localizacao}</span>
+                            <div className="flex items-center text-slate-300 mt-2">
+                                <Calendar className="text-purple-500 mr-2" size={20} />
+                                <span>{new Date(event.data_evento).toLocaleDateString()}</span>
+                            </div>
+
+                            {/* LOCATION */}
+                            <div className="mt-4 flex flex-col gap-2">
+                                <div className="flex items-center text-slate-300">
+                                    <MapPin className="text-purple-500 mr-2" size={20} />
+                                    <span>{event.localizacao?.split('•')[0].trim()}</span>
+                                </div>
+                                {event.localizacao?.includes('•') && (
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.localizacao.split('•')[1].trim() + ", " + event.localizacao.split('•')[0].trim())}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-purple-400 hover:text-purple-300 ml-7 flex items-center gap-1 uppercase font-bold"
+                                    >
+                                        <ArrowRight size={12} /> Ver no Mapa
+                                    </a>
+                                )}
+                            </div>
                             <span className="flex items-center gap-2"><Users className="text-purple-500" size={18} /> {confirmedAthletes.length} Confirmados</span>
                         </div>
                     </div>
@@ -230,7 +259,8 @@ export default function EventPage() {
                                             <p className="text-sm opacity-80">Você já está inscrito neste evento.</p>
                                         </div>
                                     </div>
-                                    {event.link_pagamento && myRegistration.status !== 'pago' && (
+                                    {/* STATUS BUTTONS (Existing logic or fallback) */}
+                                    {event.link_pagamento && myRegistration.status !== 'pago' && myRegistration.status !== 'aguardando_aprovacao' && (
                                         <div className="mt-4 pt-4 border-t border-white/10">
                                             <a href={event.link_pagamento} target="_blank" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded font-bold uppercase text-sm no-underline shadow-lg shadow-green-600/20 transition transform hover:scale-105">
                                                 Pagar Agora <ArrowRight size={16} />
@@ -238,6 +268,7 @@ export default function EventPage() {
                                         </div>
                                     )}
                                 </div>
+
                             ) : (
                                 <div className="space-y-6">
                                     {!user ? (
@@ -287,6 +318,40 @@ export default function EventPage() {
                             )}
                         </div>
                     </div>
+
+                    {/* APPROVAL MODAL */}
+                    {showApprovalModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+                            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 relative shadow-2xl animate-zoomIn">
+                                <button onClick={() => setShowApprovalModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition"><Users size={20} /></button> // Using Users icon as generic close for now or just X if imported, I'll use text
+
+                                <div className="text-center mb-6">
+                                    <div className="w-16 h-16 bg-yellow-500/10 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-500/20">
+                                        <Shield size={32} />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-white uppercase mb-2">Aprovação Necessária</h3>
+                                    <p className="text-slate-400 text-sm">Para confirmar sua vaga, seu professor precisa autorizar sua luta.</p>
+                                </div>
+
+                                <div className="bg-black/50 p-4 rounded-xl border border-slate-800 mb-6">
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-2">Link de Aprovação</p>
+                                    <code className="block bg-slate-950 p-3 rounded text-purple-400 text-xs break-all border border-slate-800">
+                                        {`${window.location.origin}/aprovar/${approvalToken}`}
+                                    </code>
+                                </div>
+
+                                <a
+                                    href={`https://wa.me/?text=${encodeURIComponent(`Professor, fiz minha inscrição no evento *${event.nome}*. Preciso que você aprove para eu lutar. Clica no link aí: ${window.location.origin}/aprovar/${approvalToken}`)}`}
+                                    target="_blank"
+                                    className="block w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-4 rounded-xl font-bold uppercase text-center shadow-lg shadow-green-900/20 transition hover:scale-[1.02] flex items-center justify-center gap-2"
+                                    onClick={() => setShowApprovalModal(false)}
+                                >
+                                    <MessageCircle size={20} /> Enviar para o Mestre
+                                </a>
+                                <button onClick={() => setShowApprovalModal(false)} className="w-full text-slate-500 text-xs font-bold uppercase mt-4 hover:text-white">Agora não</button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* FIGHT CARD */}
                     {matches.length > 0 && (

@@ -7,9 +7,11 @@ export default function TabNotificacoes({
     notificacoes = [],
     convitesEquipe = [],
     convitesParceria = [], // NEW
+    pendingRegistrations = [], // NEW
     handleDueloAction,
     handleEquipeAction,
     handleParceriaAction, // NEW
+    handleEventApprovalAction, // NEW
     perfil = {} // Added perfil prop for the header data
 }) {
 
@@ -23,6 +25,7 @@ export default function TabNotificacoes({
     // --- TAB STATE (Simulated navigation as per HTML) ---
     const [activeTab, setActiveTab] = useState('all'); // 'all', 'convites', 'duelos'
 
+    // Helpers to check if empty
     // Helpers to check if empty
     const hasDuelos = notificacoes.length > 0;
     const hasConvites = convitesEquipe && convitesEquipe.length > 0;
@@ -137,7 +140,49 @@ export default function TabNotificacoes({
                         </section>
                     )}
 
-                    {/* SECTION 1.5: CONVITES DE EMPRESA (PARCERIAS) */}
+                    {/* SECTION 1.2: EVENT REGISTRATIONS (COACH APPROVAL) */}
+                    {pendingRegistrations && pendingRegistrations.length > 0 && (activeTab === 'all' || activeTab === 'convites') && (
+                        <section className="space-y-3 sm:space-y-4 animate-fadeIn">
+                            <div className="flex items-center gap-2 mb-1 sm:mb-2 mt-6 border-t border-[#2a2a2a] pt-4">
+                                <span className="material-symbols-outlined text-yellow-500 text-lg sm:text-xl">confirmation_number</span>
+                                <h2 className="text-lg sm:text-xl font-display font-bold uppercase tracking-wider text-white">
+                                    Aprovação de Inscrições
+                                </h2>
+                            </div>
+
+                            {pendingRegistrations.map(reg => (
+                                <div key={reg.id} className="bg-[#161616] rounded-xl border border-yellow-500/20 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 hover:border-yellow-500/50 transition-all duration-300 group">
+                                    <div className="flex flex-row items-center sm:items-start gap-4 text-left w-full overflow-hidden">
+                                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded bg-[#2a2a2a] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-yellow-500/50 transition-colors shadow-md">
+                                            {reg.atleta?.foto_url ? (
+                                                <img src={reg.atleta.foto_url} alt="Atleta" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-white text-xl sm:text-2xl font-display font-medium">
+                                                    {(reg.atleta?.nome || 'A').charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-col justify-center h-full overflow-hidden w-full">
+                                            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-yellow-500 mb-0.5 sm:mb-1">
+                                                Nova Inscrição
+                                            </span>
+                                            <h3 className="text-xl sm:text-2xl font-display font-bold leading-none mb-0.5 sm:mb-1 text-white tracking-wide truncate w-full">
+                                                {reg.atleta?.apelido || reg.atleta?.nome}
+                                            </h3>
+                                            <p className="text-[10px] sm:text-xs text-[#9ca3af] uppercase font-bold tracking-wider truncate w-full">
+                                                {reg.evento?.nome} • {reg.categoria?.nome || 'S/ Categoria'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto mt-1 sm:mt-0">
+                                        <button onClick={() => handleEventApprovalAction(reg.id, 'reject')} className="h-9 sm:h-10 flex-1 sm:flex-none px-4 sm:px-6 rounded border border-white/10 text-[#9ca3af] hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-[10px] sm:text-xs tracking-widest uppercase focus:outline-none">RECUSAR</button>
+                                        <button onClick={() => handleEventApprovalAction(reg.id, 'approve')} className="h-9 sm:h-10 flex-1 sm:flex-none px-6 sm:px-8 rounded bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-[11px] sm:text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(202,138,4,0.3)] transition-all focus:outline-none clip-path-slant">APROVAR</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </section>
+                    )}
                     {convitesParceria && convitesParceria.length > 0 && (activeTab === 'all' || activeTab === 'convites') && (
                         <section className="space-y-3 sm:space-y-4 animate-fadeIn">
                             <div className="flex items-center gap-2 mb-1 sm:mb-2 mt-6 border-t border-[#2a2a2a] pt-4">

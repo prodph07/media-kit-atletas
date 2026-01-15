@@ -5,7 +5,7 @@ import { AvatarLevel } from '../../AvatarLevel';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-export default function TabMeuTime({ perfil }) {
+export default function TabMeuTime({ empresaId }) {
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'search'
     const [myTeam, setMyTeam] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,10 +19,10 @@ export default function TabMeuTime({ perfil }) {
     // 1. Carregar Time Atual
     useEffect(() => {
         fetchTeam();
-    }, [perfil.id]);
+    }, [empresaId]);
 
     const fetchTeam = async () => {
-        if (!perfil.id) return;
+        if (!empresaId) return;
         setLoading(true);
         // Buscamos parcerias onde somos a empresa
         const { data, error } = await supabase
@@ -31,12 +31,12 @@ export default function TabMeuTime({ perfil }) {
                 id, status, created_at,
                 atleta:atleta_id ( id, nome, apelido, categoria, foto_url, xp, level, slug )
             `)
-            .eq('empresa_id', perfil.id);
+            .eq('empresa_id', empresaId);
 
         if (!error && data) {
             setMyTeam(data);
             // Marcar IDs já convidados para não convidar de novo
-            setInvitedIds(data.map(p => p.atleta.id));
+            setInvitedIds(data.map(p => p.atleta?.id).filter(Boolean));
         }
         setLoading(false);
     };
@@ -71,7 +71,7 @@ export default function TabMeuTime({ perfil }) {
         if (!confirm("Enviar convite oficial para este atleta? Ele receberá uma notificação.")) return;
 
         const { error } = await supabase.from('parcerias').insert({
-            empresa_id: perfil.id,
+            empresa_id: empresaId,
             atleta_id: atletaId,
             status: 'pendente'
         });

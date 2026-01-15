@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Users, MapPin, Activity, Eye, ChevronLeft, ChevronRight, Lock, Instagram, Youtube, Twitter, Video, Link as LinkIcon, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { formatNumber } from '../../../lib/utils';
 
 const BRAZIL_STATES = [
     "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
@@ -13,7 +14,7 @@ export default function TabMetricas({
     totalViews,
     profileViews,
     isPremium,
-    formatNumber,
+
     ageRange, setAgeRange,
     genderSplit, setGenderSplit
 }) {

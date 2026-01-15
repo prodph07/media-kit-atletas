@@ -1,6 +1,6 @@
 import React from 'react';
 import { Camera, Link as LinkIcon, Check, Lock, Building2, Globe } from 'lucide-react';
-import { AvatarLevel } from '../../AvatarLevel';
+import SmartImageUpload from '@/components/SmartImageUpload';
 
 export default function TabGeralEmpresa({
     perfil,
@@ -9,7 +9,8 @@ export default function TabGeralEmpresa({
     handleSlugChange,
     openWidget,
     handleDeleteProfilePic,
-    isPremium
+    isPremium,
+    userId
 }) {
     return (
         <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 grid gap-6">
@@ -19,15 +20,29 @@ export default function TabGeralEmpresa({
             </div>
 
             <div className="flex flex-col items-center justify-center p-6 bg-black/40 rounded-xl border border-slate-700 border-dashed">
-                <div onClick={() => openWidget((url) => setPerfil({ ...perfil, foto_url: url }))} className="cursor-pointer group relative transition-transform hover:scale-105">
-                    <AvatarLevel foto={perfil.foto_url} level={perfil.level} size="large" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/50 rounded-full z-30">
-                        <Camera size={24} className="text-white" />
+                <div className="mb-4">
+                    <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-slate-800 bg-slate-900 shadow-xl">
+                        <img
+                            src={perfil.foto_url || "https://placehold.co/400"}
+                            alt="Logo da Empresa"
+                            className="w-full h-full object-cover"
+                        />
                     </div>
                 </div>
-                <div className="flex gap-4 text-xs mt-4">
-                    <button onClick={() => openWidget((url) => setPerfil({ ...perfil, foto_url: url }))} className="text-purple-400 hover:underline font-bold uppercase">Alterar Logo</button>
-                    {perfil.foto_url && <button onClick={handleDeleteProfilePic} className="text-red-500 hover:underline">Remover</button>}
+
+                <div className="w-full max-w-xs">
+                    <SmartImageUpload
+                        userId={perfil.user_id} // Assuming perfil has user_id, or passed as prop. TabGeral uses safeVal(userId).
+                        aspect={1}
+                        buttonLabel="ALTERAR LOGO"
+                        onUploadComplete={(newUrl) => setPerfil({ ...perfil, foto_url: newUrl })}
+                        className="bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase w-full py-2 rounded text-xs transition-colors"
+                    />
+                    {perfil.foto_url && (
+                        <button onClick={handleDeleteProfilePic} className="text-red-500 text-xs hover:underline mt-2 w-full text-center">
+                            Remover Logo
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -51,6 +66,7 @@ export default function TabGeralEmpresa({
                         <input className="bg-transparent text-white w-full outline-none font-bold" name="slug" value={perfil.slug} onChange={handleSlugChange} disabled={!isPremium} />
                     </div>
                 </div>
+
             </div>
         </div>
     );

@@ -30,6 +30,13 @@ export function AvatarLevel({ foto, level = 1, xp = 0, size = "large", className
             showXpBar = !hideXp;
             break;
 
+        case "medium": // Cards e Scout
+            photoClass = "w-20 h-20";
+            wrapperClass = "w-28 h-28";
+            showRankTitle = false; // Scout cards usually don't need the big title overlay
+            showXpBar = false; // Simplify for cards
+            break;
+
         case "large": // Painel e Padrão
         default:
             photoClass = "w-36 h-36";

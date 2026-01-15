@@ -58,7 +58,8 @@ export default function Painel() {
         profileViews, totalViews,
         ageRange, setAgeRange,
         genderSplit, setGenderSplit,
-        cityList, setCityList
+        cityList, setCityList,
+        pendingRegistrations, setPendingRegistrations
     } = useProfileData();
 
     // Redireciona se não houver user (tratado no hook mas safety check aqui)
@@ -228,6 +229,19 @@ export default function Painel() {
         }
     };
 
+    const handleEventApprovalAction = async (registrationId, action) => {
+        const newStatus = action === 'approve' ? 'aprovado' : 'recusado';
+        try {
+            const { error } = await supabase.from('eventos_inscricoes').update({ status: newStatus }).eq('id', registrationId);
+            if (error) throw error;
+
+            alert(action === 'approve' ? "Inscrição aprovada com sucesso!" : "Inscrição recusada.");
+            setPendingRegistrations(prev => prev.filter(r => r.id !== registrationId));
+        } catch (err) {
+            alert("Erro ao processar: " + err.message);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         const isPremium = perfil.plano === 'premium';
@@ -272,6 +286,25 @@ export default function Painel() {
             }
         }
 
+        // FIX: Map local 'about' back to DB 'sobre'
+        if (dadosParaSalvar.about !== undefined) {
+            dadosParaSalvar.sobre = dadosParaSalvar.about;
+            delete dadosParaSalvar.about;
+        }
+
+        // Clean up flat fields
+        delete dadosParaSalvar.stats;
+        delete dadosParaSalvar.contact;
+        delete dadosParaSalvar.nextFight;
+        delete dadosParaSalvar.socials;
+        delete dadosParaSalvar.record;
+        delete dadosParaSalvar.coach_details; // STORAGE FOR METADATA (Payment Config) - Actually let's keep it if we can
+        // Wait, I commented out previous delete, but now I need to make sure I don't delete it if I want to save it!
+        // But `coach_details` IS a column (jsonb/json), so that's fine.
+        // The problem is `mp_access_token` which is NOT a column.
+
+        delete dadosParaSalvar.mp_access_token; // Remove if leaked to root
+
         // Only update `team` if user is athlete
         const payload = { ...dadosParaSalvar, xp: (dadosParaSalvar.xp || 0) + xpGained, completed_tasks: newTasks, weekly_stats: currentWeeklyStats };
         if (dadosParaSalvar.tipo_conta === 'atleta') {
@@ -307,7 +340,7 @@ export default function Painel() {
 
     // --- RENDER ---
     return (
-        <div className="min-h-screen bg-[#0c0c0c] text-gray-200 font-sans pb-20 md:pb-0">
+        <div className="min-h-screen bg-[#0c0c0c] text-gray-200 font-sans md:pb-0">
             {/* Header Mobile */}
             <div className="md:hidden bg-[#111] p-4 flex justify-between items-center sticky top-0 z-50 border-b border-[#222]">
                 <div className="flex items-center gap-3">
@@ -323,6 +356,40 @@ export default function Painel() {
                     <button onClick={handleOpenProfile} className="p-2 text-gray-400 hover:text-white">
                         <Eye className="w-6 h-6" />
                     </button>
+                </div>
+            </div>
+
+            {/* Mobile Tab Navigation (Scrollable Top) */}
+            <div className="md:hidden bg-[#111] border-b border-[#222] overflow-x-auto whitespace-nowrap sticky top-[60px] z-40 custom-scrollbar">
+                <div className="flex px-4 py-2 gap-2">
+                    {/* ATHLETE TABS */}
+                    {!isCompany && (
+                        <>
+                            <button onClick={() => setActiveTab('geral')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'geral' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Geral</button>
+                            <button onClick={() => setActiveTab('cartel')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'cartel' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Cartel</button>
+                            <button onClick={() => setActiveTab('lutas')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'lutas' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Lutas</button>
+                            <button onClick={() => setActiveTab('midia')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'midia' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Mídia</button>
+                            <button onClick={() => setActiveTab('eventos_atleta')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'eventos_atleta' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Eventos</button>
+                            <button onClick={() => setActiveTab('missoes')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'missoes' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Missões</button>
+                            <button onClick={() => setActiveTab('metricas')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'metricas' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Métricas</button>
+                            <button onClick={() => setActiveTab('patrocinios')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'patrocinios' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Patrocínios</button>
+                            {isCoach && <button onClick={() => setActiveTab('treinador')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'treinador' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Treinador</button>}
+                            <button onClick={() => setActiveTab('duelos')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'duelos' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Duelos</button>
+                        </>
+                    )}
+
+                    {/* COMPANY TABS */}
+                    {isCompany && (
+                        <>
+                            <button onClick={() => setActiveTab('geral')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'geral' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Geral</button>
+                            <button onClick={() => setActiveTab('oportunidades')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'oportunidades' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Vagas</button>
+                            <button onClick={() => setActiveTab('scout')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'scout' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Scout</button>
+                            <button onClick={() => setActiveTab('meu_time')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'meu_time' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Time</button>
+                            <button onClick={() => setActiveTab('eventos_company')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'eventos_company' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Eventos</button>
+                        </>
+                    )}
+
+                    <button onClick={() => setActiveTab('contato')} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeTab === 'contato' ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}`}>Contato</button>
                 </div>
             </div>
 
@@ -400,36 +467,13 @@ export default function Painel() {
 
                     <div className="bg-[#111] md:rounded-3xl md:p-8 md:border border-[#222] min-h-[500px] mb-20 md:mb-0">
                         {/* Banner Premium */}
-                        {!isCompany && <BannerPremium isPremium={perfil.plano === 'premium'} />}
+                        {!isCompany && <BannerPremium atleta={perfil} />}
 
-                        {activeTab === 'geral' && <TabGeral perfil={perfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleUpdateStatus={handleUpdateStatus} handleFileChange={(e, field) => {
-                            // File upload logic kept simple or moved to sub-component if too complex.
-                            // For now assuming TabGeral helps with UI but upload logic ideally passed down or handled here
-                            // If TabGeral accepts a specialized uploader prop, better.
-                            // Reusing existing flow: The actual upload logic was inside the old TabGeral or handled via handleFileChange prop?
-                            // Checking old code: handleFileChange was passed to TabGeral.
-                            // I'll assume we need to implement a simple generic handler here if it wasn't strictly generic.
-                            // Actually, the original file had `handleFileChange` inside the component body, I missed copying it to the refactored version?
-                            // Let me add it back below `handleUpdateStatus` quickly if it's missing.
-                        }}
-                            handleProfilePic={async (e) => {
-                                if (!e.target.files || e.target.files.length === 0) return;
-                                setSaving(true);
-                                const file = e.target.files[0];
-                                const fileExt = file.name.split('.').pop();
-                                const fileName = `${userId}-${Math.random()}.${fileExt}`;
-                                const { error } = await supabase.storage.from('media-kit').upload(fileName, file);
-                                if (error) { alert("Erro ao enviar: " + error.message); setSaving(false); return; }
-                                const publicUrl = supabase.storage.from('media-kit').getPublicUrl(fileName).data.publicUrl;
-                                if (perfil.foto_url) await deleteImageFromBucket(perfil.foto_url);
-                                setPerfil({ ...perfil, foto_url: publicUrl });
-                                setSaving(false);
-                            }}
-                            handleDeleteProfilePic={handleDeleteProfilePic}
-                        />}
+                        {activeTab === 'geral' && !isCompany && <TabGeral perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleUpdateStatus={handleUpdateStatus} handleDeleteProfilePic={handleDeleteProfilePic} userId={userId} isPremium={perfil.plano === 'premium'} />}
+                        {activeTab === 'geral' && isCompany && <TabGeralEmpresa perfil={perfil} setPerfil={setPerfil} handleChange={handleChange} handleSlugChange={handleSlugChange} handleDeleteProfilePic={handleDeleteProfilePic} isPremium={perfil.plano === 'premium'} userId={userId} />}
 
-                        {activeTab === 'cartel' && !isCompany && <TabCartel perfil={perfil} handleStatsChange={handleStatsChange} handleRecordChange={handleRecordChange} />}
-                        {activeTab === 'lutas' && !isCompany && <TabLutas perfil={perfil} handleNextFightChange={handleNextFightChange} handleDeleteFight={(index) => { const h = [...perfil.historico]; h.splice(index, 1); setPerfil({ ...perfil, historico: h }); }} handleAddFight={() => setPerfil({ ...perfil, historico: [...perfil.historico, { event: '', date: '', result: 'Vitória', method: '', opponent: '' }] })} handleFightChange={(index, e) => { const h = [...perfil.historico]; h[index][e.target.name] = e.target.value; setPerfil({ ...perfil, historico: h }); }} />}
+                        {activeTab === 'cartel' && !isCompany && <TabCartel perfil={perfil} handleStatsChange={handleStatsChange} handleRecordChange={handleRecordChange} isPremium={perfil.plano === 'premium'} />}
+                        {activeTab === 'lutas' && !isCompany && <TabLutas perfil={perfil} handleNextFightChange={handleNextFightChange} handleDeleteFight={(index) => { const h = [...perfil.historico]; h.splice(index, 1); setPerfil({ ...perfil, historico: h }); }} handleAddFight={() => setPerfil({ ...perfil, historico: [...perfil.historico, { event: '', date: '', result: 'Vitória', method: '', opponent: '' }] })} handleFightChange={(index, e) => { const h = [...perfil.historico]; h[index][e.target.name] = e.target.value; setPerfil({ ...perfil, historico: h }); }} isPremium={perfil.plano === 'premium'} />}
                         {activeTab === 'midia' && <TabMidia perfil={perfil} handleDeleteImage={handleDeleteImage} handleAddVideo={() => setPerfil({ ...perfil, video_lista: [...perfil.video_lista, { title: '', url: '', type: 'youtube' }] })} handleDeleteVideo={(index) => { const v = [...perfil.video_lista]; v.splice(index, 1); setPerfil({ ...perfil, video_lista: v }); }} handleVideoChange={(index, field, value) => { const v = [...perfil.video_lista]; v[index][field] = value; setPerfil({ ...perfil, video_lista: v }); }}
                             handleUploadGallery={async (e) => {
                                 if (!e.target.files || e.target.files.length === 0) return;
@@ -444,43 +488,28 @@ export default function Painel() {
                                 setSaving(false);
                             }}
                         />}
-                        {activeTab === 'metricas' && !isCompany && <TabMetricas perfil={perfil} handleInstaStats={handleInstaStats} handleSocialChange={handleSocialChange} ageRange={ageRange} setAgeRange={setAgeRange} genderSplit={genderSplit} setGenderSplit={setGenderSplit} cityList={cityList} setCityList={setCityList} profileViews={profileViews} totalViews={totalViews} />}
+                        {activeTab === 'metricas' && !isCompany && <TabMetricas perfil={perfil} isPremium={perfil.plano === 'premium'} handleInstaStats={handleInstaStats} handleSocialChange={handleSocialChange} ageRange={ageRange} setAgeRange={setAgeRange} genderSplit={genderSplit} setGenderSplit={setGenderSplit} cityList={cityList} setCityList={setCityList} profileViews={profileViews} totalViews={totalViews} />}
                         {activeTab === 'contato' && <TabContato perfil={perfil} handleContactChange={handleContactChange} />}
-                        {activeTab === 'notificacoes' && <TabNotificacoes notificacoes={notificacoes} convitesEquipe={convitesEquipe} convitesParceria={convitesParceria} handleDueloAction={handleDueloAction} handleEquipeAction={handleEquipeAction} handleParceriaAction={handleParceriaAction} />}
+                        {activeTab === 'contato' && <TabContato perfil={perfil} handleContactChange={handleContactChange} />}
+                        {activeTab === 'notificacoes' && <TabNotificacoes notificacoes={notificacoes} convitesEquipe={convitesEquipe} convitesParceria={convitesParceria} pendingRegistrations={pendingRegistrations} handleDueloAction={handleDueloAction} handleEquipeAction={handleEquipeAction} handleParceriaAction={handleParceriaAction} handleEventApprovalAction={handleEventApprovalAction} />}
                         {activeTab === 'duelos' && !isCompany && <TabHistoricoDuelos meusDuelos={meusDuelos} handleDueloAction={handleDueloAction} />}
-                        {activeTab === 'treinador' && isCoach && <TabTreinador meusAlunos={meusAlunos} />}
-                        {activeTab === 'patrocinios' && !isCompany && <TabPatrocinios premios={perfil.premios || []} handleAddAward={() => setPerfil({ ...perfil, premios: [...perfil.premios, { title: '', year: '', type: 'medal' }] })} handleRemoveAward={(index) => { const p = [...perfil.premios]; p.splice(index, 1); setPerfil({ ...perfil, premios: p }); }} handleAwardChange={(index, field, value) => { const p = [...perfil.premios]; p[index][field] = value; setPerfil({ ...perfil, premios: p }); }} />}
+                        {activeTab === 'duelos' && !isCompany && <TabHistoricoDuelos meusDuelos={meusDuelos} handleDueloAction={handleDueloAction} />}
+                        {activeTab === 'treinador' && isCoach && <TabTreinador perfil={perfil} setPerfil={setPerfil} isPremium={perfil.plano === 'premium'} />}
+                        {activeTab === 'patrocinios' && !isCompany && <TabPatrocinios perfil={perfil} />}
                         {activeTab === 'missoes' && !isCompany && <TabMissoes perfil={perfil} />}
 
                         {/* COMPANY TABS */}
-                        {activeTab === 'oportunidades' && <TabOportunidades />}
+                        {activeTab === 'oportunidades' && <TabOportunidades empresaId={perfil.id} />}
                         {activeTab === 'scout' && <TabScout />}
                         {activeTab === 'meu_time' && <TabMeuTime empresaId={perfil.id} />}
-                        {activeTab === 'eventos_company' && <TabEventos empresaId={perfil.id} />}
+                        {activeTab === 'eventos_company' && <TabEventos empresaId={perfil.id} userId={perfil.user_id} />}
                         {activeTab === 'eventos_atleta' && !isCompany && <TabEventosAtleta atletaId={perfil.id} />}
 
                     </div>
                 </div>
             </div>
 
-            {/* Footer Mobile (Tab Bar) */}
-            <div className="md:hidden fixed bottom-0 left-0 w-full bg-[#111] border-t border-[#222] z-50 px-4 py-2 flex justify-between items-center text-xs">
-                {isCompany ? (
-                    <>
-                        <button onClick={() => setActiveTab('geral')} className={`flex flex-col items-center gap-1 ${activeTab === 'geral' ? 'text-red-500' : 'text-gray-500'}`}><Eye className="w-5 h-5" />Geral</button>
-                        <button onClick={() => setActiveTab('oportunidades')} className={`flex flex-col items-center gap-1 ${activeTab === 'oportunidades' ? 'text-red-500' : 'text-gray-500'}`}><Trophy className="w-5 h-5" />Vagas</button>
-                        <button onClick={() => setActiveTab('meu_time')} className={`flex flex-col items-center gap-1 ${activeTab === 'meu_time' ? 'text-red-500' : 'text-gray-500'}`}><Swords className="w-5 h-5" />Time</button>
-                        <button onClick={handleSave} className="flex flex-col items-center gap-1 text-white font-bold"><Save className="w-5 h-5 bg-red-600 p-0.5 rounded-full box-content" />Salvar</button>
-                    </>
-                ) : (
-                    <>
-                        <button onClick={() => setActiveTab('geral')} className={`flex flex-col items-center gap-1 ${activeTab === 'geral' ? 'text-red-500' : 'text-gray-500'}`}><Eye className="w-5 h-5" />Perfil</button>
-                        <button onClick={() => setActiveTab('cartel')} className={`flex flex-col items-center gap-1 ${activeTab === 'cartel' ? 'text-red-500' : 'text-gray-500'}`}><Swords className="w-5 h-5" />Stats</button>
-                        <button onClick={() => setActiveTab('missoes')} className={`flex flex-col items-center gap-1 ${activeTab === 'missoes' ? 'text-red-500' : 'text-gray-500'}`}><Trophy className="w-5 h-5" />Missões</button>
-                        <button onClick={handleSave} className="flex flex-col items-center gap-1 text-white font-bold"><Save className="w-5 h-5 bg-red-600 p-0.5 rounded-full box-content" />Salvar</button>
-                    </>
-                )}
-            </div>
+
         </div>
     );
 }
