@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Public Fighter Profile - Alex "The Silencer" Silva</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&amp;family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FF4500", // Orange Red
+                        secondary: "#FFD700", // Gold/Yellow
+                        "background-light": "#F3F4F6", 
+                        "background-dark": "#0c0c0c", // Deep Black/Charcoal
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#161616", // Slightly lighter black for cards
+                        "surface-card": "#1E1E1E", // Card background
+                        "input-dark": "#202020",
+                        "border-dark": "#333333",
+                        "win": "#10B981",
+                        "loss": "#EF4444",
+                    },
+                    fontFamily: {
+                        display: ["Oswald", "sans-serif"],
+                        body: ["Roboto", "sans-serif"],
+                    },
+                    backgroundImage: {
+                        'stripe-pattern': "repeating-linear-gradient(45deg, rgba(255,255,255,0.03), rgba(255,255,255,0.03) 10px, transparent 10px, transparent 20px)",
+                    }
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF4500; 
+        }
+        .industrial-border {
+            border: 1px solid;
+            @apply border-border-dark;
+        }
+        .skew-tag {
+            transform: skew(-12deg);
+        }
+        .skew-tag-content {
+            transform: skew(12deg);
+        }
+        .section-title {
+            @apply font-display font-bold uppercase text-2xl text-white mb-6 flex items-center gap-3;
+        }
+        .section-title::after {
+            content: '';
+            @apply h-1 flex-1 bg-gradient-to-r from-primary to-transparent opacity-50;
+        }
+        .nav-item {
+            @apply text-gray-400 hover:text-white font-display font-medium uppercase tracking-wider text-sm py-4 border-b-2 border-transparent hover:border-secondary transition-all whitespace-nowrap;
+        }
+        .nav-item.active {
+            @apply text-white border-primary;
+        }
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background-dark font-body text-gray-300 antialiased min-h-screen flex flex-col">
+<header class="relative bg-surface-dark border-b border-border-dark overflow-hidden">
+<div class="absolute inset-0 bg-stripe-pattern pointer-events-none"></div>
+<div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 relative z-10">
+<div class="flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-12">
+<div class="relative flex-shrink-0 group">
+<div class="absolute -inset-1 bg-gradient-to-br from-primary to-secondary opacity-75 blur rounded-sm group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="relative h-48 w-48 md:h-64 md:w-64 bg-black p-1">
+<img alt="Fighter Profile" class="h-full w-full object-cover grayscale contrast-125 filter" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU4cT2mlThQXLe8ZaRdyrk0Kof-lX-jsBhpkDiqK5T_ixymhUBCXBmSGiYJbdF_QCVZkgObQmlH9T-LZ8PBii9mgxOhRXMpl4LYsPE8czounvmLyAGLcwlQc8ujQkXQiQFrBPGtOICoKIALZuqyAzq02N4jJB9mE-gkdYLCQXXRGbPLtRU53yQQONFdUDdJgHSDfUbcvXL1EGs8QkUAR6wEBdhm3nP035wn_W2fyVrFLKMl2h5zLuKwJQCJKN9tLbQtA3o6TdMTjQ"/>
+<div class="absolute top-2 right-2 bg-green-500 w-3 h-3 rounded-full border-2 border-black shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+</div>
+<div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-black border border-border-dark px-4 py-1 skew-tag shadow-xl">
+<span class="block skew-tag-content font-display font-bold text-white text-xl tracking-widest">24-3-1</span>
+</div>
+</div>
+<div class="flex-1 text-center md:text-left space-y-2">
+<h2 class="text-secondary font-display font-bold text-xl md:text-2xl tracking-[0.2em] uppercase flex items-center justify-center md:justify-start gap-3">
+<span class="h-px w-8 bg-secondary"></span>
+                        The Silencer
+                        <span class="h-px w-8 bg-secondary md:hidden"></span>
+</h2>
+<h1 class="text-white font-display font-bold text-6xl md:text-8xl lg:text-9xl uppercase leading-[0.85] tracking-tight drop-shadow-lg">
+                        Alex<br/>Silva
+                    </h1>
+<div class="flex flex-wrap justify-center md:justify-start gap-4 mt-6">
+<div class="skew-tag bg-primary px-5 py-1.5 shadow-[0_0_15px_rgba(255,69,0,0.4)]">
+<span class="block skew-tag-content font-display font-bold uppercase text-white text-sm tracking-wide">Level 12 Khan</span>
+</div>
+<div class="skew-tag bg-white px-5 py-1.5">
+<span class="block skew-tag-content font-display font-bold uppercase text-black text-sm tracking-wide">Kru Patente</span>
+</div>
+<div class="flex items-center gap-2 ml-2 opacity-60">
+<span class="material-symbols-outlined text-gray-400 text-sm">flag</span>
+<span class="text-xs uppercase font-bold tracking-widest">Bangkok, TH</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<nav class="sticky top-0 z-50 bg-background-dark/90 backdrop-blur-md border-b border-border-dark shadow-lg">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex overflow-x-auto no-scrollbar gap-8">
+<a class="nav-item active" href="#stats">Estatísticas</a>
+<a class="nav-item" href="#next-fight">Próxima Luta</a>
+<a class="nav-item" href="#bio">Biografia</a>
+<a class="nav-item" href="#history">Histórico</a>
+<a class="nav-item" href="#gallery">Galeria</a>
+<a class="nav-item" href="#coach">Treinador</a>
+<a class="nav-item" href="#contact">Contato</a>
+</div>
+</div>
+</nav>
+<main class="flex-1">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+<section id="next-fight">
+<div class="relative bg-surface-card industrial-border overflow-hidden group">
+<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?q=80&amp;w=2069&amp;auto=format&amp;fit=crop')] bg-cover bg-center opacity-10 grayscale mix-blend-overlay"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-background-dark via-transparent to-background-dark"></div>
+<div class="relative p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="text-center md:text-left z-10">
+<div class="inline-flex items-center gap-2 mb-2">
+<span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+<h3 class="font-display font-bold uppercase text-red-500 text-sm tracking-widest">Upcoming Event</h3>
+</div>
+<div class="font-display font-bold text-4xl text-white uppercase mb-1">Rajadamnern Series</div>
+<div class="font-mono text-gray-400 text-sm uppercase">24 Oct 2023 • 20:00 PM • Bangkok</div>
+</div>
+<div class="flex items-center gap-6 md:gap-12 flex-1 justify-center z-10">
+<div class="text-center">
+<div class="text-2xl md:text-4xl font-display font-bold text-white uppercase">Silva</div>
+<div class="text-xs font-bold text-primary uppercase">The Silencer</div>
+</div>
+<div class="font-display font-bold italic text-5xl text-gray-700 select-none">VS</div>
+<div class="text-center">
+<div class="text-2xl md:text-4xl font-display font-bold text-white uppercase opacity-50">Unknown</div>
+<div class="text-xs font-bold text-gray-500 uppercase">Opponent</div>
+</div>
+</div>
+<div class="z-10">
+<button class="bg-secondary hover:bg-white text-black font-display font-bold uppercase px-8 py-3 tracking-wider transition-colors skew-tag">
+<span class="block skew-tag-content">Get Tickets</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8" id="bio-stats-component">
+<div class="lg:col-span-7 flex flex-col gap-8">
+<section class="relative bg-surface-card industrial-border p-8 md:p-12 overflow-hidden h-full" id="bio">
+<div class="absolute inset-0 bg-stripe-pattern opacity-5 pointer-events-none"></div>
+<div class="absolute top-10 right-10 opacity-[0.03] pointer-events-none transform rotate-12">
+<span class="material-symbols-outlined text-9xl">format_quote</span>
+</div>
+<div class="relative z-10 flex flex-col h-full">
+<h2 class="text-4xl md:text-5xl font-display font-bold text-white uppercase mb-8 inline-flex flex-col items-start leading-none tracking-tight">
+                                Bio &amp; Achievements
+                                <span class="h-2 w-32 bg-primary mt-2 skew-x-[-12deg]"></span>
+</h2>
+<div class="prose prose-invert prose-lg max-w-none text-gray-400 font-light leading-relaxed mb-6">
+<p class="mb-6">
+                                    Professional Muay Thai fighter based in Bangkok, specializing in the <strong class="text-white font-medium">Muay Mat</strong> style (heavy hands and low kicks). With over 10 years of competitive experience across Thailand and Europe, Alex brings an aggressive, forward-pressure game to the ring.
+                                </p>
+<p>
+                                    Currently ranked <span class="text-primary font-bold">#4 in the WMC Welterweight division</span>, he is known for his technical precision and relentless pace. Alex began his journey in São Paulo before moving to the heart of Muay Thai to compete against the elite.
+                                </p>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<a class="bg-background-dark border border-border-dark border-b-4 border-b-pink-600 p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-card transition-all group" href="#">
+<div class="p-3 rounded-full bg-pink-600/10 group-hover:bg-pink-600/20 transition-colors">
+<span class="material-symbols-outlined text-3xl text-pink-500">photo_camera</span>
+</div>
+<span class="text-3xl font-display font-bold text-white mt-1">45.2K</span>
+<span class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Followers</span>
+</a>
+<a class="bg-background-dark border border-border-dark border-b-4 border-b-red-600 p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-card transition-all group" href="#">
+<div class="p-3 rounded-full bg-red-600/10 group-hover:bg-red-600/20 transition-colors">
+<span class="material-symbols-outlined text-3xl text-red-600">play_arrow</span>
+</div>
+<span class="text-3xl font-display font-bold text-white mt-1">12.8K</span>
+<span class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Subscribers</span>
+</a>
+<a class="bg-background-dark border border-border-dark border-b-4 border-b-cyan-400 p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-card transition-all group" href="#">
+<div class="p-3 rounded-full bg-cyan-400/10 group-hover:bg-cyan-400/20 transition-colors">
+<span class="material-symbols-outlined text-3xl text-cyan-400">music_note</span>
+</div>
+<span class="text-3xl font-display font-bold text-white mt-1">89.5K</span>
+<span class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Followers</span>
+</a>
+</div>
+</div>
+<div class="lg:col-span-5 flex flex-col gap-8">
+<section class="bg-surface-card industrial-border p-8 md:p-10" id="stats">
+<h2 class="text-4xl font-display font-bold text-white uppercase mb-10 inline-flex flex-col leading-none tracking-tight">
+                            Attributes
+                            <span class="h-2 w-full bg-secondary mt-2 skew-x-[-12deg]"></span>
+</h2>
+<div class="grid grid-cols-2 gap-x-6 gap-y-12">
+<div class="flex flex-col gap-1 group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform">height</span>
+<span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Height</span>
+</div>
+<div class="text-5xl font-display font-bold text-white">178 <span class="text-lg text-gray-600 align-top mt-2 inline-block font-normal">cm</span></div>
+</div>
+<div class="flex flex-col gap-1 group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform">scale</span>
+<span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Weight</span>
+</div>
+<div class="text-5xl font-display font-bold text-white">70 <span class="text-lg text-gray-600 align-top mt-2 inline-block font-normal">kg</span></div>
+</div>
+<div class="flex flex-col gap-1 group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform">accessibility_new</span>
+<span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Reach</span>
+</div>
+<div class="text-5xl font-display font-bold text-white">182 <span class="text-lg text-gray-600 align-top mt-2 inline-block font-normal">cm</span></div>
+</div>
+<div class="flex flex-col gap-1 group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform">calendar_today</span>
+<span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Age</span>
+</div>
+<div class="text-5xl font-display font-bold text-white">26 <span class="text-lg text-gray-600 align-top mt-2 inline-block font-normal">yo</span></div>
+</div>
+</div>
+</section>
+<section class="bg-surface-card industrial-border p-8 md:p-10 flex-1">
+<h2 class="text-4xl font-display font-bold text-white uppercase mb-8 inline-flex flex-col leading-none tracking-tight">
+                            Major Titles
+                            <span class="h-2 w-3/4 bg-secondary mt-2 skew-x-[-12deg]"></span>
+</h2>
+<div class="space-y-4">
+<div class="relative bg-background-dark p-4 border-l-4 border-secondary overflow-hidden group">
+<div class="absolute right-0 top-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-5xl text-secondary">emoji_events</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-12 h-12 flex-shrink-0 rounded-full bg-secondary/10 flex items-center justify-center text-secondary border border-secondary/20">
+<span class="material-symbols-outlined text-2xl">emoji_events</span>
+</div>
+<div>
+<h4 class="font-display font-bold text-white uppercase text-xl leading-none group-hover:text-secondary transition-colors">WMC State Champion</h4>
+<p class="text-xs text-gray-500 font-bold uppercase mt-1 tracking-wider">2022 • Welterweight</p>
+</div>
+</div>
+</div>
+<div class="relative bg-background-dark p-4 border-l-4 border-gray-700 overflow-hidden group hover:border-secondary transition-colors">
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 border border-gray-700 group-hover:text-secondary group-hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">emoji_events</span>
+</div>
+<div>
+<h4 class="font-display font-bold text-white uppercase text-xl leading-none group-hover:text-white transition-colors">Max Muay Thai Finalist</h4>
+<p class="text-xs text-gray-500 font-bold uppercase mt-1 tracking-wider">2021 • Silver Tournament</p>
+</div>
+</div>
+</div>
+<div class="relative bg-background-dark p-4 border-l-4 border-gray-700 overflow-hidden group hover:border-secondary transition-colors">
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 border border-gray-700 group-hover:text-secondary group-hover:bg-secondary/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">military_tech</span>
+</div>
+<div>
+<h4 class="font-display font-bold text-white uppercase text-xl leading-none group-hover:text-white transition-colors">Lumpinee Top 10</h4>
+<p class="text-xs text-gray-500 font-bold uppercase mt-1 tracking-wider">2020 • Official Ranking</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<div class="lg:col-span-8 space-y-8">
+<section class="bg-surface-card industrial-border p-6 md:p-8" id="history">
+<div class="flex justify-between items-center mb-6">
+<h3 class="section-title mb-0">Recent Fight History</h3>
+<button class="text-xs font-bold text-primary uppercase border border-primary px-3 py-1 hover:bg-primary hover:text-white transition-colors">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-700 text-xs text-gray-500 uppercase tracking-widest">
+<th class="py-3 px-2 font-bold">Result</th>
+<th class="py-3 px-2 font-bold">Opponent</th>
+<th class="py-3 px-2 font-bold">Method</th>
+<th class="py-3 px-2 font-bold text-right">Event/Date</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
+<td class="py-4 px-2">
+<span class="inline-block bg-win/20 text-win border border-win px-2 py-0.5 text-[10px] font-bold uppercase rounded-sm">Win</span>
+</td>
+<td class="py-4 px-2">
+<div class="text-white font-bold font-display uppercase tracking-wide">Petchdam</div>
+<div class="text-xs text-gray-500">Sor. Jor. Piek</div>
+</td>
+<td class="py-4 px-2 text-gray-300">KO (Right Hook)</td>
+<td class="py-4 px-2 text-right">
+<div class="text-white font-bold">Rajadamnern</div>
+<div class="text-xs text-gray-500">Aug 12, 2023</div>
+</td>
+</tr>
+<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
+<td class="py-4 px-2">
+<span class="inline-block bg-loss/20 text-loss border border-loss px-2 py-0.5 text-[10px] font-bold uppercase rounded-sm">Loss</span>
+</td>
+<td class="py-4 px-2">
+<div class="text-white font-bold font-display uppercase tracking-wide">Yodwicha</div>
+<div class="text-xs text-gray-500">Banchamek Gym</div>
+</td>
+<td class="py-4 px-2 text-gray-300">Decision (Unanimous)</td>
+<td class="py-4 px-2 text-right">
+<div class="text-white font-bold">RWS Tournament</div>
+<div class="text-xs text-gray-500">May 05, 2023</div>
+</td>
+</tr>
+<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
+<td class="py-4 px-2">
+<span class="inline-block bg-win/20 text-win border border-win px-2 py-0.5 text-[10px] font-bold uppercase rounded-sm">Win</span>
+</td>
+<td class="py-4 px-2">
+<div class="text-white font-bold font-display uppercase tracking-wide">Liam Harrison</div>
+<div class="text-xs text-gray-500">Bad Company</div>
+</td>
+<td class="py-4 px-2 text-gray-300">TKO (Leg Kicks)</td>
+<td class="py-4 px-2 text-right">
+<div class="text-white font-bold">ONE Championship</div>
+<div class="text-xs text-gray-500">Jan 14, 2023</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<div class="lg:col-span-4 space-y-8">
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-background-dark p-6 border border-border-dark text-center group hover:border-primary transition-colors flex flex-col justify-center">
+<span class="material-symbols-outlined text-gray-600 group-hover:text-primary mb-2 text-3xl">trophy</span>
+<div class="text-4xl font-display font-bold text-white">85%</div>
+<div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Win Rate</div>
+</div>
+<div class="bg-background-dark p-6 border border-border-dark text-center group hover:border-primary transition-colors flex flex-col justify-center">
+<span class="material-symbols-outlined text-gray-600 group-hover:text-primary mb-2 text-3xl">flash_on</span>
+<div class="text-4xl font-display font-bold text-white">12</div>
+<div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KO Finishes</div>
+</div>
+</div>
+<section class="bg-surface-card industrial-border p-6 relative overflow-hidden" id="coach">
+<div class="absolute top-0 right-0 p-2 opacity-5">
+<span class="material-symbols-outlined text-8xl">sports_mma</span>
+</div>
+<h3 class="font-display font-bold uppercase text-xl text-white mb-6 border-b border-border-dark pb-2">Head Coach</h3>
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-gray-800 border border-gray-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-gray-500 text-3xl">person</span>
+</div>
+<div>
+<h4 class="text-lg font-display font-bold text-white uppercase">Kru Somchai</h4>
+<p class="text-xs text-primary font-bold uppercase tracking-wider">Tiger Muay Thai</p>
+<div class="flex gap-2 mt-2">
+<span class="text-xs text-gray-500">Legendary Striker</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-border-dark">
+<a class="text-xs font-bold text-gray-400 hover:text-white uppercase flex items-center gap-1 transition-colors" href="#">
+                                View Gym Profile <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</section>
+</div>
+</div>
+<section class="bg-surface-card industrial-border p-6 md:p-8" id="gallery">
+<h3 class="section-title">Media Gallery</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 h-96 md:h-80">
+<div class="col-span-2 row-span-2 relative group cursor-pointer overflow-hidden border border-border-dark">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU4cT2mlThQXLe8ZaRdyrk0Kof-lX-jsBhpkDiqK5T_ixymhUBCXBmSGiYJbdF_QCVZkgObQmlH9T-LZ8PBii9mgxOhRXMpl4LYsPE8czounvmLyAGLcwlQc8ujQkXQiQFrBPGtOICoKIALZuqyAzq02N4jJB9mE-gkdYLCQXXRGbPLtRU53yQQONFdUDdJgHSDfUbcvXL1EGs8QkUAR6wEBdhm3nP035wn_W2fyVrFLKMl2h5zLuKwJQCJKN9tLbQtA3o6TdMTjQ"/>
+<div class="absolute inset-0 bg-black/50 group-hover:bg-transparent transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-5xl opacity-80 drop-shadow-lg">play_circle</span>
+</div>
+</div>
+<div class="relative group cursor-pointer overflow-hidden border border-border-dark bg-gray-800">
+<div class="absolute inset-0 bg-stripe-pattern opacity-10"></div>
+<div class="absolute bottom-2 left-2 text-xs font-bold text-gray-500 uppercase">Training Camp</div>
+</div>
+<div class="relative group cursor-pointer overflow-hidden border border-border-dark bg-gray-800">
+<div class="absolute inset-0 bg-stripe-pattern opacity-10"></div>
+<div class="absolute bottom-2 left-2 text-xs font-bold text-gray-500 uppercase">Weigh In</div>
+</div>
+<div class="relative group cursor-pointer overflow-hidden border border-border-dark bg-gray-800">
+<div class="absolute inset-0 bg-stripe-pattern opacity-10"></div>
+<div class="absolute bottom-2 left-2 text-xs font-bold text-gray-500 uppercase">Highlights</div>
+</div>
+<div class="relative group cursor-pointer overflow-hidden border border-border-dark bg-gray-800">
+<div class="absolute inset-0 bg-stripe-pattern opacity-10"></div>
+<div class="absolute bottom-2 left-2 text-xs font-bold text-gray-500 uppercase">Press Conf</div>
+</div>
+</div>
+</section>
+<section class="flex flex-col md:flex-row gap-6 items-center justify-between bg-gradient-to-r from-surface-card to-background-dark industrial-border p-8 border-l-4 border-l-primary" id="contact">
+<div>
+<h3 class="font-display font-bold uppercase text-2xl text-white">Sponsorships &amp; Booking</h3>
+<p class="text-gray-400 text-sm mt-1">For fights, seminars, and brand partnerships.</p>
+</div>
+<div class="flex gap-4">
+<button class="bg-white hover:bg-gray-200 text-black font-display font-bold uppercase px-6 py-3 text-sm tracking-wide transition-colors">
+                        Download Press Kit
+                    </button>
+<button class="bg-primary hover:bg-orange-600 text-white font-display font-bold uppercase px-6 py-3 text-sm tracking-wide transition-colors">
+                        Contact Manager
+                    </button>
+</div>
+</section>
+</div>
+</main>
+<footer class="bg-black border-t border-border-dark py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="text-center md:text-left">
+<span class="block font-display font-bold text-white text-lg tracking-wider">SILVA MANAGEMENT</span>
+<span class="text-xs text-gray-600 uppercase font-bold">© 2023 All Rights Reserved.</span>
+</div>
+<div class="flex gap-6">
+<a class="text-gray-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">public</span></a>
+<a class="text-gray-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">mail</span></a>
+<a class="text-gray-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">alternate_email</span></a>
+</div>
+</div>
+</footer>
+
+</body></html>

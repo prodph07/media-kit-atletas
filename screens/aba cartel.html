@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Integrated Fighter Cartel Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&amp;family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#FFA500", // Orange accent color
+              "background-light": "#f3f4f6",
+              "background-dark": "#0a0a0c", // Very dark charcoal almost black
+              "card-light": "#ffffff",
+              "card-dark": "#161616", // Darker card background from mission style
+              "card-border": "#2a2a2a", // Subtle border color
+              "input-bg": "#212121", // Dark input background
+              "input-border": "#333333", // Dark input border
+              "accent-green": "#00C853",
+              "accent-red": "#D32F2F",
+              "accent-yellow": "#FFD600",
+              "accent-cyan": "#00E5FF",
+              "text-light": "#333333",
+              "text-dark": "#e5e7eb",
+              "subtext-dark": "#9ca3af",
+              "mission-orange": "#FFA500", 
+            },
+            fontFamily: {
+              display: ["Teko", "sans-serif"],
+              sans: ["Roboto", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem", // More angular/industrial
+              'xl': '0.5rem',
+            },
+            boxShadow: {
+              'glow-cyan': '0 0 10px rgba(0, 229, 255, 0.4)',
+              'glow-primary': '0 0 10px rgba(255, 165, 0, 0.4)',
+            }
+          },
+        },
+      };
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0c; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444; 
+        }.industrial-input {
+            background-color: #262626;border: 1px solid #404040;color: #f3f4f6;font-family: 'Teko', sans-serif;
+            font-size: 1.25rem;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+        .industrial-input::placeholder {
+            color: #9ca3af;}
+        .industrial-input:focus {
+            background-color: #1f1f1f;border-color: #FFA500;
+            box-shadow: 0 0 0 1px #FFA500;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-sans min-h-screen flex flex-col items-center py-6 px-4 sm:px-8">
+<main class="w-full max-w-5xl space-y-6">
+<header class="w-full bg-card-dark border border-card-border p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+<div class="flex items-center gap-6 z-10">
+<div class="relative w-20 h-20 flex items-center justify-center">
+<div class="absolute inset-0 bg-primary/20 rounded-full blur-md"></div>
+<span class="material-symbols-outlined text-6xl text-gray-300 relative z-10 drop-shadow-md">shield</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-baseline gap-2">
+<span class="text-primary font-display font-bold text-4xl leading-none">81</span>
+<span class="text-white font-display font-medium text-2xl tracking-wide uppercase">Silver III</span>
+</div>
+<span class="text-subtext-dark text-sm uppercase tracking-wider font-bold">Rank Atual</span>
+</div>
+</div>
+<div class="w-full md:max-w-md flex flex-col gap-2 z-10">
+<div class="flex justify-between items-end text-xs font-bold uppercase tracking-wider text-subtext-dark">
+<span>Progresso de XP</span>
+<span class="text-white">543 / 72,900 XP</span>
+</div>
+<div class="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
+<div class="h-full bg-primary w-[1%] shadow-[0_0_10px_rgba(255,165,0,0.5)]"></div>
+</div>
+</div>
+</header>
+<div class="space-y-6">
+<section class="bg-card-dark border border-card-border rounded-xl p-6 shadow-lg relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-transparent opacity-50"></div>
+<div class="mb-6 flex items-center gap-2">
+<h2 class="text-2xl font-display font-bold uppercase tracking-wider text-primary">
+                    Atributos Físicos
+                </h2>
+<div class="h-px bg-card-border flex-grow ml-4"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-subtext-dark pl-1">Altura</label>
+<div class="relative">
+<input class="w-full industrial-input rounded p-3 pl-4" placeholder="0,00m" type="text" value="1,75m"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-subtext-dark pl-1">Peso</label>
+<div class="relative">
+<input class="w-full industrial-input rounded p-3 pl-4" placeholder="00kg" type="text" value="75kg"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-subtext-dark pl-1">Envergadura</label>
+<div class="relative">
+<input class="w-full industrial-input rounded p-3 pl-4" placeholder="0,00m" type="text" value="1,75m"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-subtext-dark pl-1">Idade</label>
+<div class="relative">
+<input class="w-full industrial-input rounded p-3 pl-4" placeholder="dd/mm/aaaa" type="text" value="28/12/1998"/>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-card-dark border border-card-border rounded-xl p-6 shadow-lg relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-accent-cyan to-transparent opacity-50"></div>
+<div class="mb-6 flex items-center gap-2">
+<h2 class="text-2xl font-display font-bold uppercase tracking-wider text-accent-cyan">
+                    Cartel Profissional
+                </h2>
+<div class="h-px bg-card-border flex-grow ml-4"></div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-accent-green pl-1">Vitórias</label>
+<input class="w-full industrial-input rounded p-3 pl-4 border-l-4 !border-l-accent-green" type="number" value="56"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-accent-red pl-1">Derrotas</label>
+<input class="w-full industrial-input rounded p-3 pl-4 border-l-4 !border-l-accent-red" type="number" value="2"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-accent-yellow pl-1">Empates</label>
+<input class="w-full industrial-input rounded p-3 pl-4 border-l-4 !border-l-accent-yellow" type="number" value="0"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs uppercase font-bold tracking-wider text-subtext-dark pl-1">K.O.s</label>
+<input class="w-full industrial-input rounded p-3 pl-4" type="number" value="3"/>
+</div>
+<div class="space-y-2 col-span-2 md:col-span-1">
+<label class="block text-xs uppercase font-bold tracking-wider text-subtext-dark pl-1">Subs</label>
+<input class="w-full industrial-input rounded p-3 pl-4" type="number" value="0"/>
+</div>
+</div>
+</section>
+<section class="bg-card-dark border border-card-border rounded-xl p-6 shadow-lg relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-accent-yellow to-transparent opacity-50"></div>
+<div class="mb-6 flex items-center gap-2">
+<h2 class="text-2xl font-display font-bold uppercase tracking-wider text-primary">
+                    Prêmios
+                </h2>
+<div class="h-px bg-card-border flex-grow ml-4"></div>
+</div>
+<div class="space-y-4">
+<div class="flex gap-2">
+<div class="relative flex-grow">
+<input class="w-full industrial-input rounded p-3 pl-4" placeholder="Ex: Campeão Brasileiro 2024" type="text"/>
+</div>
+<button class="h-full aspect-square md:w-14 md:h-14 rounded bg-accent-cyan text-black flex items-center justify-center hover:bg-cyan-300 transition-all shadow-glow-cyan">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+</div>
+<div class="space-y-3 mt-4">
+<div class="flex items-center justify-between bg-[#111111] border border-white/5 rounded p-4 group/item hover:border-white/10 hover:bg-[#161616] transition-all">
+<span class="font-display font-medium text-lg tracking-wide text-white">Melhor Highlight do Rio de Janeiro</span>
+<button class="text-accent-red opacity-50 hover:opacity-100 p-2 hover:bg-accent-red/10 rounded transition-all">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<div class="flex items-center justify-between bg-[#111111] border border-white/5 rounded p-4 group/item hover:border-white/10 hover:bg-[#161616] transition-all">
+<span class="font-display font-medium text-lg tracking-wide text-white">Campeão Estadual Muay Thai 2023</span>
+<button class="text-accent-red opacity-50 hover:opacity-100 p-2 hover:bg-accent-red/10 rounded transition-all">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

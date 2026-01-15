@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fighter Fight History and Schedule Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&amp;family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#D50000", // Bold Red
+                        secondary: "#FFD700", // Golden Yellow
+                        "muay-gold": "#FFD700", 
+                        "muay-red": "#DC2626",
+                        "background-light": "#F3F4F6", // Light Gray
+                        "background-dark": "#0c0c0c", // Deep Black/Charcoal
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#161616", // Slightly lighter black for cards
+                        "input-dark": "#202020",
+                        "border-dark": "#333333",
+                        "win-green": "#1b5e20",
+                    },
+                    fontFamily: {
+                        display: ["Oswald", "sans-serif"],
+                        body: ["Roboto", "sans-serif"],
+                    },
+                    backgroundImage: {
+                        'stripe-pattern': "repeating-linear-gradient(45deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px)",
+                    }
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #1a1a1a; 
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #444; 
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #FFD700; 
+    }
+    .industrial-border {
+        border: 1px solid;
+        @apply border-gray-300 dark:border-border-dark;
+    }.dashboard-input {
+        @apply w-full bg-gray-100 dark:bg-black border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide text-lg focus:ring-1 focus:ring-muay-gold focus:border-muay-gold placeholder-gray-600 transition-all;
+    }
+    .dashboard-label {
+        @apply block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider;
+    }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-body text-gray-800 dark:text-gray-200 transition-colors duration-200 h-screen flex overflow-hidden">
+<div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+<main class="flex-1 overflow-y-auto p-4 lg:p-8 relative">
+<div class="max-w-6xl mx-auto space-y-8">
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 lg:p-8 shadow-2xl relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-muay-red opacity-80"></div>
+<div class="flex items-center gap-3 mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+<span class="material-symbols-outlined text-muay-gold text-3xl">swords</span>
+<h2 class="font-display font-bold uppercase text-2xl lg:text-3xl text-gray-900 dark:text-white tracking-wide">Próxima Luta</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+<div>
+<label class="dashboard-label">Data</label>
+<input class="dashboard-input" type="text" value="15/01/2026"/>
+</div>
+<div>
+<label class="dashboard-label">Evento</label>
+<input class="dashboard-input" type="text" value="Lançamento da plataforma"/>
+</div>
+<div>
+<label class="dashboard-label">Oponente</label>
+<input class="dashboard-input" type="text" value="Ranked"/>
+</div>
+<div>
+<label class="dashboard-label">Local</label>
+<input class="dashboard-input" type="text" value="Rio de Janeiro"/>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 lg:p-8 shadow-2xl relative">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
+<h2 class="font-display font-bold uppercase text-2xl lg:text-3xl text-gray-900 dark:text-white tracking-wide">Histórico de Lutas</h2>
+<button class="bg-muay-gold hover:bg-yellow-400 text-gray-900 font-display font-bold uppercase px-4 py-2 text-sm tracking-wide transition-colors flex items-center gap-2 group shadow-lg shadow-yellow-500/20">
+<span class="material-symbols-outlined text-lg group-hover:rotate-90 transition-transform">add_circle</span>
+                        Adicionar (Vazio)
+                    </button>
+</div>
+<div class="space-y-3">
+<div class="bg-gray-100 dark:bg-[#0f0f0f] border border-gray-300 dark:border-gray-800 p-2 sm:p-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-colors hover:border-gray-400 dark:hover:border-gray-600 group">
+<div class="hidden sm:flex h-12 w-16 bg-green-700 items-center justify-center flex-shrink-0">
+<span class="font-display font-bold text-white text-xl">W</span>
+</div>
+<div class="flex sm:hidden w-full items-center justify-between border-b border-gray-700 pb-2 mb-2">
+<span class="font-display font-bold text-white bg-green-700 px-3 py-1 text-sm">WIN</span>
+<span class="material-symbols-outlined text-red-500 cursor-pointer hover:text-red-400">delete</span>
+</div>
+<div class="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 w-full items-center px-0 sm:px-4 py-2">
+<div class="sm:col-span-5 flex flex-col justify-center">
+<span class="text-gray-900 dark:text-white font-display font-medium text-lg uppercase truncate">Criação da Nocaute Mídia</span>
+</div>
+<div class="sm:col-span-4 border-b border-gray-700 sm:border-none pb-2 sm:pb-0">
+<input class="bg-transparent border-0 border-b border-gray-600 focus:border-muay-gold focus:ring-0 text-gray-500 dark:text-gray-400 w-full p-0 text-sm font-body placeholder-gray-600" placeholder="Oponente" type="text"/>
+</div>
+<div class="sm:col-span-3 text-left sm:text-right">
+<span class="font-mono font-bold text-gray-400 text-sm">19/02/2024</span>
+</div>
+</div>
+<div class="hidden sm:flex h-12 w-12 items-center justify-center flex-shrink-0 cursor-pointer hover:bg-red-500/10 transition-colors">
+<span class="material-symbols-outlined text-red-500 group-hover:scale-110 transition-transform">delete</span>
+</div>
+</div>
+<div class="opacity-30 p-4 border border-dashed border-gray-600 text-center">
+<p class="font-mono text-xs uppercase text-gray-500">More fights will appear here</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

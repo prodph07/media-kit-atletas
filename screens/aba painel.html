@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Integrated Main Fighter Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&amp;family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FF4500", // Orange Red
+                        secondary: "#FFD700", // Gold/Yellow
+                        "background-light": "#F3F4F6", // Light Gray
+                        "background-dark": "#0c0c0c", // Deep Black/Charcoal
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#161616", // Slightly lighter black for cards
+                        "input-dark": "#202020",
+                        "border-dark": "#333333",
+                        "action-green": "#00E676", // Vibrant Green
+                    },
+                    fontFamily: {
+                        display: ["Oswald", "sans-serif"],
+                        body: ["Roboto", "sans-serif"],
+                    },
+                    backgroundImage: {
+                        'stripe-pattern': "repeating-linear-gradient(45deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px)",
+                    }
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF4500; 
+        }
+        .industrial-border {
+            border: 1px solid;
+            @apply border-gray-300 dark:border-border-dark;
+        }
+        .checkbox-wrapper input:checked + div {
+            background-color: #FF4500;
+            border-color: #FF4500;
+        }.material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+        .material-symbols-outlined.filled {
+          font-variation-settings:
+          'FILL' 1,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-body text-gray-800 dark:text-gray-200 transition-colors duration-200 h-screen flex flex-col overflow-hidden">
+<header class="h-16 flex-none bg-[#111] border-b border-[#222] flex items-center justify-between px-4 lg:px-8 z-20 shadow-md">
+<div class="flex items-center gap-4">
+<h1 class="font-display font-bold text-2xl tracking-tight text-white uppercase">Painel</h1>
+<span class="bg-secondary text-black font-display font-bold text-xs px-2 py-0.5 rounded-sm shadow-lg shadow-yellow-500/20">PRO</span>
+</div>
+<div class="flex items-center gap-4 lg:gap-6">
+<button class="hidden sm:flex items-center gap-2 bg-green-900/20 text-action-green hover:bg-action-green hover:text-black transition-all font-display font-bold uppercase text-xs tracking-wide border border-action-green/50 px-4 py-1.5 rounded-sm shadow-[0_0_10px_rgba(0,230,118,0.1)]">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>Save</span>
+</button>
+<div class="h-6 w-px bg-gray-700 hidden sm:block"></div>
+<button class="text-gray-400 hover:text-white transition-colors" title="View Profile">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+<button class="text-red-500 hover:text-red-400 transition-colors" title="Logout">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<div class="flex-none bg-background-dark border-b border-[#222] py-4 px-4 lg:px-8 overflow-x-auto no-scrollbar">
+<div class="flex items-center gap-3 min-w-max">
+<button class="bg-primary text-white font-display font-bold uppercase text-sm px-6 py-2 rounded-full shadow-lg shadow-primary/20 transition-transform hover:scale-105">
+                Geral
+            </button>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Missões
+            </button>
+<div class="relative">
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                    Solicitações
+                </button>
+<span class="absolute -top-1 -right-1 flex h-4 w-4">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-4 w-4 bg-primary text-[10px] text-white font-bold items-center justify-center">2</span>
+</span>
+</div>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Duelos
+            </button>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Cartel
+            </button>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Lutas
+            </button>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Área Treinador
+            </button>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Mídia
+            </button>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Métricas
+            </button>
+<button class="bg-[#222] text-gray-400 hover:text-white hover:bg-[#333] font-display font-bold uppercase text-sm px-6 py-2 rounded-full transition-colors">
+                Contato
+            </button>
+</div>
+</div>
+<main class="flex-1 overflow-y-auto p-4 lg:p-8 relative scroll-smooth pb-32">
+<div class="max-w-7xl mx-auto space-y-6">
+<div class="bg-gradient-to-r from-gray-900 to-[#1a1a1a] border border-gray-800 rounded-sm p-6 relative overflow-hidden group">
+<div class="absolute inset-0 bg-stripe-pattern opacity-10 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+<div>
+<h3 class="font-display font-bold uppercase text-2xl text-secondary mb-1 flex items-center gap-2">
+<span class="material-symbols-outlined filled">workspace_premium</span>
+                            Banner Premium
+                        </h3>
+<p class="text-gray-400 text-sm max-w-xl">Acesse estatísticas avançadas, prioridade na busca de lutas e destaque na comunidade.</p>
+</div>
+<button class="bg-secondary hover:bg-yellow-400 text-black font-display font-bold uppercase px-6 py-2 text-sm tracking-wide rounded-sm shadow-lg shadow-yellow-500/10 transition-colors whitespace-nowrap">
+                        Ver Vantagens
+                    </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-5 rounded-sm">
+<div class="flex flex-col xl:flex-row items-center gap-6">
+<div class="flex flex-1 items-center gap-6 w-full">
+<div class="h-12 w-12 rounded-full bg-green-900/20 flex items-center justify-center border border-green-500/30 shrink-0">
+<span class="material-symbols-outlined text-action-green">card_giftcard</span>
+</div>
+<div class="flex-1 text-left">
+<h4 class="font-display font-bold uppercase text-lg text-white">Indique e Ganhe</h4>
+<p class="text-gray-400 text-sm">Convide lutadores e ganhe 1 mês PRO.</p>
+</div>
+</div>
+<div class="flex flex-col md:flex-row w-full xl:w-auto items-center gap-6 justify-between xl:justify-end border-t xl:border-t-0 border-gray-800 pt-4 xl:pt-0">
+<div class="flex items-center gap-8">
+<div class="flex flex-col items-center xl:items-end">
+<span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Contas Criadas</span>
+<span class="font-display font-bold text-2xl text-white">12</span>
+</div>
+<div class="w-px h-8 bg-gray-700"></div>
+<div class="flex flex-col items-center xl:items-end">
+<span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Contas Premium</span>
+<span class="font-display font-bold text-2xl text-secondary">3</span>
+</div>
+</div>
+<div class="flex w-full md:w-auto bg-input-dark border border-gray-700 rounded-sm p-1">
+<input class="bg-transparent border-none text-gray-300 font-mono text-sm px-3 focus:ring-0 w-full md:w-32 text-center md:text-left" readonly="" value="MUAY-X92-PRO"/>
+<button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded-sm text-xs font-bold uppercase transition-colors">Copiar</button>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="lg:col-span-4 space-y-6">
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6">
+<div class="flex flex-col gap-6 items-center sm:items-start">
+<div class="flex flex-row gap-6 w-full items-start">
+<div class="relative flex-shrink-0">
+<div class="h-24 w-24 bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 p-1">
+<img alt="Fighter" class="h-full w-full object-cover grayscale contrast-125" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU4cT2mlThQXLe8ZaRdyrk0Kof-lX-jsBhpkDiqK5T_ixymhUBCXBmSGiYJbdF_QCVZkgObQmlH9T-LZ8PBii9mgxOhRXMpl4LYsPE8czounvmLyAGLcwlQc8ujQkXQiQFrBPGtOICoKIALZuqyAzq02N4jJB9mE-gkdYLCQXXRGbPLtRU53yQQONFdUDdJgHSDfUbcvXL1EGs8QkUAR6wEBdhm3nP035wn_W2fyVrFLKMl2h5zLuKwJQCJKN9tLbQtA3o6TdMTjQ"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-secondary text-black text-[10px] font-bold uppercase px-2 py-1 border border-black shadow-md">
+                                        Ready
+                                    </div>
+</div>
+<div class="flex-1">
+<h3 class="font-display font-bold uppercase text-xl text-gray-900 dark:text-white mb-1">Profile Image</h3>
+<p class="text-xs font-bold text-gray-500 uppercase mb-3">Max 5MB (JPG/PNG)</p>
+<button class="bg-transparent border border-gray-400 dark:border-gray-600 hover:border-primary text-gray-900 dark:text-white hover:text-primary font-display font-bold uppercase px-4 py-2 text-xs tracking-wide transition-colors w-full sm:w-auto">
+                                        Upload
+                                    </button>
+</div>
+</div>
+<div class="w-full">
+<label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Custom URL</label>
+<div class="flex bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 p-2 items-center">
+<span class="text-gray-500 font-mono text-xs px-2 whitespace-nowrap">MUAY/</span>
+<input class="bg-transparent border-none text-gray-900 dark:text-white font-bold font-display uppercase tracking-wide focus:ring-0 p-0 w-full text-sm" type="text" value="THE-SILENCER"/>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6">
+<div class="flex items-center gap-2 text-primary mb-4">
+<span class="material-symbols-outlined">edit_note</span>
+<h3 class="font-display font-bold uppercase text-xl text-gray-900 dark:text-white">Daily Status</h3>
+</div>
+<div class="flex flex-col gap-3">
+<textarea class="w-full bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-500 resize-none" placeholder="How's training feeling?" rows="2">Pad work feeling sharp today! 🥊</textarea>
+<button class="bg-primary hover:bg-orange-600 text-white font-display font-bold uppercase py-2 text-sm tracking-wide transition-colors w-full">
+                                Update Status
+                            </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6">
+<h3 class="font-display font-bold uppercase text-xl text-gray-900 dark:text-white mb-4">Select Role(s)</h3>
+<div class="space-y-3">
+<label class="checkbox-wrapper cursor-pointer group block relative">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 p-4 flex items-center gap-4 transition-all peer-checked:border-primary peer-checked:bg-primary/5">
+<div class="h-6 w-6 border-2 border-gray-400 dark:border-gray-600 flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
+<span class="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<div>
+<span class="block font-display font-bold uppercase text-gray-900 dark:text-white text-lg">Nak Muay</span>
+<span class="text-xs uppercase font-bold text-gray-500 dark:text-gray-400">Active Fighter</span>
+</div>
+</div>
+</label>
+<label class="checkbox-wrapper cursor-pointer group block relative">
+<input class="peer sr-only" type="checkbox"/>
+<div class="bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 p-4 flex items-center gap-4 transition-all peer-checked:border-primary peer-checked:bg-primary/5">
+<div class="h-6 w-6 border-2 border-gray-400 dark:border-gray-600 flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
+<span class="material-symbols-outlined text-white text-sm opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<div>
+<span class="block font-display font-bold uppercase text-gray-900 dark:text-white text-lg">Kru / Coach</span>
+<span class="text-xs uppercase font-bold text-gray-500 dark:text-gray-400">Trainer / Holder</span>
+</div>
+</div>
+</label>
+</div>
+</div>
+</div>
+<div class="lg:col-span-8 flex flex-col h-full gap-6">
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 lg:p-8 flex-1">
+<div class="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+<h3 class="font-display font-bold uppercase text-3xl text-gray-900 dark:text-white">Fighter Data</h3>
+<span class="text-[10px] font-bold text-primary uppercase">* Required Fields</span>
+</div>
+<div class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-xs font-bold text-gray-500 uppercase mb-2">Full Name</label>
+<input class="w-full bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-primary focus:border-primary" type="text" value="ALEX SILVA"/>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 uppercase mb-2">Fight Name</label>
+<input class="w-full bg-gray-100 dark:bg-input-dark border border-primary text-primary px-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-primary focus:border-primary" type="text" value="THE SILENCER"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-xs font-bold text-gray-500 uppercase mb-2">Weight Class</label>
+<div class="relative">
+<select class="w-full bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase appearance-none focus:ring-1 focus:ring-primary focus:border-primary">
+<option>Welterweight</option>
+<option>Lightweight</option>
+<option>Middleweight</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none bg-gray-200 dark:bg-[#333] border-l border-gray-300 dark:border-gray-700">
+<span class="material-symbols-outlined text-gray-500">expand_more</span>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 uppercase mb-2">Style</label>
+<input class="w-full bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 font-display font-bold tracking-wide uppercase focus:ring-1 focus:ring-primary focus:border-primary" type="text" value="MUAY MAT"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 uppercase mb-2">Bio</label>
+<textarea class="w-full bg-gray-100 dark:bg-input-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white px-4 py-3 text-sm font-medium focus:ring-1 focus:ring-primary focus:border-primary resize-none h-40" rows="4">Professional Muay Thai fighter based in Bangkok. Specializing in low kicks and heavy hands. Looking for opponents in the 70kg division.</textarea>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 bg-[#0c0c0c]/95 backdrop-blur-sm border-t border-[#222] p-4 lg:p-6 z-40">
+<div class="max-w-7xl mx-auto">
+<button class="w-full bg-action-green hover:bg-green-500 text-black font-display font-bold text-xl uppercase py-4 shadow-[0_0_20px_rgba(0,230,118,0.2)] transition-all transform hover:scale-[1.005] hover:shadow-[0_0_30px_rgba(0,230,118,0.4)]">
+                Salvar Alterações
+            </button>
+</div>
+</div>
+
+</body></html>

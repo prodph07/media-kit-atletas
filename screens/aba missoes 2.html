@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tabbed Fighter Missions Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&amp;family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FF4500", // Orange Red
+                        secondary: "#FFD700", // Gold/Yellow
+                        "background-light": "#F3F4F6", // Light Gray
+                        "background-dark": "#0c0c0c", // Deep Black/Charcoal
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#161616", // Slightly lighter black for cards
+                        "input-dark": "#202020",
+                        "border-dark": "#333333",
+                    },
+                    fontFamily: {
+                        display: ["Oswald", "sans-serif"],
+                        body: ["Roboto", "sans-serif"],
+                    },
+                    backgroundImage: {
+                        'stripe-pattern': "repeating-linear-gradient(45deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px)",
+                    }
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF4500; 
+        }
+        .industrial-border {
+            border: 1px solid;
+            @apply border-gray-300 dark:border-border-dark;
+        }
+        .progress-stripe {
+            background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+            background-size: 1rem 1rem;
+        }@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-tab-content {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-body text-gray-800 dark:text-gray-200 transition-colors duration-200 h-screen flex overflow-hidden">
+<div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+<main class="flex-1 overflow-y-auto p-4 lg:p-8 relative">
+<div class="max-w-7xl mx-auto space-y-8">
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 lg:p-10 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-9xl">military_tech</span>
+</div>
+<div class="flex flex-col md:flex-row items-center gap-8 md:gap-12 relative z-10">
+<div class="flex flex-col items-center justify-center md:border-r md:border-gray-700 md:pr-12 min-w-[140px]">
+<span class="text-7xl lg:text-9xl font-display font-bold text-white leading-none drop-shadow-lg" style="-webkit-text-stroke: 2px #FF4500;">81</span>
+<span class="text-xl lg:text-2xl font-display font-bold uppercase tracking-[0.2em] text-gray-400 mt-2">Silver</span>
+</div>
+<div class="flex-1 w-full">
+<div class="flex flex-col sm:flex-row justify-between items-end mb-3 gap-2">
+<h2 class="text-3xl lg:text-4xl font-display font-bold uppercase text-white tracking-wide">
+                                    Silver <span class="text-primary">III</span>
+</h2>
+<span class="font-mono text-primary font-bold text-lg">543 / 72,900 XP</span>
+</div>
+<div class="h-6 w-full bg-gray-900 border border-gray-700 relative shadow-inner">
+<div class="absolute left-0 top-0 h-full bg-gradient-to-r from-primary to-secondary w-[65%] progress-stripe flex items-center justify-end px-2">
+<div class="h-full w-1 bg-white opacity-50 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
+</div>
+<div class="absolute inset-0 flex justify-between px-[25%] pointer-events-none">
+<div class="h-full w-px bg-gray-800"></div>
+<div class="h-full w-px bg-gray-800"></div>
+<div class="h-full w-px bg-gray-800"></div>
+</div>
+</div>
+<div class="mt-3 flex justify-between text-xs font-bold uppercase text-gray-500 tracking-wider">
+<span>Previous Rank: Silver II</span>
+<span>Next Rank: Gold I</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full">
+<input checked="" class="peer/daily hidden" id="tab_daily" name="mission_tabs" type="radio"/>
+<input class="peer/weekly hidden" id="tab_weekly" name="mission_tabs" type="radio"/>
+<input class="peer/unique hidden" id="tab_unique" name="mission_tabs" type="radio"/>
+<div class="flex flex-wrap border-b border-gray-800 mb-8 sticky top-0 bg-background-light dark:bg-background-dark z-20 pt-2">
+<label class="cursor-pointer group relative px-6 py-4 flex items-center gap-3 transition-colors" for="tab_daily">
+<span class="material-symbols-outlined text-gray-500 group-hover:text-primary peer-checked/daily:text-primary transition-colors">restart_alt</span>
+<span class="font-display font-bold text-lg uppercase tracking-wider text-gray-500 group-hover:text-gray-300 transition-colors">Diárias</span>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-primary scale-x-0 group-hover:scale-x-50 transition-transform origin-left peer-checked/daily:scale-x-100 peer-checked/daily:shadow-[0_0_10px_rgba(255,69,0,0.5)]"></div>
+<style>.peer\/daily:checked ~ div label[for="tab_daily"] span { color: #FF4500; } .peer\/daily:checked ~ div label[for="tab_daily"] div { transform: scaleX(1); }</style>
+</label>
+<label class="cursor-pointer group relative px-6 py-4 flex items-center gap-3 transition-colors" for="tab_weekly">
+<span class="material-symbols-outlined text-gray-500 group-hover:text-secondary transition-colors">calendar_today</span>
+<span class="font-display font-bold text-lg uppercase tracking-wider text-gray-500 group-hover:text-gray-300 transition-colors">Semanais</span>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-secondary scale-x-0 group-hover:scale-x-50 transition-transform origin-left peer-checked/weekly:scale-x-100 peer-checked/weekly:shadow-[0_0_10px_rgba(255,215,0,0.5)]"></div>
+<style>.peer\/weekly:checked ~ div label[for="tab_weekly"] span { color: #FFD700; } .peer\/weekly:checked ~ div label[for="tab_weekly"] div { transform: scaleX(1); }</style>
+</label>
+<label class="cursor-pointer group relative px-6 py-4 flex items-center gap-3 transition-colors" for="tab_unique">
+<span class="material-symbols-outlined text-gray-500 group-hover:text-white transition-colors">trophy</span>
+<span class="font-display font-bold text-lg uppercase tracking-wider text-gray-500 group-hover:text-gray-300 transition-colors">Conquistas Únicas</span>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-white scale-x-0 group-hover:scale-x-50 transition-transform origin-left peer-checked/unique:scale-x-100 peer-checked/unique:shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+<style>.peer\/unique:checked ~ div label[for="tab_unique"] span { color: white; } .peer\/unique:checked ~ div label[for="tab_unique"] div { transform: scaleX(1); }</style>
+</label>
+</div>
+<div class="hidden peer-checked/daily:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-tab-content">
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group hover:border-primary transition-colors flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h4 class="font-display font-bold text-xl text-gray-900 dark:text-white uppercase tracking-wide">Shadow Boxing</h4>
+<div class="bg-input-dark border border-gray-700 px-3 py-1 text-xs font-bold text-secondary uppercase tracking-wider">+150 XP</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Complete 3 rounds of shadow boxing focusing on teep kicks. Ensure proper form and balance throughout each round.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-gray-500 uppercase">0/3 Rounds</span>
+<button class="bg-primary hover:bg-orange-600 text-white font-display font-bold uppercase px-6 py-2 text-sm tracking-wide transition-colors">
+                                    Start
+                                </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group hover:border-primary transition-colors flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h4 class="font-display font-bold text-xl text-gray-900 dark:text-white uppercase tracking-wide">Heavy Bag Kicks</h4>
+<div class="bg-input-dark border border-gray-700 px-3 py-1 text-xs font-bold text-secondary uppercase tracking-wider">+200 XP</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Perform 500 kicks on the heavy bag (250 each leg). Focus on shin conditioning and hip rotation.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-gray-500 uppercase">120/500</span>
+<button class="bg-transparent border border-gray-500 hover:border-primary hover:text-primary text-gray-400 font-display font-bold uppercase px-6 py-2 text-sm tracking-wide transition-colors">
+                                    Log
+                                </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group opacity-50 flex flex-col">
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center z-10 pointer-events-none">
+<span class="bg-black text-white px-4 py-2 font-display font-bold uppercase text-sm border border-gray-600 shadow-xl">Completed</span>
+</div>
+<div class="flex justify-between items-start mb-4">
+<h4 class="font-display font-bold text-xl text-gray-900 dark:text-white uppercase tracking-wide">Morning Run</h4>
+<div class="bg-input-dark border border-gray-700 px-3 py-1 text-xs font-bold text-gray-500 uppercase tracking-wider">Done</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Run 5km before 8:00 AM to build cardiovascular endurance.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-primary uppercase">5/5 km</span>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</div>
+</div>
+</div>
+<div class="hidden peer-checked/weekly:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-tab-content">
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group hover:border-secondary transition-colors flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h4 class="font-display font-bold text-xl text-gray-900 dark:text-white uppercase tracking-wide">Sparring Adept</h4>
+<div class="bg-input-dark border border-gray-700 px-3 py-1 text-xs font-bold text-secondary uppercase tracking-wider">+1000 XP</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Complete 5 full sparring sessions with a partner. Technical sparring only, no hard hits.</p>
+<div class="w-full bg-gray-800 h-2 mb-6">
+<div class="bg-secondary h-2 w-[60%] shadow-[0_0_10px_rgba(255,215,0,0.5)]"></div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-gray-500 uppercase">3/5 Sessions</span>
+<button class="bg-secondary/10 hover:bg-secondary text-secondary hover:text-black border border-secondary font-display font-bold uppercase px-6 py-2 text-sm tracking-wide transition-colors">
+                                    Check In
+                                </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group hover:border-secondary transition-colors flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h4 class="font-display font-bold text-xl text-gray-900 dark:text-white uppercase tracking-wide">Clinch Master</h4>
+<div class="bg-input-dark border border-gray-700 px-3 py-1 text-xs font-bold text-secondary uppercase tracking-wider">+800 XP</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Accumulate 60 minutes of clinch work. Focus on knee strikes and breaking posture.</p>
+<div class="w-full bg-gray-800 h-2 mb-6">
+<div class="bg-secondary h-2 w-[20%] shadow-[0_0_10px_rgba(255,215,0,0.5)]"></div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-gray-500 uppercase">12/60 Mins</span>
+<button class="bg-transparent border border-gray-500 hover:border-secondary hover:text-secondary text-gray-400 font-display font-bold uppercase px-6 py-2 text-sm tracking-wide transition-colors">
+                                    Log Time
+                                </button>
+</div>
+</div>
+</div>
+<div class="hidden peer-checked/unique:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-tab-content">
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group border-secondary shadow-[0_0_20px_rgba(255,215,0,0.05)] flex flex-col">
+<div class="absolute -top-3 -right-3 bg-secondary text-black p-2 shadow-lg border border-white rotate-12">
+<span class="material-symbols-outlined text-xl">workspace_premium</span>
+</div>
+<div class="flex justify-between items-start mb-4 pr-6">
+<h4 class="font-display font-bold text-xl text-secondary uppercase tracking-wide">Muay Mat</h4>
+<div class="bg-secondary/20 border border-secondary/50 px-3 py-1 text-xs font-bold text-secondary uppercase tracking-wider">Title</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Win 3 fights by Knockout using punches. Awarded for aggressive boxing style.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-secondary uppercase">2/3 KOs</span>
+<button class="bg-secondary hover:bg-white text-black font-display font-bold uppercase px-6 py-2 text-sm tracking-wide transition-colors shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                                    Claim
+                                </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group hover:border-white transition-colors flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h4 class="font-display font-bold text-xl text-gray-900 dark:text-white uppercase tracking-wide">Iron Shin</h4>
+<div class="bg-input-dark border border-gray-700 px-3 py-1 text-xs font-bold text-purple-400 uppercase tracking-wider">Rare</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Check 1000 kicks in sparring total. Demonstrate superior defense and conditioning.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-gray-500 uppercase">842/1000 Checked</span>
+<span class="material-symbols-outlined text-gray-600">lock</span>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark industrial-border p-6 relative group hover:border-white transition-colors flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<h4 class="font-display font-bold text-xl text-gray-900 dark:text-white uppercase tracking-wide">Waikru</h4>
+<div class="bg-input-dark border border-gray-700 px-3 py-1 text-xs font-bold text-blue-400 uppercase tracking-wider">Emote</div>
+</div>
+<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">Perform the Waikru ceremony before a fight. Show respect to your teachers.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+<span class="text-xs font-bold text-gray-500 uppercase">Locked</span>
+<span class="material-symbols-outlined text-gray-600">lock</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

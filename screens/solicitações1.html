@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Integrated Fighter Requests Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&amp;family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#FFA500", // Orange accent color
+              "background-light": "#f3f4f6",
+              "background-dark": "#0a0a0c", // Very dark charcoal almost black
+              "card-light": "#ffffff",
+              "card-dark": "#161616", // Darker card background from mission style
+              "card-border": "#2a2a2a", // Subtle border color
+              "accent-green": "#00C853",
+              "accent-red": "#D32F2F",
+              "text-light": "#333333",
+              "text-dark": "#e5e7eb",
+              "subtext-dark": "#9ca3af",
+              "mission-orange": "#FFA500", // Matching the START button
+            },
+            fontFamily: {
+              display: ["Teko", "sans-serif"],
+              sans: ["Roboto", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem", // More angular/industrial
+              'xl': '0.5rem',
+            },
+          },
+        },
+      };
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0c; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-sans min-h-screen flex flex-col items-center py-6 px-4 sm:px-8">
+<main class="w-full max-w-5xl space-y-6">
+<header class="w-full bg-card-dark border border-card-border p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+<div class="flex items-center gap-6 z-10">
+<div class="relative w-20 h-20 flex items-center justify-center">
+<div class="absolute inset-0 bg-primary/20 rounded-full blur-md"></div>
+<span class="material-symbols-outlined text-6xl text-gray-300 relative z-10 drop-shadow-md">shield</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-baseline gap-2">
+<span class="text-primary font-display font-bold text-4xl leading-none">81</span>
+<span class="text-white font-display font-medium text-2xl tracking-wide uppercase">Silver III</span>
+</div>
+<span class="text-subtext-dark text-sm uppercase tracking-wider font-bold">Rank Atual</span>
+</div>
+</div>
+<div class="w-full md:max-w-md flex flex-col gap-2 z-10">
+<div class="flex justify-between items-end text-xs font-bold uppercase tracking-wider text-subtext-dark">
+<span>Progresso de XP</span>
+<span class="text-white">543 / 72,900 XP</span>
+</div>
+<div class="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
+<div class="h-full bg-primary w-[1%] shadow-[0_0_10px_rgba(255,165,0,0.5)]"></div>
+</div>
+</div>
+</header>
+<nav class="flex w-full border-b border-card-border">
+<button class="px-8 py-3 text-lg font-display font-bold tracking-wider uppercase text-primary border-b-2 border-primary bg-primary/5 hover:bg-primary/10 transition-colors focus:outline-none">
+                Convites
+            </button>
+<button class="px-8 py-3 text-lg font-display font-bold tracking-wider uppercase text-subtext-dark hover:text-white transition-colors focus:outline-none">
+                Duelos
+            </button>
+</nav>
+<div class="space-y-8">
+<section class="space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-xl">school</span>
+<h2 class="text-xl font-display font-bold uppercase tracking-wider text-white">
+                        Convites de Treinadores/Equipe
+                    </h2>
+</div>
+<div class="bg-card-dark rounded-xl border border-card-border p-5 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-primary/30 transition-all duration-300 group">
+<div class="flex flex-col md:flex-row items-center md:items-start gap-5 text-center md:text-left w-full">
+<div class="w-14 h-14 rounded bg-[#2a2a2a] border border-white/10 flex items-center justify-center text-white text-2xl font-display font-medium shadow-md shrink-0 group-hover:border-primary/50 transition-colors">
+                            P
+                        </div>
+<div class="flex flex-col justify-center h-full">
+<span class="text-[10px] uppercase font-bold tracking-widest text-primary mb-1">
+                                Novo Pedido
+                            </span>
+<h3 class="text-2xl font-display font-bold leading-none mb-1 text-white tracking-wide">
+                                PEDRO
+                            </h3>
+<p class="text-xs text-subtext-dark uppercase font-bold tracking-wider">
+                                Quer te adicionar como aluno • Sem Equipe
+                            </p>
+</div>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end shrink-0">
+<button class="h-10 px-6 rounded border border-white/10 text-subtext-dark hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-xs tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-white/20">
+                            Recusar
+                        </button>
+<button class="h-10 px-8 rounded bg-mission-orange hover:bg-orange-600 text-black font-bold text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(255,165,0,0.3)] hover:shadow-[0_0_20px_rgba(255,165,0,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50 clip-path-slant">
+                            Aceitar
+                        </button>
+</div>
+</div>
+</section>
+<section class="space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-xl">sports_mma</span>
+<h2 class="text-xl font-display font-bold uppercase tracking-wider text-white">
+                        Desafios de Duelo
+                    </h2>
+</div>
+<div class="space-y-3">
+<div class="bg-card-dark rounded-xl border border-card-border p-5 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-primary/30 transition-all duration-300 group">
+<div class="flex flex-col md:flex-row items-center md:items-start gap-5 text-center md:text-left w-full">
+<div class="w-14 h-14 rounded bg-[#2a2a2a] border border-white/10 flex items-center justify-center text-white text-2xl font-display font-medium shadow-md shrink-0 group-hover:border-primary/50 transition-colors">
+                                P
+                            </div>
+<div class="flex flex-col justify-center h-full">
+<span class="text-[10px] uppercase font-bold tracking-widest text-primary mb-1">
+                                    Desafiante
+                                </span>
+<h3 class="text-2xl font-display font-bold leading-none mb-1 text-white tracking-wide">
+                                    PEDRO
+                                </h3>
+<p class="text-xs text-subtext-dark uppercase font-bold tracking-wider">
+                                    Criado em 11/01/2026
+                                </p>
+</div>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end shrink-0">
+<button class="h-10 px-6 rounded border border-white/10 text-subtext-dark hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-xs tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-white/20">
+                                Recusar
+                            </button>
+<button class="h-10 px-8 rounded bg-mission-orange hover:bg-orange-600 text-black font-bold text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(255,165,0,0.3)] hover:shadow-[0_0_20px_rgba(255,165,0,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+                                Aceitar
+                            </button>
+</div>
+</div>
+<div class="bg-card-dark rounded-xl border border-card-border p-5 flex flex-col md:flex-row items-center justify-between gap-6 opacity-70 hover:opacity-100 hover:border-primary/30 transition-all duration-300 group">
+<div class="flex flex-col md:flex-row items-center md:items-start gap-5 text-center md:text-left w-full">
+<div class="w-14 h-14 rounded bg-[#2a2a2a] border border-white/10 flex items-center justify-center text-white text-2xl font-display font-medium shadow-md shrink-0 group-hover:border-primary/50 transition-colors">
+                                M
+                            </div>
+<div class="flex flex-col justify-center h-full">
+<span class="text-[10px] uppercase font-bold tracking-widest text-primary mb-1">
+                                    Desafiante
+                                </span>
+<h3 class="text-2xl font-display font-bold leading-none mb-1 text-white tracking-wide">
+                                    MARCOS SILVA
+                                </h3>
+<p class="text-xs text-subtext-dark uppercase font-bold tracking-wider">
+                                    Criado em 10/01/2026
+                                </p>
+</div>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end shrink-0">
+<button class="h-10 px-6 rounded border border-white/10 text-subtext-dark hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-bold text-xs tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-white/20">
+                                Recusar
+                            </button>
+<button class="h-10 px-8 rounded bg-mission-orange hover:bg-orange-600 text-black font-bold text-sm tracking-widest uppercase shadow-[0_0_15px_rgba(255,165,0,0.3)] hover:shadow-[0_0_20px_rgba(255,165,0,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+                                Aceitar
+                            </button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+
+</body></html>

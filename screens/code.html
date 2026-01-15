@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard - Muay Thai Edition</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Oswald:wght@200..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "muay-orange": "#FF4400",
+              "muay-orange-dark": "#B33000",
+              "muay-yellow": "#FFD700",
+              "muay-yellow-dark": "#D4AF37",
+              "earth-dark": "#1C1917", 
+              "earth-mid": "#292524", 
+              "earth-border": "#44403C", 
+              "earth-surface": "#0C0A09",
+              "off-white": "#F5F5F4",
+              "metal": "#A8A29E",
+            },
+            fontFamily: {
+              "poster": ["Anton", "sans-serif"],
+              "industrial": ["Oswald", "sans-serif"],
+            },
+            boxShadow: {
+              "hard": "4px 4px 0px 0px rgba(0, 0, 0, 1)",
+              "hard-sm": "2px 2px 0px 0px rgba(0, 0, 0, 1)",
+              "glow-orange": "0 0 20px rgba(255, 68, 0, 0.4), 4px 4px 0px 0px rgba(0, 0, 0, 1)",
+            },
+            borderWidth: {
+                "3": "3px",
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+        font-family: "Oswald", sans-serif;
+        background-color: #1C1917;
+        background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBVchI_klfJDvHd9DVsVCWxzMCVTDGGt_3slOGTd3W9FUzRsSGNMN3wYP7UCc30Jj_DjbuHwEblj4gg2M9usap9JnRGQhn7mfNrc5hceJp_KXQHzqvA9AlDmJlhyzdY8OrGn-AKODMdyXPqhDV7_RnVsrfCAxT_PmdGY2cn0thYpgfflCjj4OJaboQ0FWAotD0aCPJF-GHJa0rlW4Iyl3yZu4QG8Wpjlyqa_T0B_4itJO8OSkBTdrl1prbQHTrrHn3FQwaexiUlJXTe);
+        background-blend-mode: multiply;
+    }
+    h1, h2, h3, h4, .font-poster {
+        font-family: "Anton", sans-serif;
+        letter-spacing: 0.05em
+    }
+    .material-symbols-outlined {
+        font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+    ::-webkit-scrollbar {
+        width: 8px
+    }
+    ::-webkit-scrollbar-track {
+        background: #1C1917;
+        border-left: 1px solid #44403C
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #44403C;
+        border: 1px solid #1C1917
+    }
+    .text-shadow-orange {
+        text-shadow: 2px 2px 0 #B33000
+    }
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    body {
+      min-height: max(884px, 100dvh);
+    }
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen text-off-white pb-32 selection:bg-muay-orange selection:text-white uppercase">
+<header class="sticky top-0 z-50 bg-earth-dark/95 backdrop-blur-sm border-b-2 border-earth-border">
+<div class="flex items-center justify-between px-4 py-4 max-w-md mx-auto">
+<div class="flex items-center gap-4">
+<div class="relative group">
+<div class="size-12 border-2 border-off-white bg-cover bg-center shadow-hard-sm grayscale group-hover:grayscale-0 transition-all duration-300" data-alt="Portrait of a male fighter" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDoJzxzE2Q-L4p-Bj9bDAW3voi6pTS2fvtunFqu_pq_MhMJX0QK-IfOcuv5IdRzarExUD2iXPf863Vlswgxv7OmqcYtPGtx3Wpx9YRPbfJD68ln42R6pmn_mRqFGoteRd3VuakGRkPeIWFyueehO56GIYnL-fzxmPfqjSriHf8mDTnHdPHG_qnJdnc1mz7X9sXTtlYFD2HLCPi7KmWWF-5ygJJ3DTU_32YwwuMMUwFVeUx59BYxoCKMmPgmbkTZ-O4ahHB1J9LBmgT_");'>
+</div>
+<div class="absolute -bottom-1 -right-1 size-3 bg-muay-orange border border-black"></div>
+</div>
+<div>
+<h2 class="text-[10px] text-muay-yellow font-bold tracking-[0.2em] leading-tight">MUAY THAI CAMP</h2>
+<h1 class="text-2xl font-poster text-white leading-none mt-0.5">DASHBOARD</h1>
+</div>
+</div>
+<button class="flex items-center justify-center size-10 border-2 border-earth-border bg-earth-mid hover:bg-earth-border hover:border-off-white transition-all shadow-hard-sm active:translate-y-[2px] active:shadow-none relative">
+<span class="material-symbols-outlined text-off-white text-xl">notifications</span>
+<span class="absolute top-1 right-1 size-2 bg-muay-orange animate-pulse"></span>
+</button>
+</div>
+</header>
+<main class="flex flex-col gap-6 p-4 max-w-md mx-auto w-full mt-2">
+<div class="border-2 border-muay-orange bg-gradient-to-br from-earth-mid to-black relative overflow-hidden shadow-glow-orange group">
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
+<div class="absolute right-0 top-0 h-full w-24 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#ff440020_10px,#ff440020_20px)]"></div>
+<div class="p-5 flex items-center justify-between relative z-10">
+<div>
+<h3 class="text-2xl font-poster text-white flex items-center gap-2 italic">
+<span class="material-symbols-outlined text-muay-yellow text-3xl">workspace_premium</span>
+                    NAK MUAY PRO
+                </h3>
+<p class="text-metal text-xs font-bold tracking-wider mt-1">UNLOCK FIGHT ANALYSIS</p>
+</div>
+<button class="bg-muay-yellow text-black px-4 py-2 border-2 border-black font-poster text-sm hover:bg-white transition-colors shadow-hard-sm active:translate-y-[2px] active:shadow-none">
+                UPGRADE
+            </button>
+</div>
+</div>
+<div class="bg-earth-dark border-2 border-earth-border shadow-hard p-1 relative">
+<div class="absolute top-0 left-0 w-full h-1 bg-earth-border"></div>
+<div class="p-4 border border-white/5">
+<div class="flex items-center justify-between mb-5 border-b-2 border-earth-border pb-2">
+<h3 class="text-xl font-poster text-off-white flex items-center gap-2">
+<span class="material-symbols-outlined text-muay-orange">diversity_3</span>
+                    REFERRALS
+                </h3>
+<span class="text-[10px] bg-muay-yellow/10 text-muay-yellow px-2 py-1 font-bold border border-muay-yellow/30 tracking-widest">REWARDS ACTIVE</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-5">
+<div class="bg-earth-surface p-3 border-l-4 border-earth-border">
+<span class="block text-3xl font-poster text-white leading-none">24</span>
+<span class="text-[10px] text-metal font-bold tracking-widest">TOTAL SIGN-UPS</span>
+</div>
+<div class="bg-earth-surface p-3 border-l-4 border-muay-orange">
+<span class="block text-3xl font-poster text-muay-orange leading-none">08</span>
+<span class="text-[10px] text-metal font-bold tracking-widest">CONVERSIONS</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] text-metal font-bold tracking-widest">YOUR AFFILIATE LINK</label>
+<div class="flex">
+<div class="flex-1 bg-black border-2 border-earth-border border-r-0 px-3 py-3 text-sm text-gray-300 font-mono tracking-tight select-all">
+                        MUAY.LINK/REF/SILENCER
+                    </div>
+<button class="bg-earth-mid hover:bg-muay-orange text-white px-4 border-2 border-earth-border transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-earth-dark border-2 border-earth-border shadow-hard p-5 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="relative size-20 shrink-0">
+<div class="size-20 bg-cover bg-center border-2 border-off-white shadow-lg grayscale hover:grayscale-0 transition-all duration-500" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDoJzxzE2Q-L4p-Bj9bDAW3voi6pTS2fvtunFqu_pq_MhMJX0QK-IfOcuv5IdRzarExUD2iXPf863Vlswgxv7OmqcYtPGtx3Wpx9YRPbfJD68ln42R6pmn_mRqFGoteRd3VuakGRkPeIWFyueehO56GIYnL-fzxmPfqjSriHf8mDTnHdPHG_qnJdnc1mz7X9sXTtlYFD2HLCPi7KmWWF-5ygJJ3DTU_32YwwuMMUwFVeUx59BYxoCKMmPgmbkTZ-O4ahHB1J9LBmgT_");'></div>
+<div class="absolute -bottom-2 -right-2 px-1.5 py-0.5 bg-muay-yellow border border-black text-[9px] font-bold text-black uppercase">Ready</div>
+</div>
+<div>
+<h4 class="text-xl font-poster text-white">PROFILE IMAGE</h4>
+<p class="text-metal text-gray-500 text-[10px] font-medium tracking-wide mt-1">MAX 5MB (JPG/PNG)</p>
+</div>
+</div>
+<button class="text-off-white hover:text-muay-orange border-2 border-earth-border hover:border-muay-orange px-4 py-2 text-xs font-bold transition-all shadow-hard-sm active:translate-y-[1px] active:shadow-none bg-earth-mid">
+            CHANGE
+        </button>
+</div>
+<div class="bg-earth-dark border-2 border-earth-border shadow-hard p-5">
+<label class="block text-muay-orange text-sm font-poster mb-2 flex items-center gap-2 tracking-wide">
+<span class="material-symbols-outlined text-lg">edit_note</span>
+            DAILY STATUS
+        </label>
+<div class="flex gap-0 shadow-sm">
+<input class="flex-1 bg-earth-surface border-2 border-earth-border px-4 py-3 text-white text-sm focus:outline-none focus:border-muay-orange focus:ring-0 placeholder-gray-600 transition-colors rounded-none font-industrial tracking-wide" placeholder="STATUS UPDATE..." type="text" value="Pad work feeling sharp today! 🥊"/>
+<button class="bg-muay-orange hover:bg-muay-orange-dark text-white px-5 py-2 text-sm font-poster tracking-widest transition-colors border-2 border-l-0 border-muay-orange">
+                SAVE
+            </button>
+</div>
+</div>
+<div class="bg-earth-dark border-2 border-earth-border shadow-hard p-5">
+<label class="block text-metal text-[10px] font-bold tracking-widest mb-2">CUSTOM URL</label>
+<div class="flex items-center bg-black border-2 border-earth-border focus-within:border-muay-yellow transition-colors p-1">
+<span class="pl-3 pr-1 text-metal text-sm font-bold bg-black py-2 font-mono">MUAY.SAAS/</span>
+<input class="flex-1 bg-transparent border-none py-2 px-1 text-white text-sm focus:ring-0 placeholder-gray-700 font-bold tracking-wide font-mono uppercase" type="text" value="THE-SILENCER"/>
+</div>
+</div>
+<div class="bg-earth-dark border-2 border-earth-border shadow-hard p-1">
+<div class="p-4 border border-white/5 space-y-6">
+<div class="flex items-center justify-between border-b-2 border-earth-border pb-3">
+<h3 class="text-xl font-poster text-white">FIGHTER DATA</h3>
+<span class="text-[10px] text-muay-orange font-bold">* REQUIRED FIELDS</span>
+</div>
+<div class="space-y-5">
+<div>
+<label class="block text-metal text-[10px] font-bold mb-1 tracking-widest">FULL NAME</label>
+<input class="w-full bg-earth-surface border-2 border-earth-border px-3 py-3 text-white text-sm focus:outline-none focus:border-muay-yellow focus:ring-0 transition-all rounded-none font-bold tracking-wide" type="text" value="ALEX SILVA"/>
+</div>
+<div>
+<label class="block text-metal text-[10px] font-bold mb-1 tracking-widest">FIGHT NAME</label>
+<input class="w-full bg-earth-surface border-2 border-earth-border px-3 py-3 text-muay-orange text-sm focus:outline-none focus:border-muay-orange focus:ring-0 transition-all rounded-none font-bold tracking-wide" type="text" value="THE SILENCER"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-metal text-[10px] font-bold mb-1 tracking-widest">WEIGHT CLASS</label>
+<div class="relative">
+<select class="w-full bg-earth-surface border-2 border-earth-border px-3 py-3 text-white text-sm focus:outline-none focus:border-muay-yellow focus:ring-0 appearance-none rounded-none font-bold">
+<option>WELTERWEIGHT</option>
+<option>MIDDLEWEIGHT</option>
+<option>LIGHTWEIGHT</option>
+</select>
+<div class="absolute right-0 top-0 h-full w-8 bg-earth-border flex items-center justify-center pointer-events-none">
+<span class="material-symbols-outlined text-white text-sm">expand_more</span>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-metal text-[10px] font-bold mb-1 tracking-widest">STYLE</label>
+<input class="w-full bg-earth-surface border-2 border-earth-border px-3 py-3 text-white text-sm focus:outline-none focus:border-muay-yellow focus:ring-0 transition-all rounded-none font-bold" type="text" value="MUAY MAT"/>
+</div>
+</div>
+<div>
+<label class="block text-metal text-[10px] font-bold mb-1 tracking-widest">BIO</label>
+<textarea class="w-full bg-earth-surface border-2 border-earth-border px-3 py-3 text-gray-300 text-sm focus:outline-none focus:border-muay-yellow focus:ring-0 transition-all rounded-none font-medium leading-relaxed tracking-wide" rows="4">Professional Muay Thai fighter based in Bangkok. Specializing in low kicks and heavy hands. Looking for opponents in the 70kg division.</textarea>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-earth-dark border-2 border-earth-border shadow-hard p-5">
+<label class="block text-white text-lg font-poster mb-4 tracking-wide border-b border-earth-border pb-2 w-max">SELECT ROLE(S)</label>
+<div class="space-y-3">
+<label class="flex items-center gap-4 p-4 bg-earth-surface border-2 border-earth-border cursor-pointer hover:border-muay-yellow transition-colors group relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-muay-orange opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative flex items-center">
+<input checked="" class="peer size-6 rounded-none border-2 border-gray-600 bg-black text-muay-orange focus:ring-0 focus:ring-offset-0 transition-all checked:bg-muay-orange checked:border-muay-orange" type="checkbox"/>
+</div>
+<div class="flex flex-col">
+<span class="text-white font-poster text-lg group-hover:text-muay-orange transition-colors leading-none">NAK MUAY</span>
+<span class="text-metal text-[10px] font-bold tracking-wider mt-1">ACTIVE FIGHTER</span>
+</div>
+</label>
+<label class="flex items-center gap-4 p-4 bg-earth-surface border-2 border-earth-border cursor-pointer hover:border-white transition-colors group relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative flex items-center">
+<input class="peer size-6 rounded-none border-2 border-gray-600 bg-black text-white focus:ring-0 focus:ring-offset-0 transition-all" type="checkbox"/>
+</div>
+<div class="flex flex-col">
+<span class="text-white font-poster text-lg group-hover:text-white transition-colors leading-none">KRU / COACH</span>
+<span class="text-metal text-[10px] font-bold tracking-wider mt-1">TRAINER / HOLDER</span>
+</div>
+</label>
+</div>
+</div>
+<button class="w-full bg-muay-orange hover:bg-muay-orange-dark text-white font-poster text-xl tracking-[0.1em] py-5 shadow-glow-orange border-2 border-black transition-all active:translate-y-[4px] active:shadow-none flex items-center justify-center gap-3 mt-4 group relative overflow-hidden">
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30 mix-blend-overlay"></div>
+<span class="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform relative z-10">save</span>
+<span class="relative z-10">SAVE ALL CHANGES</span>
+</button>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-earth-dark border-t-2 border-earth-border z-50 pb-safe shadow-2xl">
+<div class="flex justify-around items-center h-20 max-w-md mx-auto px-2">
+<a class="flex flex-col items-center justify-center w-full h-full gap-1 text-muay-orange group bg-earth-mid border-x border-earth-border relative" href="#">
+<div class="absolute top-0 left-0 w-full h-1 bg-muay-orange"></div>
+<span class="material-symbols-outlined text-3xl transition-transform group-active:scale-90">dashboard</span>
+<span class="text-[9px] font-bold tracking-widest">GENERAL</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full gap-1 text-metal hover:text-off-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-3xl font-light transition-transform group-active:scale-90">sports_mma</span>
+<span class="text-[9px] font-bold tracking-widest">FIGHTS</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full gap-1 text-metal hover:text-off-white transition-colors group" href="#">
+<div class="relative">
+<span class="material-symbols-outlined text-3xl font-light transition-transform group-active:scale-90">chat_bubble</span>
+<span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center bg-muay-orange text-[9px] font-bold text-white border border-black">3</span>
+</div>
+<span class="text-[9px] font-bold tracking-widest">MSG</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full gap-1 text-metal hover:text-off-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-3xl font-light transition-transform group-active:scale-90">person</span>
+<span class="text-[9px] font-bold tracking-widest">PROFILE</span>
+</a>
+</div>
+</nav>
+
+</body></html>
