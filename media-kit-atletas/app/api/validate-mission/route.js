@@ -1,11 +1,11 @@
 // app/api/validate-mission/route.js
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
 // --- CORREÇÃO PARA CLOUDFLARE PAGES ---
 export const runtime = 'edge';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+// Removido SDK para economizar espaço
+// const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 // Dicionário de Prompts: O cérebro de cada missão
 const MISSION_PROMPTS = {
@@ -39,30 +39,48 @@ export async function POST(req) {
 
     // Seleciona o prompt correto
     const prompt = MISSION_PROMPTS[missionType];
-    
+
     if (!prompt) {
       return NextResponse.json({ valid: false, reason: "Tipo de missão inválido." }, { status: 400 });
     }
 
     // Limpa header do base64 se necessário
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const result = await model.generateContent([
-      prompt,
-      { inlineData: { data: base64Data, mimeType: "image/jpeg" } },
-    ]);
+    const API_KEY = process.env.GOOGLE_API_KEY;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
-    const responseText = result.response.text();
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+          ]
+        }]
+      })
+    });
+
+    const result = await response.json();
+    const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!responseText) {
+      throw new Error("Falha na resposta da IA: " + JSON.stringify(result));
+    }
+
     // Limpeza de segurança para garantir JSON válido
     const cleanJson = responseText.replace(/```json|```/g, "").trim();
-    
+
     try {
-        const validation = JSON.parse(cleanJson);
-        return NextResponse.json(validation);
+      const validation = JSON.parse(cleanJson);
+      return NextResponse.json(validation);
     } catch (e) {
-        console.error("Erro JSON Gemini:", responseText);
-        return NextResponse.json({ valid: false, reason: "Erro na análise da I.A." }, { status: 500 });
+      console.error("Erro JSON Gemini:", responseText);
+      return NextResponse.json({ valid: false, reason: "Erro na análise da I.A." }, { status: 500 });
     }
 
   } catch (error) {
