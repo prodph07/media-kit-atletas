@@ -1,10 +1,11 @@
 'use client';
-export const runtime = 'edge';
+
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Calendar, MapPin, Trophy, Users, Shield, CheckCircle, AlertTriangle, ArrowRight, Swords, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import EventPredictionCard from '@/components/predictions/EventPredictionCard';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -415,6 +416,10 @@ export default function EventPage() {
                                                 </div>
                                             </div>
                                         </div>
+                                        {/* PREDICTION CARD FOR THIS FIGHT */}
+                                        <EventPredictionCard fight={fight} event={event} user={user} />
+
+
                                     </div>
                                 ))}
                             </div>

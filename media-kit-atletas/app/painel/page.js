@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { Save, LogOut, Eye, Bell, Swords, GraduationCap, Trophy } from 'lucide-react';
@@ -46,8 +46,8 @@ export default function Painel() {
     const router = useRouter();
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('geral');
+    const [selectedType, setSelectedType] = useState(null); // 'atleta', 'fan', 'empresa'
 
-    // --- USE CUSTOM HOOK FOR DATA FETCHING ---
     const {
         loading, userId, perfil, setPerfil,
         notificacoes, setNotificacoes,
@@ -62,10 +62,130 @@ export default function Painel() {
         pendingRegistrations, setPendingRegistrations
     } = useProfileData();
 
+    useEffect(() => {
+        if (perfil?.tipo_conta === 'fan') {
+            router.push('/painel/fan');
+        }
+    }, [perfil, router]);
+
+    // --- SELEÇÃO DE PERFIL (Se logado mas sem perfil) ---
+    if (!loading && !perfil) {
+        const handleConfirmSelection = async () => {
+            if (!selectedType) return;
+
+            if (selectedType === 'fan') {
+                router.push('/cadastro/fan');
+                return;
+            }
+
+            setSaving(true);
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error("Usuário não autenticado");
+
+                const { error } = await supabase.from('atletas').insert([{
+                    user_id: user.id,
+                    nome: user.user_metadata.full_name || 'Novo Usuário',
+                    apelido: user.user_metadata.full_name?.split(' ')[0] || 'Novo',
+                    foto_url: user.user_metadata.avatar_url || '',
+                    tipo_conta: selectedType,
+                    plano: 'free',
+                    is_athlete: selectedType === 'atleta',
+                    is_coach: false
+                }]);
+
+                if (error) throw error;
+                window.location.reload();
+            } catch (err) {
+                alert("Erro ao criar perfil: " + err.message);
+                setSaving(false);
+            }
+        };
+
+        return (
+            <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-4">
+                <div className="max-w-4xl w-full flex flex-col items-center">
+                    <h1 className="text-3xl md:text-5xl font-black text-center text-white mb-2 italic tracking-tighter uppercase">
+                        Nocaute <span className="text-red-600">Pages</span>
+                    </h1>
+                    <p className="text-gray-400 text-center mb-8 text-lg">Escolha como você quer participar do nosso ecossistema.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-8">
+                        {/* ATLETA */}
+                        <div
+                            onClick={() => setSelectedType('atleta')}
+                            className={`group cursor-pointer bg-[#111] border p-8 rounded-2xl transition-all relative overflow-hidden ${selectedType === 'atleta' ? 'border-red-600 shadow-2xl shadow-red-900/20 scale-105 z-10' : 'border-[#222] hover:border-gray-700 hover:-translate-y-1 opacity-60 hover:opacity-100'}`}
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 transition">
+                                <Swords size={120} className={selectedType === 'atleta' ? 'text-red-600' : 'text-white'} />
+                            </div>
+                            <div className="relative z-10">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border ${selectedType === 'atleta' ? 'bg-red-600 text-white border-red-500' : 'bg-[#222] text-gray-500 border-[#333]'}`}>
+                                    <Swords size={32} />
+                                </div>
+                                <h3 className={`text-2xl font-bold mb-2 uppercase ${selectedType === 'atleta' ? 'text-white' : 'text-gray-400'}`}>Atleta / Treinador</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">
+                                    Crie seu Media Kit profissional, gerencie sua carreira, busque patrocínios e conecte-se com eventos.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* FAN */}
+                        <div
+                            onClick={() => setSelectedType('fan')}
+                            className={`group cursor-pointer bg-[#111] border p-8 rounded-2xl transition-all relative overflow-hidden ${selectedType === 'fan' ? 'border-green-600 shadow-2xl shadow-green-900/20 scale-105 z-10' : 'border-[#222] hover:border-gray-700 hover:-translate-y-1 opacity-60 hover:opacity-100'}`}
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 transition">
+                                <Trophy size={120} className={selectedType === 'fan' ? 'text-green-600' : 'text-white'} />
+                            </div>
+                            <div className="relative z-10">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border ${selectedType === 'fan' ? 'bg-green-600 text-white border-green-500' : 'bg-[#222] text-gray-500 border-[#333]'}`}>
+                                    <Trophy size={32} />
+                                </div>
+                                <h3 className={`text-2xl font-bold mb-2 uppercase ${selectedType === 'fan' ? 'text-white' : 'text-gray-400'}`}>Fã / Analista</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">
+                                    Faça palpites nos eventos, suba no ranking global, ganhe recompensas e acompanhe seus ídolos.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* EMPRESA */}
+                        <div
+                            onClick={() => setSelectedType('empresa')}
+                            className={`group cursor-pointer bg-[#111] border p-8 rounded-2xl transition-all relative overflow-hidden ${selectedType === 'empresa' ? 'border-purple-600 shadow-2xl shadow-purple-900/20 scale-105 z-10' : 'border-[#222] hover:border-gray-700 hover:-translate-y-1 opacity-60 hover:opacity-100'}`}
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 transition">
+                                <GraduationCap size={120} className={selectedType === 'empresa' ? 'text-purple-600' : 'text-white'} />
+                            </div>
+                            <div className="relative z-10">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 border ${selectedType === 'empresa' ? 'bg-purple-600 text-white border-purple-500' : 'bg-[#222] text-gray-500 border-[#333]'}`}>
+                                    <GraduationCap size={32} />
+                                </div>
+                                <h3 className={`text-2xl font-bold mb-2 uppercase ${selectedType === 'empresa' ? 'text-white' : 'text-gray-400'}`}>Empresa / Evento</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">
+                                    Organize eventos, contrate atletas, divulgue sua marca e encontre novos talentos.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleConfirmSelection}
+                        disabled={!selectedType || saving}
+                        className={`px-12 py-4 rounded-full font-black text-lg uppercase tracking-widest transition-all transform ${selectedType ? 'bg-white text-black hover:scale-105 hover:shadow-xl shadow-white/20' : 'bg-[#222] text-gray-600 cursor-not-allowed'}`}
+                    >
+                        {saving ? 'Criando Perfil...' : 'Confirmar e Continuar'}
+                    </button>
+
+                    {!selectedType && <p className="mt-4 text-gray-600 text-sm animate-pulse">Selecione uma opção acima para continuar</p>}
+                </div>
+            </div>
+        );
+    }
+
     // Redireciona se não houver user (tratado no hook mas safety check aqui)
     if (!loading && !userId) {
-        // O hook pode não redirecionar diretamente se estivermos no server, mas no client sim.
-        // router.push('/login'); // Já tratado no hook ou chamador
+        router.push('/login');
     }
 
     const handleOpenProfile = async () => {
@@ -332,7 +452,9 @@ export default function Painel() {
 
     if (loading) return <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center text-white"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div></div>;
 
-    if (!perfil) return null;
+
+    // --- NORMAL PANEL RENDER (se perfil existe) ---
+    if (!perfil) return null; // Should be handled by top if, but safe check
 
     const isCompany = perfil.tipo_conta === 'empresa';
     const isCoach = perfil.is_coach || perfil.tipo_conta === 'treinador';

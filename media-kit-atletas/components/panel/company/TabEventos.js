@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, MapPin, Users, Trophy, ExternalLink, Loader2, DollarSign, ChevronRight, Save, ArrowLeft, Trash2, CheckCircle, Swords, AlertTriangle, X, Pencil, RotateCcw } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import AdminFightControl from '../../admin/AdminFightControl';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -979,21 +980,44 @@ export default function TabEventos({ perfil, setPerfil, userId, empresaId }) {
                                                     Luta {idx + 1} <span className="w-1 h-1 bg-slate-600 rounded-full"></span> {inscA.eventos_categorias?.nome || 'Peso Combinado'}
                                                 </div>
 
-                                                <div className="flex items-center justify-between w-full px-4 md:px-10">
-                                                    <div className="text-center w-1/3">
-                                                        <div className="text-white font-bold truncate">{fight.atleta_a?.nome}</div>
-                                                        <div className="text-red-500 text-[10px] font-bold uppercase">Red Corner</div>
-                                                    </div>
-                                                    <div className="text-slate-700 font-black text-xl italic">VS</div>
-                                                    <div className="text-center w-1/3">
-                                                        <div className="text-white font-bold truncate">{fight.atleta_b?.nome}</div>
-                                                        <div className="text-blue-500 text-[10px] font-bold uppercase">Blue Corner</div>
-                                                    </div>
-                                                </div>
+                                                {(() => {
+                                                    const winnerId = String(fight.vencedor_id); // Loose compare safety
+                                                    const idA = String(fight.atleta_a_id);
+                                                    const idB = String(fight.atleta_b_id);
+                                                    const hasResult = !!fight.vencedor_id;
+                                                    const isWinA = hasResult && winnerId === idA;
+                                                    const isWinB = hasResult && winnerId === idB;
+
+                                                    return (
+                                                        <div className="flex items-center justify-between w-full px-4 md:px-10">
+                                                            <div className={`text-center w-5/12 transition-all p-2 rounded ${isWinA ? 'bg-green-900/10 ring-1 ring-green-500/50' : hasResult ? 'opacity-40 grayscale' : ''}`}>
+                                                                <div className={`font-bold truncate text-base ${isWinA ? 'text-green-400' : 'text-white'}`}>
+                                                                    {fight.atleta_a?.nome}
+                                                                </div>
+                                                                {isWinA && <div className="text-[10px] font-bold bg-green-500 text-black px-2 py-0.5 rounded-full w-fit mx-auto mt-1 uppercase">Vencedor</div>}
+                                                                <div className="text-red-500 text-[10px] font-bold uppercase mt-1">Red Corner</div>
+                                                            </div>
+
+                                                            <div className="text-slate-700 font-black text-xl italic">VS</div>
+
+                                                            <div className={`text-center w-5/12 transition-all p-2 rounded ${isWinB ? 'bg-green-900/10 ring-1 ring-green-500/50' : hasResult ? 'opacity-40 grayscale' : ''}`}>
+                                                                <div className={`font-bold truncate text-base ${isWinB ? 'text-green-400' : 'text-white'}`}>
+                                                                    {fight.atleta_b?.nome}
+                                                                </div>
+                                                                {isWinB && <div className="text-[10px] font-bold bg-green-500 text-black px-2 py-0.5 rounded-full w-fit mx-auto mt-1 uppercase">Vencedor</div>}
+                                                                <div className="text-blue-500 text-[10px] font-bold uppercase mt-1">Blue Corner</div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
 
                                                 <div className="absolute top-2 right-2 flex opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                                                     <button onClick={() => handleEditMatch(fight)} className="p-2 bg-slate-800 text-slate-300 hover:text-white rounded hover:bg-slate-700"><Pencil size={14} /></button>
                                                     <button onClick={() => handleDeleteMatch(fight.id)} className="p-2 bg-slate-800 text-red-500 hover:text-red-400 rounded hover:bg-slate-700"><Trash2 size={14} /></button>
+                                                </div>
+
+                                                <div className="w-full">
+                                                    <AdminFightControl fight={fight} onUpdate={fetchMatches} />
                                                 </div>
                                             </div>
                                         );

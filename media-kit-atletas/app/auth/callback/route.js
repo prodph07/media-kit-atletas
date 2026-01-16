@@ -12,12 +12,12 @@ export async function GET(request) {
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
-    
+
     // Apenas troca o código pela sessão
     // O Trigger do banco já criou o perfil nesse momento!
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // Redireciona para o painel
-  return NextResponse.redirect(`${requestUrl.origin}/painel`);
+  // Redireciona para a página de verificação de perfil
+  return NextResponse.redirect(`${requestUrl.origin}/auth/redirect`);
 }

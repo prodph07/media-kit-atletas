@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Users, Building2 } from 'lucide-react'; // Importei o ícone de loading
+import { Loader2, Users, Building2, Target } from 'lucide-react'; // Importei o ícone de loading
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -164,9 +164,10 @@ export default function Cadastro() {
 
     if (accountType === 'atleta') {
       if (!validarCPF(formData.documento)) { setMsg('CPF inválido. Verifique os números.'); setLoading(false); return; }
-    } else {
+    } else if (accountType === 'empresa') {
       if (!validarCNPJ(formData.documento)) { setMsg('CNPJ inválido. Verifique os números.'); setLoading(false); return; }
     }
+    // Fan doesn't need document check here
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -182,6 +183,13 @@ export default function Cadastro() {
       }
 
       if (data.user) {
+        // Se for Fã, não cria na tabela atletas, manda completar perfil
+        if (accountType === 'fan') {
+          setMsg('Conta criada! Complete seu perfil de Fã...');
+          setTimeout(() => { router.push('/cadastro/fan'); }, 1500);
+          return;
+        }
+
         const docLimpo = formData.documento.replace(/\D/g, '');
         const slugFinal = `${gerarSlug(formData.nome)}-${Math.floor(Math.random() * 10000)}`;
 
@@ -222,12 +230,18 @@ export default function Cadastro() {
       <div className="w-full max-w-md bg-slate-900 p-8 rounded-xl border border-slate-800 shadow-2xl animate-fadeIn">
 
         {/* ACCOUNT TYPE TOGGLE */}
-        <div className="flex bg-slate-800 p-1 rounded-lg mb-6">
+        <div className="bg-slate-800 p-1 rounded-lg mb-6 flex flex-col sm:flex-row gap-1">
           <button
             onClick={() => { setAccountType('atleta'); setFormData({ ...formData, documento: '' }); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-bold transition-all ${accountType === 'atleta' ? 'bg-[#FF4500] text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
           >
             <Users size={16} /> Atleta / Treinador
+          </button>
+          <button
+            onClick={() => { setAccountType('fan'); setFormData({ ...formData, documento: '' }); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-bold transition-all ${accountType === 'fan' ? 'bg-green-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+          >
+            <Target size={16} /> Fan / Analista
           </button>
           <button
             onClick={() => { setAccountType('empresa'); setFormData({ ...formData, documento: '' }); }}
@@ -283,19 +297,21 @@ export default function Cadastro() {
             <input type="text" name="nome" required className="w-full bg-black border border-slate-700 p-3 rounded text-white outline-none focus:border-yellow-500" value={formData.nome} onChange={handleChange} />
           </div>
 
-          <div>
-            <label className="text-xs uppercase font-bold text-slate-500">{accountType === 'atleta' ? 'CPF' : 'CNPJ'}</label>
-            <input
-              type="text"
-              name="documento"
-              required
-              maxLength={accountType === 'atleta' ? "14" : "18"}
-              className="w-full bg-black border border-slate-700 p-3 rounded text-white outline-none focus:border-yellow-500"
-              placeholder={accountType === 'atleta' ? "000.000.000-00" : "00.000.000/0000-00"}
-              value={formData.documento}
-              onChange={handleChange}
-            />
-          </div>
+          {accountType !== 'fan' && (
+            <div>
+              <label className="text-xs uppercase font-bold text-slate-500">{accountType === 'atleta' ? 'CPF' : 'CNPJ'}</label>
+              <input
+                type="text"
+                name="documento"
+                required
+                maxLength={accountType === 'atleta' ? "14" : "18"}
+                className="w-full bg-black border border-slate-700 p-3 rounded text-white outline-none focus:border-yellow-500"
+                placeholder={accountType === 'atleta' ? "000.000.000-00" : "00.000.000/0000-00"}
+                value={formData.documento}
+                onChange={handleChange}
+              />
+            </div>
+          )}
 
           <div>
             <label className="text-xs uppercase font-bold text-slate-500">Email</label>

@@ -190,6 +190,26 @@ export function useProfileData() {
                         setProfileViews(viewsCompletas);
                     }
                 }
+            } else {
+                // Tenta buscar em FANS
+                const { data: fanData } = await supabase.from('fans').select('*').eq('user_id', user.id).single();
+                if (fanData) {
+                    setPerfil({
+                        ...fanData,
+                        id: fanData.id,
+                        nome: fanData.nickname,
+                        apelido: fanData.nickname,
+                        foto_url: fanData.avatar_url || '',
+                        tipo_conta: 'fan',
+                        level: fanData.level || 1,
+                        xp: fanData.xp || 0,
+                        weekly_stats: fanData.weekly_stats || {},
+                        // Mock fields to prevent crashes in generic components/hooks
+                        socials: { instagram: { active: false }, youtube: { active: false }, tiktok: { active: false }, x: { active: false }, kwai: { active: false } },
+                        stats: {}, record: {}, contact: {}, nextFight: {},
+                        galeria: [], historico: [], video_lista: [], premios: [], completed_tasks: []
+                    });
+                }
             }
             setLoading(false);
         }

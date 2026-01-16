@@ -35,7 +35,13 @@ export const REWARDS = {
     weight_checkin: 50,
     share_bonus: 30,
     vote_bonus: 15,
-    link_in_bio: 200       // I.A.
+    link_in_bio: 200,      // I.A.
+
+    // Palpites (Predictions)
+    PREDICTION_WINNER: 30,    // Acertou só o vencedor
+    PREDICTION_METHOD: 15,    // Bônus p/ método correto
+    PREDICTION_ROUND: 15,     // Bônus p/ round correto
+    PREDICTION_PERFECT: 100   // Bônus se acertar TUDO (Total = 30+15+15+100 = 160)
 };
 
 // Normaliza chaves para garantir compatibilidade (Ex: REWARDS.DAILY_LOGIN funciona igual REWARDS.daily_login)

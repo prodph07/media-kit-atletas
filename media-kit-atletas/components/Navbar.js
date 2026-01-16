@@ -41,22 +41,34 @@ export default function Navbar() {
             setSession(currentSession);
 
             if (currentSession) {
-                const { data: profile } = await supabase
+                // 1. Tenta buscar Atleta
+                const { data: athlete } = await supabase
                     .from('atletas')
                     .select('*')
                     .eq('user_id', currentSession.user.id)
                     .single();
 
-                if (profile) {
-                    setUserData(profile);
+                if (athlete) {
+                    setUserData({ ...athlete, role: 'atleta' });
 
                     const { count } = await supabase
                         .from('duelos')
                         .select('*', { count: 'exact', head: true })
-                        .eq('atleta_2_id', profile.id)
+                        .eq('atleta_2_id', athlete.id)
                         .eq('status', 'pending');
 
                     if (count > 0) setHasNotification(true);
+                } else {
+                    // 2. Tenta buscar Fã
+                    const { data: fan } = await supabase
+                        .from('fans')
+                        .select('*')
+                        .eq('user_id', currentSession.user.id)
+                        .single();
+
+                    if (fan) {
+                        setUserData({ ...fan, role: 'fan' });
+                    }
                 }
             }
             setLoadingUser(false);
